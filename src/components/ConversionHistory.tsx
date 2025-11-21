@@ -1,12 +1,5 @@
 import { Card } from "@/components/ui/card";
-
-interface ConversionResult {
-  from: string;
-  to: string;
-  amount: number;
-  result: number;
-  timestamp: Date;
-}
+import { ConversionResult } from "@/types";
 
 interface ConversionHistoryProps {
   history: ConversionResult[];
