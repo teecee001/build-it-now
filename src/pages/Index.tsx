@@ -2,14 +2,7 @@ import { useState } from "react";
 import { CurrencyConverter } from "@/components/CurrencyConverter";
 import { CryptoChart } from "@/components/CryptoChart";
 import { ConversionHistory } from "@/components/ConversionHistory";
-
-interface ConversionResult {
-  from: string;
-  to: string;
-  amount: number;
-  result: number;
-  timestamp: Date;
-}
+import { ConversionResult } from "@/types";
 
 const Index = () => {
   const [conversionHistory, setConversionHistory] = useState<ConversionResult[]>([]);
