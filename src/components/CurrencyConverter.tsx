@@ -3,30 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { CURRENCIES, EXCHANGE_RATES } from "@/constants/currencies";
+import { CURRENCIES } from "@/constants/currencies";
 import { ConversionResult } from "@/types";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 interface CurrencyConverterProps {
   onConvert: (result: ConversionResult) => void;
 }
-
 
 export const CurrencyConverter = ({ onConvert }: CurrencyConverterProps) => {
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("BTC");
   const [amount, setAmount] = useState("1000");
   const [result, setResult] = useState<number | null>(null);
+  const { rates, isLoading, isLive } = useExchangeRates();
 
   const handleConvert = () => {
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum)) return;
 
-    // Convert using USD as base currency
-    const inUSD = amountNum / EXCHANGE_RATES[fromCurrency];
-    const converted = inUSD * EXCHANGE_RATES[toCurrency];
-    
+    const inUSD = amountNum / rates[fromCurrency];
+    const converted = inUSD * rates[toCurrency];
+
     setResult(converted);
-    
+
     onConvert({
       from: fromCurrency,
       to: toCurrency,
@@ -38,8 +40,19 @@ export const CurrencyConverter = ({ onConvert }: CurrencyConverterProps) => {
 
   return (
     <Card className="p-8 bg-card border-border">
-      <h2 className="text-2xl font-semibold mb-6 text-center">Convert Currency</h2>
-      
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <h2 className="text-2xl font-semibold">Convert Currency</h2>
+        {isLoading ? (
+          <Badge variant="outline" className="gap-1">
+            <Loader2 className="h-3 w-3 animate-spin" /> Loading rates...
+          </Badge>
+        ) : (
+          <Badge variant={isLive ? "default" : "secondary"}>
+            {isLive ? "● Live Rates" : "Mock Rates"}
+          </Badge>
+        )}
+      </div>
+
       <div className="grid md:grid-cols-2 gap-6 mb-6">
         <div className="space-y-2">
           <label className="text-sm text-muted-foreground">From:</label>
@@ -88,8 +101,9 @@ export const CurrencyConverter = ({ onConvert }: CurrencyConverterProps) => {
       <Button
         onClick={handleConvert}
         className="w-full bg-gradient-primary hover:opacity-90 transition-opacity text-lg py-6 font-semibold shadow-glow"
+        disabled={isLoading}
       >
-        Convert
+        {isLoading ? "Loading Rates..." : "Convert"}
       </Button>
 
       {result !== null && (
