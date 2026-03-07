@@ -11,6 +11,11 @@ import WalletPage from "./pages/WalletPage";
 import SendMoney from "./pages/SendMoney";
 import Markets from "./pages/Markets";
 import AIAdvisor from "./pages/AIAdvisor";
+import Rewards from "./pages/Rewards";
+import Activity from "./pages/Activity";
+import CardPage from "./pages/CardPage";
+import Deposit from "./pages/Deposit";
+import BillPay from "./pages/BillPay";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -48,6 +53,11 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/send" element={<SendMoney />} />
+              <Route path="/deposit" element={<Deposit />} />
+              <Route path="/activity" element={<Activity />} />
+              <Route path="/rewards" element={<Rewards />} />
+              <Route path="/card" element={<CardPage />} />
+              <Route path="/bills" element={<BillPay />} />
               <Route path="/markets" element={<Markets />} />
               <Route path="/advisor" element={<AIAdvisor />} />
             </Route>
