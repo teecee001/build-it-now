@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
-  LayoutDashboard, Wallet, Send, TrendingUp, Bot, Settings, LogOut, X,
-  Menu
+  LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
+  Menu, CreditCard, Gift, Activity, Landmark, Receipt
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,9 +9,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const NAV_ITEMS = [
-  { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { path: "/dashboard", icon: LayoutDashboard, label: "Account" },
   { path: "/wallet", icon: Wallet, label: "Wallet" },
   { path: "/send", icon: Send, label: "Send" },
+  { path: "/deposit", icon: Landmark, label: "Deposit" },
+  { path: "/activity", icon: Activity, label: "Activity" },
+  { path: "/rewards", icon: Gift, label: "Rewards" },
+  { path: "/card", icon: CreditCard, label: "Card" },
+  { path: "/bills", icon: Receipt, label: "Bills" },
   { path: "/markets", icon: TrendingUp, label: "Markets" },
   { path: "/advisor", icon: Bot, label: "AI Advisor" },
 ];
@@ -23,6 +28,7 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const handle = "@" + (user?.email?.split("@")[0] || "user");
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -37,7 +43,7 @@ export function AppLayout() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 space-y-1">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -45,7 +51,7 @@ export function AppLayout() {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all",
                   isActive
                     ? "bg-secondary text-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -66,7 +72,7 @@ export function AppLayout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{displayName}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              <p className="text-xs text-muted-foreground truncate">{handle}</p>
             </div>
           </div>
           <button
@@ -99,7 +105,7 @@ export function AppLayout() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden fixed inset-x-0 top-[52px] z-40 bg-card border-b border-border p-4 space-y-1"
+            className="md:hidden fixed inset-x-0 top-[52px] z-40 bg-card border-b border-border p-4 space-y-0.5 max-h-[80vh] overflow-y-auto"
           >
             {NAV_ITEMS.map((item) => {
               const isActive = location.pathname === item.path;
