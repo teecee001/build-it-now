@@ -3,9 +3,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, Wallet, Send, Bot } from "lucide-react";
+import { 
+  ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, 
+  Wallet, Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
+  DollarSign, Percent, Eye, EyeOff
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 const PORTFOLIO_ASSETS = [
   { code: "BTC", name: "Bitcoin", symbol: "₿", allocation: 0.45 },
@@ -15,24 +20,47 @@ const PORTFOLIO_ASSETS = [
   { code: "XRP", name: "Ripple", symbol: "XRP", allocation: 0.05 },
 ];
 
+const RECENT_ACTIVITY = [
+  { type: "received", label: "Welcome Bonus", amount: 25.00, time: "Just now", icon: Gift },
+  { type: "deposit", label: "Direct Deposit", amount: 2450.00, time: "2h ago", icon: Landmark },
+  { type: "sent", label: "Sent to @sarah_k", amount: -50.00, time: "5h ago", icon: Send },
+  { type: "cashback", label: "Cashback Reward", amount: 3.42, time: "1d ago", icon: Percent },
+];
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { rates, isLive } = useExchangeRates();
   const navigate = useNavigate();
+  const [showBalance, setShowBalance] = useState(true);
   
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const handle = "@" + (user?.email?.split("@")[0] || "user");
 
-  // Simulated portfolio value based on live rates
-  const portfolioUSD = 24_831.47;
+  const walletBalance = 12_483.92;
+  const savingsBalance = 8_250.00;
+  const totalBalance = walletBalance + savingsBalance;
+  const apyRate = 6.0;
+  const monthlyEarnings = (savingsBalance * apyRate / 100 / 12);
   const change24h = 3.42;
   const isPositive = change24h >= 0;
+
+  // Crypto portfolio
+  const portfolioUSD = 4_097.55;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-muted-foreground text-sm">Welcome back,</p>
-        <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-muted-foreground text-sm">Welcome back,</p>
+            <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+            <p className="text-xs text-muted-foreground font-mono">{handle}</p>
+          </div>
+          <button onClick={() => setShowBalance(!showBalance)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+            {showBalance ? <Eye className="w-5 h-5 text-muted-foreground" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
+          </button>
+        </div>
       </motion.div>
 
       {/* Total Balance Card */}
@@ -48,7 +76,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-baseline gap-3">
               <h2 className="text-4xl font-bold tracking-tight font-mono">
-                ${portfolioUSD.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                {showBalance ? `$${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••••"}
               </h2>
               <span className={`flex items-center gap-1 text-sm font-medium ${isPositive ? "text-success" : "text-destructive"}`}>
                 {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -56,46 +84,134 @@ export default function Dashboard() {
               </span>
             </div>
 
+            {/* Balance Breakdown */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="p-3 rounded-lg bg-secondary/50">
+                <p className="text-xs text-muted-foreground">Wallet</p>
+                <p className="text-sm font-semibold font-mono">
+                  {showBalance ? `$${walletBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••"}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Savings</p>
+                  <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-success/10 text-success border-0">
+                    {apyRate}% APY
+                  </Badge>
+                </div>
+                <p className="text-sm font-semibold font-mono">
+                  {showBalance ? `$${savingsBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••"}
+                </p>
+              </div>
+            </div>
+
+            {/* APY Earnings callout */}
+            <div className="mt-3 p-3 rounded-lg bg-success/5 border border-success/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <PiggyBank className="w-4 h-4 text-success" />
+                <span className="text-xs text-success">Monthly earnings</span>
+              </div>
+              <span className="text-xs font-mono font-semibold text-success">
+                +${monthlyEarnings.toFixed(2)}/mo
+              </span>
+            </div>
+
             {/* Quick Actions */}
-            <div className="flex gap-3 mt-6">
+            <div className="grid grid-cols-4 gap-2 mt-5">
               <Button
                 size="sm"
-                className="flex-1 bg-foreground text-background hover:bg-foreground/90 gap-2"
+                className="flex-col h-auto py-3 bg-foreground text-background hover:bg-foreground/90 gap-1"
+                onClick={() => navigate("/deposit")}
+              >
+                <ArrowDownLeft className="w-4 h-4" />
+                <span className="text-[10px]">Deposit</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-col h-auto py-3 gap-1"
                 onClick={() => navigate("/send")}
               >
-                <ArrowUpRight className="w-4 h-4" /> Send
+                <ArrowUpRight className="w-4 h-4" />
+                <span className="text-[10px]">Send</span>
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 gap-2"
-                onClick={() => navigate("/wallet")}
+                className="flex-col h-auto py-3 gap-1"
+                onClick={() => navigate("/send")}
               >
-                <ArrowDownLeft className="w-4 h-4" /> Receive
+                <DollarSign className="w-4 h-4" />
+                <span className="text-[10px]">Request</span>
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 gap-2"
+                className="flex-col h-auto py-3 gap-1"
                 onClick={() => navigate("/markets")}
               >
-                <Repeat className="w-4 h-4" /> Convert
+                <Repeat className="w-4 h-4" />
+                <span className="text-[10px]">Convert</span>
               </Button>
             </div>
           </div>
         </Card>
       </motion.div>
 
-      {/* Assets */}
+      {/* Welcome Bonus */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+        <Card className="p-4 bg-gradient-to-r from-warning/10 to-warning/5 border-warning/20 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
+            <Gift className="w-5 h-5 text-warning" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">$25 Welcome Bonus</p>
+            <p className="text-xs text-muted-foreground">Credited to your X Money wallet</p>
+          </div>
+          <Badge className="bg-warning/20 text-warning border-0 text-xs">Claimed</Badge>
+        </Card>
+      </motion.div>
+
+      {/* Recent Activity */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Assets</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Activity</h3>
+          <button onClick={() => navigate("/activity")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            View All →
+          </button>
+        </div>
+        <div className="space-y-2">
+          {RECENT_ACTIVITY.map((item, i) => (
+            <Card key={i} className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                  item.amount >= 0 ? "bg-success/10" : "bg-secondary"
+                }`}>
+                  <item.icon className={`w-4 h-4 ${item.amount >= 0 ? "text-success" : "text-muted-foreground"}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.time}</p>
+                </div>
+                <p className={`text-sm font-semibold font-mono ${item.amount >= 0 ? "text-success" : "text-foreground"}`}>
+                  {item.amount >= 0 ? "+" : ""}${Math.abs(item.amount).toFixed(2)}
+                </p>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Assets */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Crypto Assets</h3>
           <button onClick={() => navigate("/wallet")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
             View All →
           </button>
         </div>
         <div className="space-y-2">
-          {PORTFOLIO_ASSETS.map((asset, i) => {
+          {PORTFOLIO_ASSETS.slice(0, 3).map((asset, i) => {
             const priceUSD = rates[asset.code] ? 1 / rates[asset.code] : 0;
             const holdingUSD = portfolioUSD * asset.allocation;
             const holdingAmount = priceUSD > 0 ? holdingUSD / priceUSD : 0;
@@ -134,30 +250,38 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Feature Cards */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card 
           className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/wallet")}
+          onClick={() => navigate("/card")}
         >
-          <Wallet className="w-5 h-5 text-accent mb-2" />
-          <p className="text-sm font-semibold">Wallet</p>
-          <p className="text-xs text-muted-foreground">Manage your crypto portfolio</p>
+          <CreditCard className="w-5 h-5 text-accent mb-2" />
+          <p className="text-sm font-semibold">Debit Card</p>
+          <p className="text-xs text-muted-foreground">Metal card by Visa</p>
         </Card>
         <Card 
           className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/send")}
+          onClick={() => navigate("/rewards")}
         >
-          <Send className="w-5 h-5 text-warning mb-2" />
-          <p className="text-sm font-semibold">Send Money</p>
-          <p className="text-xs text-muted-foreground">Transfer to anyone, anywhere</p>
+          <Gift className="w-5 h-5 text-warning mb-2" />
+          <p className="text-sm font-semibold">Rewards</p>
+          <p className="text-xs text-muted-foreground">Cashback & APY</p>
+        </Card>
+        <Card 
+          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
+          onClick={() => navigate("/bills")}
+        >
+          <Landmark className="w-5 h-5 text-primary mb-2" />
+          <p className="text-sm font-semibold">Pay Bills</p>
+          <p className="text-xs text-muted-foreground">Utilities & more</p>
         </Card>
         <Card 
           className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
           onClick={() => navigate("/advisor")}
         >
-          <Bot className="w-5 h-5 text-primary mb-2" />
+          <Bot className="w-5 h-5 text-accent mb-2" />
           <p className="text-sm font-semibold">AI Advisor</p>
-          <p className="text-xs text-muted-foreground">Get smart financial insights</p>
+          <p className="text-xs text-muted-foreground">Smart insights</p>
         </Card>
       </motion.div>
     </div>
