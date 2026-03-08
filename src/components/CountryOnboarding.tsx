@@ -86,8 +86,9 @@ export function CountryOnboarding({ onComplete }: Props) {
         onComplete();
       }
     } catch (err: any) {
-      toast.error(err.message || "Verification failed");
-      if (step === "registering") setStep("phone");
+      const msg = err?.context?.body?.error || err?.message || "Verification failed";
+      toast.error(msg);
+      setStep("phone");
     }
   };
 
