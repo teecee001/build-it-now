@@ -49,7 +49,6 @@ export function AppLayout() {
           </div>
           <NotificationBell />
         </div>
-        </div>
 
         {/* Nav */}
         <nav className="flex-1 space-y-0.5 overflow-y-auto">
