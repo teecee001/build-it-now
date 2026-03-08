@@ -593,56 +593,46 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Testimonials ─── */}
+      {/* ─── Early Access CTA ─── */}
       <section className="px-6 py-20">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            transition={{ duration: 0.6 }}
+            className="relative rounded-3xl overflow-hidden border border-accent/20 p-8 sm:p-12 text-center"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 mb-6">
-              <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-xs font-semibold text-muted-foreground">What People Say</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Loved by users{" "}
-              <span className="text-accent">worldwide</span>
-            </h2>
-          </motion.div>
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/10" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-accent/8 rounded-full blur-[100px]" />
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="rounded-2xl border border-border bg-card p-5 hover:border-accent/20 transition-colors"
-              >
-                <div className="flex gap-0.5 mb-3">
-                  {Array.from({ length: 5 }).map((_, s) => (
-                    <Star
-                      key={s}
-                      className={`w-3.5 h-3.5 ${s < t.rating ? "fill-warning text-warning" : "text-border"}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">"{t.quote}"</p>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-6">
+                <Sparkles className="w-3.5 h-3.5 text-accent" />
+                <span className="text-xs font-semibold text-accent">Now in Beta</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+                Be among the first to{" "}
+                <span className="text-accent">experience ExoSky</span>
+              </h2>
+              <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
+                We're building the future of finance and you can be part of it from day one. 
+                Sign up now to get early access and your $25 welcome bonus.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Button
+                  size="lg"
+                  onClick={() => navigate("/auth")}
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.25)]"
+                >
+                  Get Early Access <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                Free to join · No credit card required · Beta users get exclusive perks
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
