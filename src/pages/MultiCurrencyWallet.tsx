@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { CURRENCIES } from "@/constants/currencies";
+import { RateAlerts } from "@/components/RateAlerts";
 import {
   Plus, ArrowLeftRight, Globe, Loader2, DollarSign, Briefcase
 } from "lucide-react";
