@@ -39,6 +39,7 @@ export default function Dashboard() {
   const { activeCurrency, activeBalance, activeSymbol, formatBalance, fromUSD, wallets } = useActiveCurrency();
   const { transactions, isLoading: txLoading } = useTransactions(5);
   const { rates, isLive } = useExchangeRates();
+  const { isFeatureAvailable, geoStatus } = useGeoVerification();
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
   
