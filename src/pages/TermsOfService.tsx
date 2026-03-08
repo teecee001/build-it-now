@@ -17,7 +17,7 @@ export default function TermsOfService() {
     },
     {
       title: "3. Account Registration & Verification",
-      content: `You must provide accurate, current, and complete information during registration, including your country of residence and phone number matching your declared country. You are responsible for maintaining the confidentiality of your credentials. ExoSky performs continuous location verification. If your location is found inconsistent with your registered country, access may be restricted pending re-verification.`,
+      content: `You must provide accurate, current, and complete information during registration, including your country of residence and phone number matching your declared country. You are responsible for maintaining the confidentiality of your credentials. Ξ╳oSky performs continuous location verification. If your location is found inconsistent with your registered country, access may be restricted pending re-verification.`,
     },
     {
       title: "4. Country-Specific Feature Availability",
