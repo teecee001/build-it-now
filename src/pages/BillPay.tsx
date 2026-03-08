@@ -89,6 +89,14 @@ const BILL_PROVIDERS: Record<string, { name: string; avgAmount: number }[]> = {
 };
 
 export default function BillPay() {
+  return (
+    <FeatureGate feature="features_bill_pay" featureLabel="Bill Pay">
+      <BillPayContent />
+    </FeatureGate>
+  );
+}
+
+function BillPayContent() {
   const { bills, isLoading, payBill, addBill } = useBills();
   const { balance, updateBalance } = useWallet();
   const { addTransaction } = useTransactions();

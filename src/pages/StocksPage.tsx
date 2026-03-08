@@ -38,6 +38,14 @@ function MiniChart({ ticker }: { ticker: string }) {
 }
 
 export default function StocksPage() {
+  return (
+    <FeatureGate feature="features_stocks" featureLabel="Stocks">
+      <StocksContent />
+    </FeatureGate>
+  );
+}
+
+function StocksContent() {
   const { getWallet } = useMultiCurrencyWallet();
   const { holdingsMap, isLoading: holdingsLoading } = useStockHoldings();
   const { getPrice, getChange } = useStockPrices();

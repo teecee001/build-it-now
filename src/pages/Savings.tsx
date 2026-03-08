@@ -17,6 +17,14 @@ import {
 type TransferDirection = "to_savings" | "to_wallet";
 
 export default function Savings() {
+  return (
+    <FeatureGate feature="features_savings" featureLabel="Savings">
+      <SavingsContent />
+    </FeatureGate>
+  );
+}
+
+function SavingsContent() {
   const {
     apyRate, savingsBalance, walletBalance,
     monthlyEarnings, dailyEarnings, yearlyEarnings,

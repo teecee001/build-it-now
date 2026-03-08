@@ -142,6 +142,14 @@ function clearFailures() {
 }
 
 export default function CardPage() {
+  return (
+    <FeatureGate feature="features_cards" featureLabel="Cards">
+      <CardPageContent />
+    </FeatureGate>
+  );
+}
+
+function CardPageContent() {
   const { user } = useAuth();
   const { cards, isLoading, toggleFreeze, addCard, updateCardName } = useCard();
   const { tier, config, limits } = useAccountTier();
