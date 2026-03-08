@@ -137,6 +137,78 @@ export type Database = {
         }
         Relationships: []
       }
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          currency_code: string
+          features_bill_pay: boolean
+          features_cards: boolean
+          features_crypto: boolean
+          features_forex: boolean
+          features_premium: boolean
+          features_savings: boolean
+          features_send_money: boolean
+          features_stocks: boolean
+          is_sanctioned: boolean
+          is_supported: boolean
+          max_daily_transaction: number | null
+          max_single_transaction: number | null
+          name: string
+          phone_code: string
+          region: string
+          regulatory_notes: string | null
+          requires_enhanced_kyc: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency_code?: string
+          features_bill_pay?: boolean
+          features_cards?: boolean
+          features_crypto?: boolean
+          features_forex?: boolean
+          features_premium?: boolean
+          features_savings?: boolean
+          features_send_money?: boolean
+          features_stocks?: boolean
+          is_sanctioned?: boolean
+          is_supported?: boolean
+          max_daily_transaction?: number | null
+          max_single_transaction?: number | null
+          name: string
+          phone_code: string
+          region: string
+          regulatory_notes?: string | null
+          requires_enhanced_kyc?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency_code?: string
+          features_bill_pay?: boolean
+          features_cards?: boolean
+          features_crypto?: boolean
+          features_forex?: boolean
+          features_premium?: boolean
+          features_savings?: boolean
+          features_send_money?: boolean
+          features_stocks?: boolean
+          is_sanctioned?: boolean
+          is_supported?: boolean
+          max_daily_transaction?: number | null
+          max_single_transaction?: number | null
+          name?: string
+          phone_code?: string
+          region?: string
+          regulatory_notes?: string | null
+          requires_enhanced_kyc?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crypto_holdings: {
         Row: {
           amount: number
@@ -203,32 +275,46 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          country_code: string | null
           created_at: string
           full_name: string | null
           handle: string | null
           id: string
+          phone_number: string | null
           referral_code: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          country_code?: string | null
           created_at?: string
           full_name?: string | null
           handle?: string | null
           id: string
+          phone_number?: string | null
           referral_code?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          country_code?: string | null
           created_at?: string
           full_name?: string | null
           handle?: string | null
           id?: string
+          phone_number?: string | null
           referral_code?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       rate_alerts: {
         Row: {
@@ -412,6 +498,71 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_geo_verification: {
+        Row: {
+          block_reason: string | null
+          browser_country: string | null
+          country_code: string
+          created_at: string
+          id: string
+          id_document_type: string | null
+          id_document_verified: boolean
+          ip_country: string | null
+          is_blocked: boolean
+          last_location_check: string | null
+          location_mismatch: boolean
+          phone_number: string
+          phone_verified: boolean
+          updated_at: string
+          user_id: string
+          vpn_detected: boolean
+        }
+        Insert: {
+          block_reason?: string | null
+          browser_country?: string | null
+          country_code: string
+          created_at?: string
+          id?: string
+          id_document_type?: string | null
+          id_document_verified?: boolean
+          ip_country?: string | null
+          is_blocked?: boolean
+          last_location_check?: string | null
+          location_mismatch?: boolean
+          phone_number: string
+          phone_verified?: boolean
+          updated_at?: string
+          user_id: string
+          vpn_detected?: boolean
+        }
+        Update: {
+          block_reason?: string | null
+          browser_country?: string | null
+          country_code?: string
+          created_at?: string
+          id?: string
+          id_document_type?: string | null
+          id_document_verified?: boolean
+          ip_country?: string | null
+          is_blocked?: boolean
+          last_location_check?: string | null
+          location_mismatch?: boolean
+          phone_number?: string
+          phone_verified?: boolean
+          updated_at?: string
+          user_id?: string
+          vpn_detected?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_geo_verification_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       wallets: {
         Row: {
