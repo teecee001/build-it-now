@@ -14,7 +14,7 @@ import {
   ArrowLeft, ShieldCheck, Smartphone, MapPin, ShoppingBag,
   Fuel, Utensils, Plane, DollarSign, AlertTriangle,
   Plus, Wifi, Package, Truck, Crown, KeyRound,
-  Timer, Ban, Check, Palette
+  Timer, Ban, Check, Palette, X
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
@@ -169,6 +169,14 @@ function CardPageContent() {
   const [pinVerified, setPinVerified] = useState(false);
   const [pinVerifyError, setPinVerifyError] = useState("");
 
+  // Reset PIN state
+  const [showResetPin, setShowResetPin] = useState(false);
+  const [resetPinStep, setResetPinStep] = useState<"verify" | "new" | "confirm">("verify");
+  const [resetOldPin, setResetOldPin] = useState("");
+  const [resetNewPin, setResetNewPin] = useState("");
+  const [resetConfirmPin, setResetConfirmPin] = useState("");
+  const [resetPinError, setResetPinError] = useState("");
+
   // Attempt limiting
   const [isLocked, setIsLocked] = useState(false);
   const [lockTimeLeft, setLockTimeLeft] = useState(0);
@@ -265,6 +273,37 @@ function CardPageContent() {
         setPinVerifyError(`Incorrect PIN. ${result.remaining} attempt${result.remaining !== 1 ? "s" : ""} remaining.`);
       }
       setPinInput("");
+    }
+  };
+
+  const handleResetPinStep = () => {
+    if (!selectedCard) return;
+    if (resetPinStep === "verify") {
+      if (!verifyCardPin(selectedCard.id, resetOldPin)) {
+        setResetPinError("Incorrect current PIN");
+        setResetOldPin("");
+        return;
+      }
+      setResetPinStep("new");
+      return;
+    }
+    if (resetPinStep === "new") {
+      if (resetNewPin.length < 4 || resetNewPin.length > 6) {
+        setResetPinError("PIN must be 4-6 digits");
+        return;
+      }
+      setResetPinStep("confirm");
+      return;
+    }
+    if (resetPinStep === "confirm") {
+      if (resetConfirmPin !== resetNewPin) {
+        setResetPinError("PINs do not match");
+        setResetConfirmPin("");
+        return;
+      }
+      setCardPinHash(selectedCard.id, resetNewPin);
+      setShowResetPin(false);
+      toast.success("Card PIN updated successfully");
     }
   };
 
@@ -691,7 +730,7 @@ function CardPageContent() {
                 </Card>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Full number copied"); }}>
                     <Copy className="w-4 h-4" />
                     <span className="text-[10px]">Copy</span>
@@ -704,11 +743,95 @@ function CardPageContent() {
                     <Snowflake className="w-4 h-4" />
                     <span className="text-[10px]">{selectedCard.is_frozen ? "Unfreeze" : "Freeze"}</span>
                   </Button>
+                  <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => {
+                    setShowResetPin(true);
+                    setResetPinStep(getCardPinHash(selectedCard.id) ? "verify" : "new");
+                    setResetOldPin("");
+                    setResetNewPin("");
+                    setResetConfirmPin("");
+                    setResetPinError("");
+                  }}>
+                    <KeyRound className="w-4 h-4" />
+                    <span className="text-[10px]">Reset PIN</span>
+                  </Button>
                   <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => openSettings(selectedCard)}>
                     <Settings className="w-4 h-4" />
                     <span className="text-[10px]">Settings</span>
                   </Button>
                 </div>
+
+                {/* Reset PIN Modal */}
+                <AnimatePresence>
+                  {showResetPin && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+                    >
+                      <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        className="w-full max-w-sm bg-card border border-border rounded-2xl p-6 space-y-5 shadow-xl"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <KeyRound className="w-5 h-5 text-accent" />
+                            <h3 className="text-lg font-bold">
+                              {resetPinStep === "verify" ? "Verify Current PIN" : resetPinStep === "new" ? "Set New PIN" : "Confirm New PIN"}
+                            </h3>
+                          </div>
+                          <button onClick={() => setShowResetPin(false)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground">
+                          {resetPinStep === "verify"
+                            ? "Enter your current PIN to continue"
+                            : resetPinStep === "new"
+                            ? "Enter a new 4-6 digit PIN"
+                            : "Re-enter your new PIN to confirm"}
+                        </p>
+
+                        <Input
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={6}
+                          placeholder="Enter PIN"
+                          value={resetPinStep === "verify" ? resetOldPin : resetPinStep === "new" ? resetNewPin : resetConfirmPin}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            setResetPinError("");
+                            if (resetPinStep === "verify") setResetOldPin(val);
+                            else if (resetPinStep === "new") setResetNewPin(val);
+                            else setResetConfirmPin(val);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleResetPinStep();
+                          }}
+                          className="text-center text-2xl tracking-[0.5em] font-mono bg-secondary border-border h-14"
+                          autoFocus
+                        />
+
+                        {resetPinError && <p className="text-xs text-destructive text-center">{resetPinError}</p>}
+
+                        <Button
+                          onClick={handleResetPinStep}
+                          disabled={
+                            (resetPinStep === "verify" && resetOldPin.length < 4) ||
+                            (resetPinStep === "new" && resetNewPin.length < 4) ||
+                            (resetPinStep === "confirm" && resetConfirmPin.length < 4)
+                          }
+                          className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-semibold"
+                        >
+                          {resetPinStep === "confirm" ? "Save New PIN" : "Continue"}
+                        </Button>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Benefits */}
                 <div className="space-y-2">
