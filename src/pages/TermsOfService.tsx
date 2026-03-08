@@ -28,7 +28,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">2. Eligibility</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              You must be at least 18 years old and a resident of a jurisdiction where our services are available. You must complete identity verification (KYC) before accessing financial features. By using X Money, you represent that you meet these requirements.
+              You must be at least 18 years old and a resident of a jurisdiction where our services are available. You must complete identity verification (KYC) before accessing financial features. By using ExoSky, you represent that you meet these requirements.
             </p>
           </section>
 
