@@ -101,6 +101,7 @@ const HOW_IT_WORKS = [
   },
 ];
 
+const FAQS = [
   {
     q: "Is ExoSky a real bank?",
     a: "ExoSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
