@@ -93,8 +93,27 @@ export default function BillPay() {
   const [showAdd, setShowAdd] = useState(false);
   const [newBiller, setNewBiller] = useState("");
   const [newCategory, setNewCategory] = useState("Electric");
+  const [newBiller, setNewBiller] = useState(BILL_PROVIDERS["Electric"]?.[0]?.name ?? "");
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
+
+  const handleCategoryChange = (cat: string) => {
+    setNewCategory(cat);
+    const providers = BILL_PROVIDERS[cat] || [];
+    if (providers.length > 0) {
+      setNewBiller(providers[0].name);
+      setNewAmount(providers[0].avgAmount.toFixed(2));
+    } else {
+      setNewBiller("");
+      setNewAmount("");
+    }
+  };
+
+  const handleProviderChange = (providerName: string) => {
+    setNewBiller(providerName);
+    const provider = (BILL_PROVIDERS[newCategory] || []).find(p => p.name === providerName);
+    if (provider) setNewAmount(provider.avgAmount.toFixed(2));
+  };
 
   const handlePay = async (bill: { id: string; amount: number; biller_name: string }) => {
     if (bill.amount > balance) {
