@@ -101,7 +101,63 @@ const HOW_IT_WORKS = [
   },
 ];
 
-export default function LandingPage() {
+const TESTIMONIALS = [
+  {
+    name: "Amara O.",
+    role: "Freelancer, Lagos",
+    quote: "ExoSky replaced three apps for me — my bank, Wise, and Coinbase. The multi-currency wallet alone is worth it.",
+    rating: 5,
+    avatar: "AO",
+  },
+  {
+    name: "Jake M.",
+    role: "Digital Nomad, Berlin",
+    quote: "0% FX markup is real. I've saved over $800 this year compared to my old bank. The virtual cards are instant too.",
+    rating: 5,
+    avatar: "JM",
+  },
+  {
+    name: "Priya S.",
+    role: "Startup Founder, Mumbai",
+    quote: "6% APY on savings with no lock-in? I moved my emergency fund here and haven't looked back.",
+    rating: 5,
+    avatar: "PS",
+  },
+  {
+    name: "Carlos R.",
+    role: "Student, São Paulo",
+    quote: "The $25 welcome bonus actually showed up instantly. I used it to buy my first crypto. Super smooth experience.",
+    rating: 4,
+    avatar: "CR",
+  },
+];
+
+const FAQS = [
+  {
+    q: "Is ExoSky a real bank?",
+    a: "ExoSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
+  },
+  {
+    q: "How does ExoSky offer 6% APY?",
+    a: "We invest your savings in low-risk, high-yield instruments and pass the returns directly to you. With no physical branches and minimal overhead, we can offer significantly higher rates than traditional banks.",
+  },
+  {
+    q: "Are there any hidden fees?",
+    a: "No. ExoSky has zero monthly fees, zero FX markup, and free domestic transfers. International transfers and crypto trades have transparent, industry-low fees shown before you confirm.",
+  },
+  {
+    q: "How long do transfers take?",
+    a: "Internal ExoSky transfers are instant. Bank transfers typically settle in 1–2 business days depending on the destination country. Crypto transactions confirm on-chain in minutes.",
+  },
+  {
+    q: "Is my money safe?",
+    a: "Absolutely. We use bank-grade AES-256 encryption, biometric authentication, and all accounts are KYC/AML verified. Your funds are held in segregated accounts with regulated partners.",
+  },
+  {
+    q: "Which countries does ExoSky support?",
+    a: "ExoSky is available in 150+ countries. Some features like cards or stock trading may vary by region due to local regulations. Check the app for availability in your country.",
+  },
+];
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
