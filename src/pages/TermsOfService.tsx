@@ -63,7 +63,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">7. Privacy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Your use of X Money is also governed by our Privacy Policy. By using the Service, you consent to the collection, use, and sharing of your information as described in the Privacy Policy.
+              Your use of ExoSky is also governed by our Privacy Policy. By using the Service, you consent to the collection, use, and sharing of your information as described in the Privacy Policy.
             </p>
           </section>
 
