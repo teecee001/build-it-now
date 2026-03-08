@@ -20,6 +20,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ComplianceDisclosures from "./pages/ComplianceDisclosures";
 import KYCVerification from "./pages/KYCVerification";
+import Savings from "./pages/Savings";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
