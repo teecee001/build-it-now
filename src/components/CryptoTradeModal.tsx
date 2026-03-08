@@ -1,0 +1,203 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Loader2, CheckCircle2, X } from "lucide-react";
+import { toast } from "sonner";
+import { CRYPTO_LIST } from "@/constants/cryptoList";
+
+type TradeType = "buy" | "sell" | "swap";
+
+interface CryptoTradeModalProps {
+  type: TradeType;
+  code: string;
+  price: number;
+  onClose: () => void;
+}
+
+export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModalProps) {
+  const { user } = useAuth();
+  const { wallets, getWallet } = useMultiCurrencyWallet();
+  const { addTransaction } = useTransactions();
+  const [amount, setAmount] = useState("");
+  const [swapTo, setSwapTo] = useState(code === "BTC" ? "ETH" : "BTC");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDone, setIsDone] = useState(false);
+
+  const usdWallet = getWallet("USD");
+  const usdBalance = usdWallet?.balance ?? 0;
+  const cryptoName = CRYPTO_LIST.find(c => c.code === code)?.name ?? code;
+  const numAmount = parseFloat(amount) || 0;
+
+  const cryptoAmount = type === "buy" ? numAmount / price : numAmount;
+  const usdValue = type === "sell" ? numAmount * price : numAmount;
+
+  const canProceed = numAmount > 0 && (
+    type === "buy" ? usdBalance >= numAmount :
+    type === "sell" ? true : // Mock: assume they hold enough
+    true
+  );
+
+  const handleTrade = async () => {
+    if (!user || !canProceed) return;
+    setIsProcessing(true);
+    try {
+      if (type === "buy") {
+        // Deduct USD
+        if (!usdWallet) throw new Error("No USD wallet");
+        await supabase.from("wallets").update({ balance: usdBalance - numAmount }).eq("id", usdWallet.id);
+        
+        await addTransaction.mutateAsync({
+          type: "purchase",
+          amount: -numAmount,
+          description: `Bought ${cryptoAmount.toFixed(6)} ${code} at $${price.toLocaleString()}`,
+          metadata: { crypto: code, crypto_amount: cryptoAmount, price_per_unit: price, action: "buy" },
+        });
+        toast.success(`Bought ${cryptoAmount.toFixed(6)} ${code}! 🎉`);
+      } else if (type === "sell") {
+        // Credit USD
+        if (!usdWallet) throw new Error("No USD wallet");
+        await supabase.from("wallets").update({ balance: usdBalance + usdValue }).eq("id", usdWallet.id);
+        
+        await addTransaction.mutateAsync({
+          type: "purchase",
+          amount: usdValue,
+          description: `Sold ${numAmount.toFixed(6)} ${code} at $${price.toLocaleString()}`,
+          metadata: { crypto: code, crypto_amount: numAmount, price_per_unit: price, action: "sell" },
+        });
+        toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
+      } else {
+        // Swap: just log the transaction
+        await addTransaction.mutateAsync({
+          type: "conversion",
+          amount: -numAmount,
+          description: `Swapped ${numAmount} ${code} → ${swapTo}`,
+          metadata: { from: code, to: swapTo, amount: numAmount, action: "swap" },
+        });
+        toast.success(`Swapped ${numAmount} ${code} → ${swapTo} ⚡`);
+      }
+      setIsDone(true);
+    } catch (err: any) {
+      toast.error(err.message || "Trade failed");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const icons = { buy: ArrowDownLeft, sell: ArrowUpRight, swap: ArrowLeftRight };
+  const colors = { buy: "text-success", sell: "text-destructive", swap: "text-accent" };
+  const Icon = icons[type];
+
+  if (isDone) {
+    return (
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+        <Card className="p-6 bg-card border-border text-center space-y-4">
+          <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
+          <h3 className="text-lg font-semibold">Trade Complete!</h3>
+          <p className="text-sm text-muted-foreground">Your balance has been updated.</p>
+          <Button onClick={onClose} className="w-full">Done</Button>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
+      <Card className="p-5 bg-card border-border space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon className={`w-5 h-5 ${colors[type]}`} />
+            <h3 className="font-semibold capitalize">{type} {code}</h3>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+        </div>
+
+        {/* Price */}
+        <div className="p-3 bg-secondary/50 rounded-lg">
+          <p className="text-xs text-muted-foreground">Current Price</p>
+          <p className="text-lg font-bold font-mono">
+            ${price > 1 ? price.toLocaleString("en-US", { maximumFractionDigits: 2 }) : price.toFixed(6)}
+          </p>
+        </div>
+
+        {/* Amount Input */}
+        <div className="space-y-2">
+          <label className="text-sm text-muted-foreground font-medium">
+            {type === "buy" ? "Amount (USD)" : type === "sell" ? `Amount (${code})` : `Amount (${code})`}
+          </label>
+          <Input
+            type="number"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="h-12 bg-secondary border-border font-mono text-lg"
+          />
+          {type === "buy" && (
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>You get: ~{cryptoAmount.toFixed(6)} {code}</span>
+              <span>Balance: ${usdBalance.toFixed(2)}</span>
+            </div>
+          )}
+          {type === "sell" && (
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>You get: ~${usdValue.toFixed(2)} USD</span>
+              <span>{cryptoName}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Swap Target */}
+        {type === "swap" && (
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground font-medium">Swap to</label>
+            <select
+              value={swapTo}
+              onChange={(e) => setSwapTo(e.target.value)}
+              className="w-full h-10 rounded-lg bg-secondary border border-border px-3 text-sm"
+            >
+              {CRYPTO_LIST.filter(c => c.code !== code).slice(0, 20).map(c => (
+                <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Quick amounts */}
+        {type === "buy" && (
+          <div className="flex gap-2">
+            {[10, 25, 50, 100].map(v => (
+              <Button
+                key={v}
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={() => setAmount(v.toString())}
+              >
+                ${v}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        <Button
+          onClick={handleTrade}
+          disabled={!canProceed || isProcessing}
+          className={`w-full gap-2 ${
+            type === "buy" ? "bg-success text-success-foreground hover:bg-success/90" :
+            type === "sell" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" :
+            "bg-accent text-accent-foreground hover:bg-accent/90"
+          }`}
+        >
+          {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
+          {isProcessing ? "Processing..." : `${type.charAt(0).toUpperCase() + type.slice(1)} ${code}`}
+        </Button>
+      </Card>
+    </motion.div>
+  );
+}
