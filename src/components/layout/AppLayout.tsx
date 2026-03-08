@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
