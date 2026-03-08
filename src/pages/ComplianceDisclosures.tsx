@@ -24,7 +24,7 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "Sanctioned Countries & Territories",
-      content: `ExoSky services are not available in countries or territories subject to comprehensive sanctions by the United States (OFAC), European Union, United Nations, or other applicable bodies. This includes but is not limited to: North Korea (DPRK), Iran, Syria, Cuba, Afghanistan, and the Crimea, Donetsk, and Luhansk regions. Attempting to access ExoSky from a sanctioned jurisdiction will result in account blocking and may be reported to relevant authorities.`,
+      content: `Ξ╳oSky services are not available in countries or territories subject to comprehensive sanctions by the United States (OFAC), European Union, United Nations, or other applicable bodies. This includes but is not limited to: North Korea (DPRK), Iran, Syria, Cuba, Afghanistan, and the Crimea, Donetsk, and Luhansk regions. Attempting to access Ξ╳oSky from a sanctioned jurisdiction will result in account blocking and may be reported to relevant authorities.`,
     },
     {
       title: "Banking Relationships",
