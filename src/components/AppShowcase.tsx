@@ -1070,10 +1070,24 @@ export function AppShowcase() {
             <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
           </div>
 
-          {/* Hover CTA Overlay */}
+          {/* Persistent pulse hint — visible before hover */}
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none group-hover/phone:opacity-0 transition-opacity duration-300">
+            <motion.div
+              animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_30px_hsl(142_71%_45%/0.5)]"
+            >
+              <ArrowRight className="w-4 h-4 text-white" />
+            </motion.div>
+            <p className="text-white/60 text-[9px] font-semibold text-center mt-1.5 tracking-wide">Try it live</p>
+          </div>
+
+          {/* Full hover CTA overlay */}
           <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
             <motion.div
               initial={false}
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_40px_hsl(142_71%_45%/0.4)]"
             >
               <ArrowRight className="w-6 h-6 text-white" />
