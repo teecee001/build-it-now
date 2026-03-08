@@ -82,7 +82,7 @@ export function CountryOnboarding({ onComplete }: Props) {
           countryCode: selectedCountry,
           phoneNumber,
         });
-        toast.success("Welcome to ExoSky!");
+        toast.success("Welcome to Ξ╳oSky!");
         onComplete();
       }
     } catch (err: any) {
@@ -104,7 +104,7 @@ export function CountryOnboarding({ onComplete }: Props) {
           <div className="inline-flex items-center justify-center mb-3">
             <ExoLogo size="lg" variant="mark" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome to ExoSky</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome to Ξ╳oSky</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Select your country to get started
           </p>

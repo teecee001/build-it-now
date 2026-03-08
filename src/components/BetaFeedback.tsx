@@ -63,7 +63,7 @@ export function BetaFeedback() {
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold">Beta Feedback</h3>
-                <p className="text-xs text-muted-foreground">Help us improve ExoSky</p>
+                <p className="text-xs text-muted-foreground">Help us improve Ξ╳oSky</p>
               </div>
               <Badge variant="outline" className="text-[10px] border-accent/30 text-accent">
                 BETA

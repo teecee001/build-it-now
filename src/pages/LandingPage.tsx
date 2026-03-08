@@ -106,28 +106,28 @@ const HOW_IT_WORKS = [
 
 const FAQS = [
   {
-    q: "Is ExoSky a real bank?",
-    a: "ExoSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
+    q: "Is Ξ╳oSky a real bank?",
+    a: "Ξ╳oSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
   },
   {
-    q: "How does ExoSky offer 6% APY?",
+    q: "How does Ξ╳oSky offer 6% APY?",
     a: "We invest your savings in low-risk, high-yield instruments and pass the returns directly to you. With no physical branches and minimal overhead, we can offer significantly higher rates than traditional banks.",
   },
   {
     q: "Are there any hidden fees?",
-    a: "No. ExoSky has zero monthly fees, zero FX markup, and free domestic transfers. International transfers and crypto trades have transparent, industry-low fees shown before you confirm.",
+    a: "No. Ξ╳oSky has zero monthly fees, zero FX markup, and free domestic transfers. International transfers and crypto trades have transparent, industry-low fees shown before you confirm.",
   },
   {
     q: "How long do transfers take?",
-    a: "Internal ExoSky transfers are instant. Bank transfers typically settle in 1–2 business days depending on the destination country. Crypto transactions confirm on-chain in minutes.",
+    a: "Internal Ξ╳oSky transfers are instant. Bank transfers typically settle in 1–2 business days depending on the destination country. Crypto transactions confirm on-chain in minutes.",
   },
   {
     q: "Is my money safe?",
     a: "Absolutely. We use bank-grade AES-256 encryption, biometric authentication, and all accounts are KYC/AML verified. Your funds are held in segregated accounts with regulated partners.",
   },
   {
-    q: "Which countries does ExoSky support?",
-    a: "ExoSky is available in 150+ countries. Some features like cards or stock trading may vary by region due to local regulations. Check the app for availability in your country.",
+    q: "Which countries does Ξ╳oSky support?",
+    a: "Ξ╳oSky is available in 150+ countries. Some features like cards or stock trading may vary by region due to local regulations. Check the app for availability in your country.",
   },
 ];
 
@@ -166,7 +166,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
               <span className="text-sm font-black text-accent-foreground tracking-tighter">Ξ╳</span>
             </div>
-            <span className="text-lg font-bold tracking-tight">ExoSky</span>
+            <span className="text-lg font-bold tracking-tight"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
           </div>
           <div className="flex items-center gap-2">
@@ -835,7 +835,7 @@ export default function LandingPage() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
                   <span className="text-xs font-black text-accent-foreground tracking-tighter">Ξ╳</span>
                 </div>
-                <span className="text-base font-bold">ExoSky</span>
+                <span className="text-base font-bold"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 The everything finance app. Banking, crypto, stocks, and global payments in one place.
@@ -887,7 +887,7 @@ export default function LandingPage() {
 
           <div className="border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground/60">
-              © {new Date().getFullYear()} ExoSky Inc. All rights reserved. ExoSky is not a bank. Banking services provided by partner institutions.
+              © {new Date().getFullYear()} Ξ╳oSky Inc. All rights reserved. Ξ╳oSky is not a bank. Banking services provided by partner institutions.
             </p>
             <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
               <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
