@@ -91,6 +91,7 @@ const App = () => (
               <Route path="/qr/pay" element={<QRPayments />} />
               <Route path="/recurring" element={<RecurringPayments />} />
               <Route path="/currencies" element={<MultiCurrencyWallet />} />
+              <Route path="/stocks" element={<StocksPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

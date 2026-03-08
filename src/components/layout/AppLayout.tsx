@@ -12,7 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const NAV_ITEMS = [
   { path: "/dashboard", icon: LayoutDashboard, label: "Account" },
-  { path: "/wallet", icon: Wallet, label: "Wallet" },
+  { path: "/wallet", icon: Wallet, label: "Crypto" },
+  { path: "/stocks", icon: Briefcase, label: "Stocks" },
   { path: "/send", icon: Send, label: "Send" },
   { path: "/qr", icon: QrCode, label: "QR Pay" },
   { path: "/deposit", icon: Landmark, label: "Deposit" },
