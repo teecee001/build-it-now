@@ -952,11 +952,11 @@ export default function CardPage() {
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-[10px] text-muted-foreground">Per Tx</p>
-                      <p className="text-xs font-bold font-mono">${tc.singleTx.toLocaleString()}</p>
+                      <p className="text-xs font-bold font-mono">${tc.single.toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">Daily</p>
-                      <p className="text-xs font-bold font-mono">${tc.dailyTx.toLocaleString()}</p>
+                      <p className="text-xs font-bold font-mono">${tc.daily.toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">Cards</p>
