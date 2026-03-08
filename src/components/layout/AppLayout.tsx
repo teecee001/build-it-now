@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
-  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode
+  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -12,7 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const NAV_ITEMS = [
   { path: "/dashboard", icon: LayoutDashboard, label: "Account" },
-  { path: "/wallet", icon: Wallet, label: "Wallet" },
+  { path: "/wallet", icon: Wallet, label: "Crypto" },
+  { path: "/stocks", icon: Briefcase, label: "Stocks" },
   { path: "/send", icon: Send, label: "Send" },
   { path: "/qr", icon: QrCode, label: "QR Pay" },
   { path: "/deposit", icon: Landmark, label: "Deposit" },

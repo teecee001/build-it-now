@@ -29,6 +29,7 @@ import SpendingAnalytics from "./pages/SpendingAnalytics";
 import QRPayments from "./pages/QRPayments";
 import RecurringPayments from "./pages/RecurringPayments";
 import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
+import StocksPage from "./pages/StocksPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -90,6 +91,7 @@ const App = () => (
               <Route path="/qr/pay" element={<QRPayments />} />
               <Route path="/recurring" element={<RecurringPayments />} />
               <Route path="/currencies" element={<MultiCurrencyWallet />} />
+              <Route path="/stocks" element={<StocksPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
