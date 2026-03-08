@@ -473,7 +473,7 @@ function BillPayContent() {
               </div>
               <div className="border-t border-border pt-2 mt-2">
                 <p className="text-[10px] text-muted-foreground text-center">
-                  By confirming, you authorize this payment from your ExoSky wallet.
+                  By confirming, you authorize this payment from your Ξ╳oSky wallet.
                 </p>
               </div>
             </div>

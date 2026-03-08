@@ -387,7 +387,7 @@ export default function LandingPage() {
               <span className="text-muted-foreground">Nothing you don't.</span>
             </h2>
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-              From everyday spending to building wealth — ExoSky replaces your bank, broker, and payment apps.
+              From everyday spending to building wealth — Ξ╳oSky replaces your bank, broker, and payment apps.
             </p>
           </motion.div>
 
@@ -520,7 +520,7 @@ export default function LandingPage() {
               <span className="text-xs font-semibold text-accent">Side by Side</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
-              ExoSky vs. Traditional Banks
+              Ξ╳oSky vs. Traditional Banks
             </h2>
             <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
               See why thousands are making the switch.
@@ -538,7 +538,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-3 bg-secondary/50">
               <div className="p-4 sm:p-5 text-sm font-semibold text-muted-foreground">Feature</div>
               <div className="p-4 sm:p-5 text-center">
-                <span className="text-sm font-bold text-accent">ExoSky</span>
+                <span className="text-sm font-bold text-accent">Ξ╳oSky</span>
               </div>
               <div className="p-4 sm:p-5 text-center">
                 <span className="text-sm font-bold text-muted-foreground">Banks</span>
@@ -598,7 +598,7 @@ export default function LandingPage() {
               onClick={() => navigate("/auth")}
               className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl"
             >
-              Switch to ExoSky <ArrowRight className="w-4 h-4" />
+              Switch to Ξ╳oSky <ArrowRight className="w-4 h-4" />
             </Button>
           </motion.div>
         </div>
@@ -639,7 +639,7 @@ export default function LandingPage() {
                 transition={{ delay: 0.3 }}
                 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight"
               >
-                ExoSky is currently in
+                Ξ╳oSky is currently in
                 <br />
                 <span className="text-accent">private beta.</span>
               </motion.h2>

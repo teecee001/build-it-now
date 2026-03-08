@@ -286,7 +286,7 @@ export default function QRPayments() {
                 <div>
                   <p className="text-sm font-semibold">Instant P2P Transfers</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Share your QR code to receive payments. Scan any ExoSky QR or external payment QR to send money instantly.
+                    Share your QR code to receive payments. Scan any Ξ╳oSky QR or external payment QR to send money instantly.
                   </p>
                 </div>
               </div>
@@ -313,7 +313,7 @@ export default function QRPayments() {
               </div>
 
               <p className="text-[10px] text-muted-foreground">
-                Scannable by any QR reader — opens ExoSky payment
+                Scannable by any QR reader — opens Ξ╳oSky payment
               </p>
 
               {/* Optional amount */}
@@ -347,7 +347,7 @@ export default function QRPayments() {
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={() => {
                   if (navigator.share) {
-                    navigator.share({ title: "Pay me on ExoSky", text: `Pay ${handle} on ExoSky`, url: payUrl });
+                    navigator.share({ title: "Pay me on Ξ╳oSky", text: `Pay ${handle} on Ξ╳oSky`, url: payUrl });
                   } else {
                     navigator.clipboard.writeText(payUrl);
                     toast.success("Copied to share");

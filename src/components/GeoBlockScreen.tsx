@@ -38,7 +38,7 @@ export function GeoBlockScreen({ vpnDetected, locationMismatch }: Props) {
                 <span className="text-sm font-medium">VPN / Proxy Detected</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                For regulatory compliance, ExoSky does not allow access through VPNs, proxies, or anonymizing services.
+                For regulatory compliance, Ξ╳oSky does not allow access through VPNs, proxies, or anonymizing services.
                 Please disable your VPN and reload the page.
               </p>
             </div>
@@ -77,7 +77,7 @@ export function GeoBlockScreen({ vpnDetected, locationMismatch }: Props) {
         </Card>
 
         <p className="text-[10px] text-muted-foreground mt-4">
-          ExoSky complies with international financial regulations including OFAC, EU sanctions, and local laws.
+          Ξ╳oSky complies with international financial regulations including OFAC, EU sanctions, and local laws.
         </p>
       </motion.div>
     </div>

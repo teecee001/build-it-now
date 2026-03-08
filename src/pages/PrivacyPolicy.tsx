@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
       title: "2. How We Use Your Information",
       content: null,
       list: [
-        "Provide, maintain, and improve ExoSky services",
+        "Provide, maintain, and improve Ξ╳oSky services",
         "Verify your identity and country of residence (KYC/AML compliance)",
         "Enforce geographic restrictions and detect VPN/proxy usage",
         "Process transactions and send related notifications",
@@ -35,7 +35,7 @@ export default function PrivacyPolicy() {
     },
     {
       title: "3. Geographic Verification & Location Data",
-      content: `ExoSky collects and processes location data to comply with international financial regulations. This includes your IP address geolocation, device GPS coordinates (with your permission), and phone number country code verification. We use this data to verify your country of residence, enforce geographic feature restrictions, detect VPN and proxy usage, and prevent sanctions evasion. Location checks are performed at registration and periodically during active sessions. You cannot opt out of location verification as it is required for regulatory compliance.`,
+      content: `Ξ╳oSky collects and processes location data to comply with international financial regulations. This includes your IP address geolocation, device GPS coordinates (with your permission), and phone number country code verification. We use this data to verify your country of residence, enforce geographic feature restrictions, detect VPN and proxy usage, and prevent sanctions evasion. Location checks are performed at registration and periodically during active sessions. You cannot opt out of location verification as it is required for regulatory compliance.`,
     },
     {
       title: "4. Information Sharing",
@@ -63,7 +63,7 @@ export default function PrivacyPolicy() {
     },
     {
       title: "10. Children's Privacy",
-      content: `ExoSky is not intended for individuals under 18 years of age (or the age of majority in your jurisdiction). We do not knowingly collect personal information from minors. If we discover we have collected data from a minor, we will promptly delete it and close the associated account.`,
+      content: `Ξ╳oSky is not intended for individuals under 18 years of age (or the age of majority in your jurisdiction). We do not knowingly collect personal information from minors. If we discover we have collected data from a minor, we will promptly delete it and close the associated account.`,
     },
     {
       title: "11. Changes to This Policy",
@@ -71,7 +71,7 @@ export default function PrivacyPolicy() {
     },
     {
       title: "12. Contact Us",
-      content: `For privacy inquiries: privacy@exosky.app · Data Protection Officer: dpo@exosky.app · ExoSky Inc., 1355 Market Street, San Francisco, CA 94103, USA. EU Representative: ExoSky EU Ltd., Dublin, Ireland.`,
+      content: `For privacy inquiries: privacy@exosky.app · Data Protection Officer: dpo@exosky.app · Ξ╳oSky Inc., 1355 Market Street, San Francisco, CA 94103, USA. EU Representative: Ξ╳oSky EU Ltd., Dublin, Ireland.`,
     },
   ];
 
@@ -95,7 +95,7 @@ export default function PrivacyPolicy() {
 
           <Card className="p-4 bg-muted/30 border-border">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Your privacy matters.</strong> ExoSky collects location and identity data to comply with international financial regulations. This policy explains what we collect, why, and your rights. We comply with GDPR, CCPA, LGPD, POPIA, and other applicable data protection laws.
+              <strong className="text-foreground">Your privacy matters.</strong> Ξ╳oSky collects location and identity data to comply with international financial regulations. This policy explains what we collect, why, and your rights. We comply with GDPR, CCPA, LGPD, POPIA, and other applicable data protection laws.
             </p>
           </Card>
 

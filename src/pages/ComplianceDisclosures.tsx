@@ -20,19 +20,19 @@ export default function ComplianceDisclosures() {
   const sections = [
     {
       title: "Geographic Compliance & Feature Restrictions",
-      content: `ExoSky enforces strict geographic compliance. Feature availability is determined by your verified country of residence and local regulations. This includes but is not limited to: cryptocurrency trading restrictions, stock market access, foreign exchange limitations, money transfer corridors, card issuance eligibility, and savings product availability. Users may only access features authorized in their jurisdiction. Geographic verification is performed using IP geolocation, device location, and phone number validation. The use of VPNs, proxies, or any location-spoofing technology to bypass geographic restrictions is a violation of our Terms and applicable law, and will result in immediate account suspension.`,
+      content: `Ξ╳oSky enforces strict geographic compliance. Feature availability is determined by your verified country of residence and local regulations. This includes but is not limited to: cryptocurrency trading restrictions, stock market access, foreign exchange limitations, money transfer corridors, card issuance eligibility, and savings product availability. Users may only access features authorized in their jurisdiction. Geographic verification is performed using IP geolocation, device location, and phone number validation. The use of VPNs, proxies, or any location-spoofing technology to bypass geographic restrictions is a violation of our Terms and applicable law, and will result in immediate account suspension.`,
     },
     {
       title: "Sanctioned Countries & Territories",
-      content: `ExoSky services are not available in countries or territories subject to comprehensive sanctions by the United States (OFAC), European Union, United Nations, or other applicable bodies. This includes but is not limited to: North Korea (DPRK), Iran, Syria, Cuba, Afghanistan, and the Crimea, Donetsk, and Luhansk regions. Attempting to access ExoSky from a sanctioned jurisdiction will result in account blocking and may be reported to relevant authorities.`,
+      content: `Ξ╳oSky services are not available in countries or territories subject to comprehensive sanctions by the United States (OFAC), European Union, United Nations, or other applicable bodies. This includes but is not limited to: North Korea (DPRK), Iran, Syria, Cuba, Afghanistan, and the Crimea, Donetsk, and Luhansk regions. Attempting to access Ξ╳oSky from a sanctioned jurisdiction will result in account blocking and may be reported to relevant authorities.`,
     },
     {
       title: "Banking Relationships",
-      content: `ExoSky is a financial technology company, not a bank. Banking services are provided by licensed partner institutions in applicable jurisdictions. Deposit insurance coverage varies by country: FDIC insurance (up to $250,000) in the United States, FSCS protection (up to £85,000) in the United Kingdom, and equivalent protections where available. Not all jurisdictions offer deposit insurance. Please verify coverage applicable to your country in your account settings.`,
+      content: `Ξ╳oSky is a financial technology company, not a bank. Banking services are provided by licensed partner institutions in applicable jurisdictions. Deposit insurance coverage varies by country: FDIC insurance (up to $250,000) in the United States, FSCS protection (up to £85,000) in the United Kingdom, and equivalent protections where available. Not all jurisdictions offer deposit insurance. Please verify coverage applicable to your country in your account settings.`,
     },
     {
       title: "Anti-Money Laundering (AML)",
-      content: `ExoSky maintains a comprehensive global AML compliance program aligned with FATF recommendations and local regulations including the US Bank Secrecy Act (BSA), EU Anti-Money Laundering Directives (AMLD), UK Money Laundering Regulations, and equivalent frameworks in all operating jurisdictions. Our program includes: Customer Identification Program (CIP), Customer Due Diligence (CDD) and Enhanced Due Diligence (EDD), ongoing transaction monitoring and screening, Suspicious Activity Report (SAR/STR) filing, and regular independent audits.`,
+      content: `Ξ╳oSky maintains a comprehensive global AML compliance program aligned with FATF recommendations and local regulations including the US Bank Secrecy Act (BSA), EU Anti-Money Laundering Directives (AMLD), UK Money Laundering Regulations, and equivalent frameworks in all operating jurisdictions. Our program includes: Customer Identification Program (CIP), Customer Due Diligence (CDD) and Enhanced Due Diligence (EDD), ongoing transaction monitoring and screening, Suspicious Activity Report (SAR/STR) filing, and regular independent audits.`,
     },
     {
       title: "Know Your Customer (KYC) & Identity Verification",
@@ -40,11 +40,11 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "OFAC & International Sanctions Compliance",
-      content: `ExoSky screens all users and transactions against: the US OFAC Specially Designated Nationals (SDN) list, EU Consolidated Sanctions List, UN Security Council Consolidated List, UK HM Treasury Financial Sanctions List, and applicable national sanctions lists in operating jurisdictions. Transactions involving sanctioned entities, individuals, or jurisdictions are automatically blocked. False positives are reviewed by our compliance team within 24 hours.`,
+      content: `Ξ╳oSky screens all users and transactions against: the US OFAC Specially Designated Nationals (SDN) list, EU Consolidated Sanctions List, UN Security Council Consolidated List, UK HM Treasury Financial Sanctions List, and applicable national sanctions lists in operating jurisdictions. Transactions involving sanctioned entities, individuals, or jurisdictions are automatically blocked. False positives are reviewed by our compliance team within 24 hours.`,
     },
     {
       title: "Country-Specific Regulatory Notes",
-      content: `United States: Services provided through FinCEN-registered MSB and state-licensed partners. Regulation E protections apply to electronic transfers. · European Union/EEA: Services comply with PSD2, AMLD6, and MiFID II where applicable. GDPR governs data processing. · United Kingdom: Compliant with FCA regulations and UK Money Laundering Regulations. · Other Jurisdictions: ExoSky complies with local financial regulations in each country of operation. Specific regulatory disclosures are available in your account based on your verified country.`,
+      content: `United States: Services provided through FinCEN-registered MSB and state-licensed partners. Regulation E protections apply to electronic transfers. · European Union/EEA: Services comply with PSD2, AMLD6, and MiFID II where applicable. GDPR governs data processing. · United Kingdom: Compliant with FCA regulations and UK Money Laundering Regulations. · Other Jurisdictions: Ξ╳oSky complies with local financial regulations in each country of operation. Specific regulatory disclosures are available in your account based on your verified country.`,
     },
     {
       title: "Transaction Limits & Reporting",
@@ -52,7 +52,7 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "Interest Rate & Investment Disclosures",
-      content: `Savings APY is variable and may differ by country. Displayed rates apply to qualifying balances and may change without notice. Cryptocurrency and stock trading involve significant risk of loss. Past performance is not indicative of future results. ExoSky does not provide investment advice. Trading features are only available in jurisdictions where such services are legally permitted and properly licensed.`,
+      content: `Savings APY is variable and may differ by country. Displayed rates apply to qualifying balances and may change without notice. Cryptocurrency and stock trading involve significant risk of loss. Past performance is not indicative of future results. Ξ╳oSky does not provide investment advice. Trading features are only available in jurisdictions where such services are legally permitted and properly licensed.`,
     },
     {
       title: "Complaints & Dispute Resolution",
@@ -80,7 +80,7 @@ export default function ComplianceDisclosures() {
 
           <Card className="p-4 bg-muted/30 border-border">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Regulatory Notice:</strong> ExoSky operates in 90+ countries with strict compliance to local financial regulations. Feature availability, transaction limits, and reporting requirements vary by jurisdiction. Your verified country determines which services and protections apply to your account.
+              <strong className="text-foreground">Regulatory Notice:</strong> Ξ╳oSky operates in 90+ countries with strict compliance to local financial regulations. Feature availability, transaction limits, and reporting requirements vary by jurisdiction. Your verified country determines which services and protections apply to your account.
             </p>
           </Card>
 

@@ -395,7 +395,7 @@ function CardsScreen() {
               <div className="w-4 h-4 rounded bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center">
                 <span className="text-[6px] font-bold text-white/80 tracking-tighter">Ξ╳</span>
               </div>
-              <span className="text-[9px] font-bold tracking-wider text-white/80">EXOSKY</span>
+              <span className="text-[9px] font-bold tracking-wider text-white/80">Ξ╳OSKY</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[7px] text-white/50">METAL</span>

@@ -6,7 +6,7 @@ const TIERS = {
   pro: {
     price_id: "price_1T8fhd7TGYrUaVZ5ypAYQgch",
     product_id: "prod_U6tUwJbpoVFlFP",
-    name: "ExoSky Pro",
+    name: "Ξ╳oSky Pro",
     price: 14.99,
     features: [
       "8% APY on Savings",

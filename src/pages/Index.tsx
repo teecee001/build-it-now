@@ -17,7 +17,7 @@ const Index = () => {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            ExoSky Currency Converter
+            Ξ╳oSky Currency Converter
           </h1>
           <p className="text-muted-foreground text-lg">
             Fiat & crypto currencies with real-time charts
