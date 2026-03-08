@@ -44,7 +44,7 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "Country-Specific Regulatory Notes",
-      content: `United States: Services provided through FinCEN-registered MSB and state-licensed partners. Regulation E protections apply to electronic transfers. · European Union/EEA: Services comply with PSD2, AMLD6, and MiFID II where applicable. GDPR governs data processing. · United Kingdom: Compliant with FCA regulations and UK Money Laundering Regulations. · Other Jurisdictions: ExoSky complies with local financial regulations in each country of operation. Specific regulatory disclosures are available in your account based on your verified country.`,
+      content: `United States: Services provided through FinCEN-registered MSB and state-licensed partners. Regulation E protections apply to electronic transfers. · European Union/EEA: Services comply with PSD2, AMLD6, and MiFID II where applicable. GDPR governs data processing. · United Kingdom: Compliant with FCA regulations and UK Money Laundering Regulations. · Other Jurisdictions: Ξ╳oSky complies with local financial regulations in each country of operation. Specific regulatory disclosures are available in your account based on your verified country.`,
     },
     {
       title: "Transaction Limits & Reporting",
