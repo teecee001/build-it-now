@@ -66,7 +66,7 @@ export default function WalletPage() {
     (c) => c.name.toLowerCase().includes(search.toLowerCase()) || c.code.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openTrade = (type: "buy" | "sell" | "swap", code: string) => {
+  const openTrade = (type: "buy" | "sell" | "swap" | "send", code: string) => {
     setTradeModal({ type, code });
     setSelectedCoin(null);
   };
