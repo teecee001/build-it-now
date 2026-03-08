@@ -21,7 +21,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">1. Acceptance of Terms</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              By accessing or using X Money ("Service"), you agree to be bound by these Terms of Service. X Money is a financial technology platform operated by X Corp. If you do not agree to these terms, do not use the Service.
+              By accessing or using ExoSky ("Service"), you agree to be bound by these Terms of Service. ExoSky is a financial technology platform operated by ExoSky Inc. If you do not agree to these terms, do not use the Service.
             </p>
           </section>
 
