@@ -1025,7 +1025,7 @@ export function AppShowcase() {
           </div>
 
           {/* Screen content with scroll */}
-          <div className="h-[480px] sm:h-[520px] overflow-y-auto scrollbar-none">
+          <div className="h-[460px] sm:h-[520px] lg:h-[580px] xl:h-[660px] overflow-y-auto scrollbar-none">
             <AnimatePresence mode="wait">
               <motion.div
                 key={SCREENS[activeIndex].id}
