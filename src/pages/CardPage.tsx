@@ -47,7 +47,12 @@ export default function CardPage() {
     );
   }
 
-  const openDetail = (c: CardData) => { setSelectedCard(c); setView("detail"); };
+  const openDetail = async (c: CardData) => {
+    setSelectedCard(c);
+    setShowNumber(false);
+    biometric.reset();
+    setView("detail");
+  };
   const openSettings = (c: CardData) => { setSelectedCard(c); setView("settings"); };
 
   const tierColors: Record<AccountTierType, string> = {
