@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -6,10 +6,11 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowRight, Shield, Zap, TrendingUp, CreditCard,
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
-  ChevronRight, Star, Lock, Users, Wallet
+  ChevronRight, Star, Lock, Users, Wallet,
+  Check, Sparkles
 } from "lucide-react";
-import { useEffect } from "react";
-import appMockup from "@/assets/app-mockup.png";
+import { useEffect, useRef } from "react";
+import { AppShowcase } from "@/components/AppShowcase";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -71,9 +72,37 @@ const TRUST_BADGES = [
   { icon: Users, label: "KYC/AML Compliant" },
 ];
 
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    title: "Create your account",
+    description: "Sign up in under 2 minutes with just your email. Get $25 free instantly.",
+    icon: Sparkles,
+  },
+  {
+    step: "02",
+    title: "Fund & explore",
+    description: "Deposit via bank transfer, card, or crypto. Access every feature from day one.",
+    icon: Wallet,
+  },
+  {
+    step: "03",
+    title: "Grow your money",
+    description: "Earn 6% APY, trade crypto & stocks, send money globally — all from one app.",
+    icon: TrendingUp,
+  },
+];
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -116,7 +145,11 @@ export default function LandingPage() {
       </nav>
 
       {/* ─── Hero ─── */}
-      <section className="relative pt-32 pb-20 px-6">
+      <motion.section
+        ref={heroRef}
+        style={{ opacity: heroOpacity, scale: heroScale }}
+        className="relative pt-32 pb-20 px-6"
+      >
         {/* Ambient glow */}
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/8 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
@@ -185,73 +218,39 @@ export default function LandingPage() {
                 See What's Inside
               </Button>
             </motion.div>
+
+            {/* Trust indicators inline */}
+            <motion.div
+              custom={4}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="mt-8 flex items-center justify-center lg:justify-start gap-5 flex-wrap"
+            >
+              {[
+                "Bank-grade encryption",
+                "150+ countries",
+                "No hidden fees",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-accent" />
+                  <span className="text-xs text-muted-foreground font-medium">{item}</span>
+                </div>
+              ))}
+            </motion.div>
           </div>
 
-          {/* Right: Phone Mockup */}
+          {/* Right: Animated App Showcase */}
           <motion.div
-            initial={{ opacity: 0, y: 40, rotateY: -8 }}
-            animate={{ opacity: 1, y: 0, rotateY: 0 }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
             className="relative flex-shrink-0"
           >
-            {/* Glow behind phone */}
-            <div className="absolute -inset-8 bg-accent/10 rounded-full blur-[60px] pointer-events-none" />
-            
-            {/* Floating phone */}
-            <motion.div
-              animate={{ y: [0, -12, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="relative"
-            >
-              {/* Phone frame */}
-              <div className="relative w-[260px] sm:w-[280px] rounded-[2.5rem] border-[6px] border-border/80 bg-card shadow-2xl shadow-black/40 overflow-hidden">
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-border/80 rounded-b-xl z-10" />
-                <img
-                  src={appMockup}
-                  alt="ExoSky app dashboard showing account balance, portfolio chart, and quick actions"
-                  className="w-full h-auto"
-                  loading="eager"
-                />
-              </div>
-
-              {/* Floating badges */}
-              <motion.div
-                animate={{ y: [0, -6, 0], x: [0, 3, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="absolute -left-12 top-16 px-3 py-2 rounded-xl bg-card border border-border shadow-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-accent" />
-                  <span className="text-xs font-bold">+12.4%</span>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, 8, 0], x: [0, -4, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -right-10 top-1/3 px-3 py-2 rounded-xl bg-card border border-border shadow-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-bold">150+ Countries</span>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                className="absolute -left-8 bottom-24 px-3 py-2 rounded-xl bg-card border border-accent/30 shadow-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <PiggyBank className="w-4 h-4 text-warning" />
-                  <span className="text-xs font-bold text-warning">6% APY</span>
-                </div>
-              </motion.div>
-            </motion.div>
+            <AppShowcase />
           </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ─── Stats Bar ─── */}
       <section className="px-6 pb-16">
@@ -263,14 +262,69 @@ export default function LandingPage() {
           className="max-w-4xl mx-auto"
         >
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-2xl overflow-hidden border border-border bg-border">
-            {STATS.map((stat) => (
-              <div key={stat.label} className="bg-card p-6 text-center">
+            {STATS.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.4 }}
+                className="bg-card p-6 text-center"
+              >
                 <p className="text-2xl sm:text-3xl font-black tracking-tight text-accent">{stat.value}</p>
                 <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
+      </section>
+
+      {/* ─── How It Works ─── */}
+      <section className="px-6 py-20">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 mb-6">
+              <Smartphone className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">How It Works</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+              Up and running in{" "}
+              <span className="text-accent">minutes</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-3 gap-6">
+            {HOW_IT_WORKS.map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15, duration: 0.5 }}
+                className="relative group"
+              >
+                <div className="text-5xl font-black text-accent/10 group-hover:text-accent/20 transition-colors mb-4">
+                  {item.step}
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3 group-hover:bg-accent/20 transition-colors">
+                  <item.icon className="w-5 h-5 text-accent" />
+                </div>
+                <h3 className="text-base font-bold mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                {i < HOW_IT_WORKS.length - 1 && (
+                  <div className="hidden sm:block absolute top-8 -right-3 w-6">
+                    <ChevronRight className="w-5 h-5 text-border" />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ─── Features Grid ─── */}
@@ -300,7 +354,8 @@ export default function LandingPage() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={fadeUp}
-                className={`group relative rounded-2xl border border-border bg-gradient-to-br ${feature.gradient} p-6 hover:border-accent/30 transition-all duration-300`}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className={`group relative rounded-2xl border border-border bg-gradient-to-br ${feature.gradient} p-6 hover:border-accent/30 transition-all duration-300 cursor-default`}
               >
                 <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:bg-accent/10 transition-colors">
                   <feature.icon className="w-5 h-5 text-accent" />
@@ -348,12 +403,16 @@ export default function LandingPage() {
                 </Button>
               </div>
 
-              <div className="w-48 h-48 rounded-2xl bg-secondary/50 border border-border flex items-center justify-center">
+              <motion.div
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className="w-48 h-48 rounded-2xl bg-secondary/50 border border-border flex items-center justify-center"
+              >
                 <div className="text-center">
                   <p className="text-5xl font-black text-accent">$25</p>
                   <p className="text-xs text-muted-foreground mt-1 font-medium">Welcome Bonus</p>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </motion.div>
@@ -383,11 +442,18 @@ export default function LandingPage() {
                 { amount: "$1,000", earnings: "$60/yr" },
                 { amount: "$10,000", earnings: "$600/yr" },
                 { amount: "$100,000", earnings: "$6,000/yr" },
-              ].map((tier) => (
-                <div key={tier.amount} className="bg-card p-5 text-center">
+              ].map((tier, i) => (
+                <motion.div
+                  key={tier.amount}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-card p-5 text-center"
+                >
                   <p className="text-xs text-muted-foreground">Save {tier.amount}</p>
                   <p className="text-lg font-bold text-warning mt-1">{tier.earnings}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -403,13 +469,20 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12"
           >
-            {TRUST_BADGES.map((badge) => (
-              <div key={badge.label} className="flex items-center gap-3">
+            {TRUST_BADGES.map((badge, i) => (
+              <motion.div
+                key={badge.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex items-center gap-3"
+              >
                 <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
                   <badge.icon className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <span className="text-sm font-medium text-muted-foreground">{badge.label}</span>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
         </div>
