@@ -8,6 +8,7 @@ import {
   ChevronRight, Star, Lock, Users, Wallet
 } from "lucide-react";
 import { useEffect } from "react";
+import appMockup from "@/assets/app-mockup.png";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
