@@ -119,67 +119,134 @@ export default function LandingPage() {
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/8 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto text-center relative">
-          <motion.div
-            custom={0}
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-8"
-          >
-            <Gift className="w-3.5 h-3.5 text-accent" />
-            <span className="text-xs font-semibold text-accent">Get $25 when you sign up — No deposit required</span>
-          </motion.div>
-
-          <motion.h1
-            custom={1}
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.05]"
-          >
-            The future of
-            <br />
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>
-              money is here
-            </span>
-          </motion.h1>
-
-          <motion.p
-            custom={2}
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-          >
-            Banking, savings, crypto, stocks, cards, and global payments —
-            all in one beautifully simple app. Built for the borderless generation.
-          </motion.p>
-
-          <motion.div
-            custom={3}
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <Button
-              size="lg"
-              onClick={() => navigate("/auth")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 h-13 px-8 text-base font-semibold gap-2 rounded-xl shadow-[0_0_30px_hsl(142_71%_45%/0.3)]"
+        <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          {/* Left: Text */}
+          <div className="flex-1 text-center lg:text-left">
+            <motion.div
+              custom={0}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-8"
             >
-              Create Free Account <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => {
-                document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="h-13 px-8 text-base rounded-xl border-border/60"
+              <Gift className="w-3.5 h-3.5 text-accent" />
+              <span className="text-xs font-semibold text-accent">Get $25 when you sign up — No deposit required</span>
+            </motion.div>
+
+            <motion.h1
+              custom={1}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.05]"
             >
-              See What's Inside
-            </Button>
+              The future of
+              <br />
+              <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>
+                money is here
+              </span>
+            </motion.h1>
+
+            <motion.p
+              custom={2}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+            >
+              Banking, savings, crypto, stocks, cards, and global payments —
+              all in one beautifully simple app. Built for the borderless generation.
+            </motion.p>
+
+            <motion.div
+              custom={3}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
+            >
+              <Button
+                size="lg"
+                onClick={() => navigate("/auth")}
+                className="bg-accent text-accent-foreground hover:bg-accent/90 h-13 px-8 text-base font-semibold gap-2 rounded-xl shadow-[0_0_30px_hsl(142_71%_45%/0.3)]"
+              >
+                Create Free Account <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="h-13 px-8 text-base rounded-xl border-border/60"
+              >
+                See What's Inside
+              </Button>
+            </motion.div>
+          </div>
+
+          {/* Right: Phone Mockup */}
+          <motion.div
+            initial={{ opacity: 0, y: 40, rotateY: -8 }}
+            animate={{ opacity: 1, y: 0, rotateY: 0 }}
+            transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
+            className="relative flex-shrink-0"
+          >
+            {/* Glow behind phone */}
+            <div className="absolute -inset-8 bg-accent/10 rounded-full blur-[60px] pointer-events-none" />
+            
+            {/* Floating phone */}
+            <motion.div
+              animate={{ y: [0, -12, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="relative"
+            >
+              {/* Phone frame */}
+              <div className="relative w-[260px] sm:w-[280px] rounded-[2.5rem] border-[6px] border-border/80 bg-card shadow-2xl shadow-black/40 overflow-hidden">
+                {/* Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-border/80 rounded-b-xl z-10" />
+                <img
+                  src={appMockup}
+                  alt="ExoSky app dashboard showing account balance, portfolio chart, and quick actions"
+                  className="w-full h-auto"
+                  loading="eager"
+                />
+              </div>
+
+              {/* Floating badges */}
+              <motion.div
+                animate={{ y: [0, -6, 0], x: [0, 3, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                className="absolute -left-12 top-16 px-3 py-2 rounded-xl bg-card border border-border shadow-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-accent" />
+                  <span className="text-xs font-bold">+12.4%</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, 8, 0], x: [0, -4, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute -right-10 top-1/3 px-3 py-2 rounded-xl bg-card border border-border shadow-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs font-bold">150+ Countries</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                className="absolute -left-8 bottom-24 px-3 py-2 rounded-xl bg-card border border-accent/30 shadow-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <PiggyBank className="w-4 h-4 text-warning" />
+                  <span className="text-xs font-bold text-warning">6% APY</span>
+                </div>
+              </motion.div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
