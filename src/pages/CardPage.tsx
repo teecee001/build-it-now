@@ -462,32 +462,35 @@ function CardPageContent() {
       return;
     }
 
-    const result = await addCard.mutateAsync({
-      format: newCardFormat,
-      name: newCardName || undefined,
-    });
+    try {
+      await addCard.mutateAsync({
+        format: newCardFormat,
+        name: newCardName || undefined,
+      });
 
-    // Store the PIN for the newly created card
-    // We need to get the card ID — refetch and find the newest card
-    // For now, store with a temp key and associate on next load
-    const { data: latestCards } = await supabase
-      .from("cards")
-      .select("id")
-      .eq("user_id", user!.id)
-      .order("created_at", { ascending: false })
-      .limit(1);
+      // Store the PIN for the newly created card
+      const { data: latestCards } = await supabase
+        .from("cards")
+        .select("id")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    if (latestCards && latestCards[0]) {
-      setCardPinHash(latestCards[0].id, newCardPin);
+      if (latestCards && latestCards[0]) {
+        setCardPinHash(latestCards[0].id, newCardPin);
+      }
+
+      setNewCardName("");
+      setNewCardPin("");
+      setNewCardPinConfirm("");
+      setPinError("");
+      setNewCardDesign(CARD_DESIGNS[0].id);
+      setAddStep("format");
+      setView("list");
+    } catch (error: any) {
+      console.error("Card creation failed:", error);
+      setPinError(error?.message || "Failed to create card. Please try again.");
     }
-
-    setNewCardName("");
-    setNewCardPin("");
-    setNewCardPinConfirm("");
-    setPinError("");
-    setNewCardDesign(CARD_DESIGNS[0].id);
-    setAddStep("format");
-    setView("list");
   };
 
   return (
