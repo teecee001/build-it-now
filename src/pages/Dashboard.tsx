@@ -5,6 +5,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
+import { TravelMode } from "@/components/TravelMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
