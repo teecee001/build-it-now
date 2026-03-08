@@ -51,7 +51,7 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Anti-Money Laundering (AML)</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money maintains a comprehensive AML compliance program in accordance with the Bank Secrecy Act (BSA) and USA PATRIOT Act. This includes Customer Identification Program (CIP), Customer Due Diligence (CDD), ongoing transaction monitoring, and Suspicious Activity Report (SAR) filing obligations.
+              ExoSky maintains a comprehensive AML compliance program in accordance with the Bank Secrecy Act (BSA) and USA PATRIOT Act. This includes Customer Identification Program (CIP), Customer Due Diligence (CDD), ongoing transaction monitoring, and Suspicious Activity Report (SAR) filing obligations.
             </p>
           </section>
 
