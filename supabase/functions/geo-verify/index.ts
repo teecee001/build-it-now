@@ -147,12 +147,11 @@ Deno.serve(async (req) => {
 
       const locationMismatch = ipCountry !== "unknown" && ipCountry !== country_code;
 
-      // Block if VPN detected or location mismatch
-      const isBlocked = isVpn || locationMismatch;
-      const blockReason = isVpn
-        ? "VPN or proxy detected. Please disable your VPN and try again."
-        : locationMismatch
-        ? `Your IP location (${ipCountry}) does not match your selected country (${country_code}).`
+      // Store VPN/mismatch flags but DON'T block during initial registration
+      // Blocking only happens if both VPN detected AND location mismatch
+      const isBlocked = isVpn && locationMismatch;
+      const blockReason = isBlocked
+        ? `VPN detected with location mismatch. Your IP appears to be from ${ipCountry} but you selected ${country_code}.`
         : null;
 
       // Upsert geo verification
@@ -185,13 +184,23 @@ Deno.serve(async (req) => {
 
       if (isBlocked) {
         return new Response(
-          JSON.stringify({ success: false, error: blockReason, code: "BLOCKED", vpn_detected: isVpn, location_mismatch: locationMismatch }),
+          JSON.stringify({ 
+            success: false, 
+            error: blockReason, 
+            code: "BLOCKED", 
+            vpn_detected: isVpn, 
+            location_mismatch: locationMismatch 
+          }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       return new Response(
-        JSON.stringify({ success: true, verified: true }),
+        JSON.stringify({ 
+          success: true, 
+          verified: true,
+          warning: isVpn ? "VPN detected - some features may be restricted" : null,
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
