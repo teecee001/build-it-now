@@ -77,7 +77,7 @@ export function GeoBlockScreen({ vpnDetected, locationMismatch }: Props) {
         </Card>
 
         <p className="text-[10px] text-muted-foreground mt-4">
-          ExoSky complies with international financial regulations including OFAC, EU sanctions, and local laws.
+          Ξ╳oSky complies with international financial regulations including OFAC, EU sanctions, and local laws.
         </p>
       </motion.div>
     </div>
