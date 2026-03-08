@@ -359,7 +359,7 @@ export default function Markets() {
 }
 
 // ── Fallback TradingView-style chart for non-crypto assets ──
-import { useEffect, useRef } from "react";
+// useEffect and useRef already imported at top
 import { createChart, ColorType, AreaSeries } from "lightweight-charts";
 import type { Time } from "lightweight-charts";
 
