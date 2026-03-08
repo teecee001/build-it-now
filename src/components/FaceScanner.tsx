@@ -126,7 +126,7 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
 
   const startPositioning = useCallback(() => {
     let stableFrames = 0;
-    const THRESHOLD = 12;
+    const THRESHOLD = 6;
 
     intervalRef.current = setInterval(() => {
       if (!videoRef.current || !canvasRef.current) return;
