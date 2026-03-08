@@ -5,12 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { useWallet } from "@/hooks/useWallet";
+import { useTransactions } from "@/hooks/useTransactions";
 import { CURRENCIES } from "@/constants/currencies";
 import { ArrowRight, QrCode, Users, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SendMoney() {
-  const { rates, isLive } = useExchangeRates();
+  const { rates } = useExchangeRates();
+  const { balance, updateBalance } = useWallet();
+  const { addTransaction } = useTransactions();
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -22,12 +26,30 @@ export default function SendMoney() {
       toast.error("Please fill in all fields");
       return;
     }
+    const sendAmount = parseFloat(amount);
+    const usdAmount = currency === "USD" ? sendAmount : sendAmount / (rates[currency] || 1);
+    
+    if (usdAmount > balance) {
+      toast.error("Insufficient balance");
+      return;
+    }
+
     setIsSending(true);
-    // Simulate payment processing
-    await new Promise((r) => setTimeout(r, 2000));
-    setIsSending(false);
-    setSent(true);
-    toast.success(`$${amount} ${currency} sent to ${recipient}`);
+    try {
+      await updateBalance.mutateAsync({ balance: balance - usdAmount });
+      await addTransaction.mutateAsync({
+        type: "send",
+        amount: -usdAmount,
+        description: `Sent to ${recipient}`,
+        recipient,
+      });
+      setSent(true);
+      toast.success(`$${usdAmount.toFixed(2)} sent to ${recipient}`);
+    } catch (err: any) {
+      toast.error(err.message || "Transfer failed");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (sent) {
@@ -56,6 +78,14 @@ export default function SendMoney() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-bold tracking-tight">Send Money</h1>
         <p className="text-muted-foreground text-sm mt-1">Transfer funds to anyone, anywhere in the world</p>
+      </motion.div>
+
+      {/* Balance display */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+        <Card className="p-4 bg-card border-border flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">Available balance</p>
+          <p className="text-lg font-bold font-mono">${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+        </Card>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
@@ -137,25 +167,6 @@ export default function SendMoney() {
             )}
           </Button>
         </Card>
-      </motion.div>
-
-      {/* Recent Recipients */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent</h3>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {["Alex M.", "Sarah K.", "Mike R.", "Lisa T."].map((name) => (
-            <button
-              key={name}
-              onClick={() => setRecipient(name.toLowerCase().replace(" ", ".") + "@email.com")}
-              className="flex flex-col items-center gap-2 min-w-[64px] group"
-            >
-              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-sm font-bold group-hover:bg-accent/20 group-hover:text-accent transition-colors">
-                {name[0]}
-              </div>
-              <span className="text-xs text-muted-foreground">{name}</span>
-            </button>
-          ))}
-        </div>
       </motion.div>
     </div>
   );

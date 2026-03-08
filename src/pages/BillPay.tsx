@@ -3,12 +3,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useBills } from "@/hooks/useBills";
+import { useWallet } from "@/hooks/useWallet";
+import { useTransactions } from "@/hooks/useTransactions";
 import { 
   Zap, Wifi, Home, Phone, Tv, Droplets, Search,
-  CheckCircle2, Loader2, ArrowRight
+  CheckCircle2, Loader2, ArrowRight, Plus
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 const BILL_CATEGORIES = [
   { icon: Zap, label: "Electric", color: "text-warning" },
@@ -19,32 +23,113 @@ const BILL_CATEGORIES = [
   { icon: Home, label: "Rent", color: "text-foreground" },
 ];
 
-const SAVED_BILLERS = [
-  { name: "Pacific Gas & Electric", category: "Electric", lastPaid: "Feb 15", amount: 142.50, due: "Mar 15" },
-  { name: "AT&T Wireless", category: "Phone", lastPaid: "Feb 20", amount: 85.00, due: "Mar 20" },
-  { name: "Comcast Xfinity", category: "Internet", lastPaid: "Feb 10", amount: 69.99, due: "Mar 10" },
-  { name: "Netflix Premium", category: "Streaming", lastPaid: "Feb 25", amount: 22.99, due: "Mar 25" },
-];
-
 export default function BillPay() {
+  const { bills, isLoading, payBill, addBill } = useBills();
+  const { balance, updateBalance } = useWallet();
+  const { addTransaction } = useTransactions();
   const [search, setSearch] = useState("");
-  const [payingIndex, setPayingIndex] = useState<number | null>(null);
-  const [paidIndexes, setPaidIndexes] = useState<Set<number>>(new Set());
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newBiller, setNewBiller] = useState("");
+  const [newCategory, setNewCategory] = useState("Electric");
+  const [newAmount, setNewAmount] = useState("");
+  const [newDueDate, setNewDueDate] = useState("");
 
-  const handlePay = async (index: number) => {
-    setPayingIndex(index);
-    await new Promise(r => setTimeout(r, 1500));
-    setPayingIndex(null);
-    setPaidIndexes(prev => new Set(prev).add(index));
-    toast.success(`Paid ${SAVED_BILLERS[index].name}`);
+  const handlePay = async (bill: { id: string; amount: number; biller_name: string }) => {
+    if (bill.amount > balance) {
+      toast.error("Insufficient balance");
+      return;
+    }
+    setPayingId(bill.id);
+    try {
+      await updateBalance.mutateAsync({ balance: balance - bill.amount });
+      await addTransaction.mutateAsync({
+        type: "bill_payment",
+        amount: -bill.amount,
+        description: `Bill payment — ${bill.biller_name}`,
+      });
+      // Record 1% cashback
+      const cashback = bill.amount * 0.01;
+      await updateBalance.mutateAsync({ balance: balance - bill.amount + cashback });
+      await addTransaction.mutateAsync({
+        type: "cashback",
+        amount: cashback,
+        description: `1% cashback — ${bill.biller_name}`,
+      });
+      await payBill.mutateAsync(bill.id);
+      toast.success(`Paid ${bill.biller_name} — earned $${cashback.toFixed(2)} cashback`);
+    } catch (err: any) {
+      toast.error(err.message || "Payment failed");
+    } finally {
+      setPayingId(null);
+    }
   };
+
+  const handleAddBill = async () => {
+    if (!newBiller || !newAmount || !newDueDate) {
+      toast.error("Fill in all fields");
+      return;
+    }
+    try {
+      await addBill.mutateAsync({
+        biller_name: newBiller,
+        category: newCategory,
+        amount: parseFloat(newAmount),
+        due_date: newDueDate,
+      });
+      toast.success("Bill added");
+      setShowAdd(false);
+      setNewBiller("");
+      setNewAmount("");
+      setNewDueDate("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add bill");
+    }
+  };
+
+  const filteredBills = bills.filter(b =>
+    !search || b.biller_name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const unpaidBills = filteredBills.filter(b => !b.is_paid);
+  const paidBills = filteredBills.filter(b => b.is_paid);
 
   return (
     <div className="space-y-6 max-w-lg mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Pay Bills</h1>
-        <p className="text-muted-foreground text-sm mt-1">Pay utilities, subscriptions, and more</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Pay Bills</h1>
+            <p className="text-muted-foreground text-sm mt-1">Pay utilities, subscriptions, and more</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setShowAdd(!showAdd)} className="gap-1">
+            <Plus className="w-4 h-4" /> Add
+          </Button>
+        </div>
       </motion.div>
+
+      {/* Add Bill Form */}
+      {showAdd && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="p-4 bg-card border-border space-y-3">
+            <Input placeholder="Biller name" value={newBiller} onChange={e => setNewBiller(e.target.value)} className="bg-secondary border-border" />
+            <div className="flex gap-2">
+              <select
+                value={newCategory}
+                onChange={e => setNewCategory(e.target.value)}
+                className="flex-1 h-10 rounded-md bg-secondary border border-border px-3 text-sm"
+              >
+                {BILL_CATEGORIES.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+              </select>
+              <Input type="number" placeholder="Amount" value={newAmount} onChange={e => setNewAmount(e.target.value)} className="flex-1 bg-secondary border-border" />
+            </div>
+            <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} className="bg-secondary border-border" />
+            <Button onClick={handleAddBill} disabled={addBill.isPending} className="w-full bg-foreground text-background hover:bg-foreground/90">
+              {addBill.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Bill"}
+            </Button>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Categories */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
@@ -69,46 +154,75 @@ export default function BillPay() {
         />
       </div>
 
-      {/* Saved Billers */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Upcoming Bills</h3>
-        <div className="space-y-2">
-          {SAVED_BILLERS.map((biller, i) => {
-            const isPaid = paidIndexes.has(i);
-            const isPaying = payingIndex === i;
-            return (
-              <Card key={i} className="p-4 bg-card border-border">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold">{biller.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <Badge variant="secondary" className="text-[10px] px-1 py-0">{biller.category}</Badge>
-                      <p className="text-xs text-muted-foreground">Due {biller.due}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm font-bold font-mono">${biller.amount.toFixed(2)}</p>
-                    {isPaid ? (
-                      <Badge className="bg-success/10 text-success border-0 gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Paid
-                      </Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => handlePay(i)}
-                        disabled={isPaying}
-                        className="bg-foreground text-background hover:bg-foreground/90 h-8 gap-1"
-                      >
-                        {isPaying ? <Loader2 className="w-3 h-3 animate-spin" /> : <>Pay <ArrowRight className="w-3 h-3" /></>}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
-      </motion.div>
+      ) : (
+        <>
+          {/* Unpaid Bills */}
+          {unpaidBills.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Upcoming Bills</h3>
+              <div className="space-y-2">
+                {unpaidBills.map((bill) => (
+                  <Card key={bill.id} className="p-4 bg-card border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold">{bill.biller_name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge variant="secondary" className="text-[10px] px-1 py-0">{bill.category}</Badge>
+                          <p className="text-xs text-muted-foreground">Due {format(new Date(bill.due_date), "MMM d")}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className="text-sm font-bold font-mono">${Number(bill.amount).toFixed(2)}</p>
+                        <Button
+                          size="sm"
+                          onClick={() => handlePay(bill)}
+                          disabled={payingId === bill.id}
+                          className="bg-foreground text-background hover:bg-foreground/90 h-8 gap-1"
+                        >
+                          {payingId === bill.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <>Pay <ArrowRight className="w-3 h-3" /></>}
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Paid Bills */}
+          {paidBills.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Paid</h3>
+              <div className="space-y-2">
+                {paidBills.map((bill) => (
+                  <Card key={bill.id} className="p-4 bg-card border-border opacity-60">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold">{bill.biller_name}</p>
+                        <Badge variant="secondary" className="text-[10px] px-1 py-0">{bill.category}</Badge>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className="text-sm font-bold font-mono">${Number(bill.amount).toFixed(2)}</p>
+                        <Badge className="bg-success/10 text-success border-0 gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Paid
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {bills.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-8">No bills yet. Add a bill to get started!</p>
+          )}
+        </>
+      )}
 
       {/* Cashback Notice */}
       <Card className="p-3 bg-warning/5 border-warning/10">

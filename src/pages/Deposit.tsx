@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useWallet } from "@/hooks/useWallet";
+import { useTransactions } from "@/hooks/useTransactions";
 import { 
   Landmark, Building2, CreditCard, ArrowDownLeft, 
   CheckCircle2, Copy, Percent, Loader2
@@ -11,6 +13,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export default function Deposit() {
+  const { wallet, balance, updateBalance } = useWallet();
+  const { addTransaction } = useTransactions();
   const [method, setMethod] = useState<"direct" | "bank" | "card" | null>(null);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -20,15 +24,28 @@ export default function Deposit() {
   const accountNumber = "9876543210";
 
   const handleDeposit = async () => {
-    if (!amount || parseFloat(amount) <= 0) {
+    const depositAmount = parseFloat(amount);
+    if (!depositAmount || depositAmount <= 0) {
       toast.error("Enter a valid amount");
       return;
     }
     setIsProcessing(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setIsProcessing(false);
-    setDone(true);
-    toast.success(`$${amount} deposited successfully`);
+    try {
+      // Update wallet balance
+      await updateBalance.mutateAsync({ balance: balance + depositAmount });
+      // Record transaction
+      await addTransaction.mutateAsync({
+        type: "deposit",
+        amount: depositAmount,
+        description: method === "bank" ? "Bank transfer deposit" : "Debit card deposit",
+      });
+      setDone(true);
+      toast.success(`$${amount} deposited successfully`);
+    } catch (err: any) {
+      toast.error(err.message || "Deposit failed");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (done) {
@@ -51,6 +68,14 @@ export default function Deposit() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-bold tracking-tight">Deposit Funds</h1>
         <p className="text-muted-foreground text-sm mt-1">Add money to your X Money wallet</p>
+      </motion.div>
+
+      {/* Current Balance */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+        <Card className="p-4 bg-card border-border flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">Current wallet balance</p>
+          <p className="text-lg font-bold font-mono">${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+        </Card>
       </motion.div>
 
       {/* APY Promo */}
@@ -103,7 +128,6 @@ export default function Deposit() {
           <Card className="p-5 bg-card border-border shadow-card space-y-4">
             <h3 className="text-sm font-semibold">Direct Deposit Details</h3>
             <p className="text-xs text-muted-foreground">Share these details with your employer to set up direct deposit</p>
-            
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                 <div>
@@ -124,7 +148,6 @@ export default function Deposit() {
                 </button>
               </div>
             </div>
-
             <div className="p-3 rounded-lg bg-success/5 border border-success/10">
               <p className="text-xs text-success">✓ Deposits arrive within 1-2 business days. Earn 6.00% APY on your entire balance.</p>
             </div>
@@ -147,7 +170,6 @@ export default function Deposit() {
               />
             </div>
 
-            {/* Quick amounts */}
             <div className="grid grid-cols-4 gap-2">
               {["50", "100", "250", "500"].map((a) => (
                 <button
