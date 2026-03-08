@@ -386,7 +386,7 @@ export default function CardPage() {
                           else toast.error("Incorrect password");
                           setPasswordInput("");
                         }}
-                        disabled={!passwordInput || verification.step === "verifying"}
+                        disabled={!passwordInput}
                         className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
                       >
                         <LockKeyhole className="w-4 h-4" /> Verify
