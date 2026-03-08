@@ -32,7 +32,7 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "Anti-Money Laundering (AML)",
-      content: `ExoSky maintains a comprehensive global AML compliance program aligned with FATF recommendations and local regulations including the US Bank Secrecy Act (BSA), EU Anti-Money Laundering Directives (AMLD), UK Money Laundering Regulations, and equivalent frameworks in all operating jurisdictions. Our program includes: Customer Identification Program (CIP), Customer Due Diligence (CDD) and Enhanced Due Diligence (EDD), ongoing transaction monitoring and screening, Suspicious Activity Report (SAR/STR) filing, and regular independent audits.`,
+      content: `Ξ╳oSky maintains a comprehensive global AML compliance program aligned with FATF recommendations and local regulations including the US Bank Secrecy Act (BSA), EU Anti-Money Laundering Directives (AMLD), UK Money Laundering Regulations, and equivalent frameworks in all operating jurisdictions. Our program includes: Customer Identification Program (CIP), Customer Due Diligence (CDD) and Enhanced Due Diligence (EDD), ongoing transaction monitoring and screening, Suspicious Activity Report (SAR/STR) filing, and regular independent audits.`,
     },
     {
       title: "Know Your Customer (KYC) & Identity Verification",
