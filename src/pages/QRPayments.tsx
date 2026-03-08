@@ -92,6 +92,19 @@ export default function QRPayments() {
 
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
+  // Auto-fill from URL params (when opened via scanned QR)
+  useEffect(() => {
+    const to = searchParams.get("to");
+    if (to) {
+      setScanRecipient(to);
+      const amt = searchParams.get("amount");
+      if (amt) setScanAmount(amt);
+      const note = searchParams.get("note");
+      if (note) setScanNote(note);
+      setView("confirm");
+    }
+  }, [searchParams]);
+
   // Generate real QR code
   const payload = useMemo<ExoPayload>(() => {
     const p: ExoPayload = { app: "exosky", handle };
