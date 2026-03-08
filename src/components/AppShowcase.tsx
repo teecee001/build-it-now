@@ -969,6 +969,7 @@ const SCREEN_COMPONENTS: Record<string, React.FC> = {
 export function AppShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const navigate = useNavigate();
 
   const next = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % SCREENS.length);
