@@ -85,7 +85,7 @@ export default function TermsOfService() {
 
           <Card className="p-4 bg-muted/30 border-border">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Important:</strong> ExoSky operates globally with country-specific feature availability. By using our services, you agree to comply with the regulations of your verified country of residence. Geographic verification is mandatory and continuous.
+              <strong className="text-foreground">Important:</strong> Ξ╳oSky operates globally with country-specific feature availability. By using our services, you agree to comply with the regulations of your verified country of residence. Geographic verification is mandatory and continuous.
             </p>
           </Card>
 
