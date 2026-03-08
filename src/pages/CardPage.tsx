@@ -570,17 +570,21 @@ function CardPageContent() {
                   <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
                     <KeyRound className="w-8 h-8 text-accent" />
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold">Enter Card PIN</h3>
+                   <div>
+                    <h3 className="text-base font-bold">
+                      {selectedCard && getCardPinHash(selectedCard.id) ? "Enter Card PIN" : "Set Card PIN"}
+                    </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Enter your 4-6 digit PIN to view card details.
+                      {selectedCard && getCardPinHash(selectedCard.id)
+                        ? "Enter your 4-6 digit PIN to view card details."
+                        : "Create a 4-6 digit PIN to secure this card."}
                     </p>
                   </div>
                   <Input
                     type="password"
                     inputMode="numeric"
                     maxLength={6}
-                    placeholder="Enter PIN"
+                    placeholder={selectedCard && getCardPinHash(selectedCard.id) ? "Enter PIN" : "Create PIN"}
                     value={pinInput}
                     onChange={(e) => { setPinInput(e.target.value.replace(/\D/g, "")); setPinVerifyError(""); }}
                     onKeyDown={(e) => e.key === "Enter" && pinInput.length >= 4 && handlePinVerify()}
@@ -593,7 +597,7 @@ function CardPageContent() {
                     disabled={pinInput.length < 4}
                     className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
                   >
-                    <KeyRound className="w-4 h-4" /> Verify PIN
+                    <KeyRound className="w-4 h-4" /> {selectedCard && getCardPinHash(selectedCard.id) ? "Verify PIN" : "Set PIN"}
                   </Button>
                 </Card>
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
