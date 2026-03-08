@@ -51,9 +51,7 @@ export default function Auth() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-accent flex items-center justify-center font-black text-xl text-primary-foreground">
-              E
-            </div>
+            <img src="/favicon.png" alt="ExoSky" className="w-12 h-12 rounded-xl" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">ExoSky</h1>
           <p className="text-muted-foreground mt-2">The everything finance app</p>
