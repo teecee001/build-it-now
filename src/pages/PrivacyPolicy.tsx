@@ -95,7 +95,7 @@ export default function PrivacyPolicy() {
 
           <Card className="p-4 bg-muted/30 border-border">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Your privacy matters.</strong> ExoSky collects location and identity data to comply with international financial regulations. This policy explains what we collect, why, and your rights. We comply with GDPR, CCPA, LGPD, POPIA, and other applicable data protection laws.
+              <strong className="text-foreground">Your privacy matters.</strong> Ξ╳oSky collects location and identity data to comply with international financial regulations. This policy explains what we collect, why, and your rights. We comply with GDPR, CCPA, LGPD, POPIA, and other applicable data protection laws.
             </p>
           </Card>
 

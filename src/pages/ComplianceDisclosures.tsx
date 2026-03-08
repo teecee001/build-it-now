@@ -80,7 +80,7 @@ export default function ComplianceDisclosures() {
 
           <Card className="p-4 bg-muted/30 border-border">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Regulatory Notice:</strong> ExoSky operates in 90+ countries with strict compliance to local financial regulations. Feature availability, transaction limits, and reporting requirements vary by jurisdiction. Your verified country determines which services and protections apply to your account.
+              <strong className="text-foreground">Regulatory Notice:</strong> Ξ╳oSky operates in 90+ countries with strict compliance to local financial regulations. Feature availability, transaction limits, and reporting requirements vary by jurisdiction. Your verified country determines which services and protections apply to your account.
             </p>
           </Card>
 
