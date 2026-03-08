@@ -20,7 +20,7 @@ export default function ComplianceDisclosures() {
   const sections = [
     {
       title: "Geographic Compliance & Feature Restrictions",
-      content: `ExoSky enforces strict geographic compliance. Feature availability is determined by your verified country of residence and local regulations. This includes but is not limited to: cryptocurrency trading restrictions, stock market access, foreign exchange limitations, money transfer corridors, card issuance eligibility, and savings product availability. Users may only access features authorized in their jurisdiction. Geographic verification is performed using IP geolocation, device location, and phone number validation. The use of VPNs, proxies, or any location-spoofing technology to bypass geographic restrictions is a violation of our Terms and applicable law, and will result in immediate account suspension.`,
+      content: `Ξ╳oSky enforces strict geographic compliance. Feature availability is determined by your verified country of residence and local regulations. This includes but is not limited to: cryptocurrency trading restrictions, stock market access, foreign exchange limitations, money transfer corridors, card issuance eligibility, and savings product availability. Users may only access features authorized in their jurisdiction. Geographic verification is performed using IP geolocation, device location, and phone number validation. The use of VPNs, proxies, or any location-spoofing technology to bypass geographic restrictions is a violation of our Terms and applicable law, and will result in immediate account suspension.`,
     },
     {
       title: "Sanctioned Countries & Territories",
