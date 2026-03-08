@@ -101,38 +101,6 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    name: "Amara O.",
-    role: "Freelancer, Lagos",
-    quote: "ExoSky replaced three apps for me — my bank, Wise, and Coinbase. The multi-currency wallet alone is worth it.",
-    rating: 5,
-    avatar: "AO",
-  },
-  {
-    name: "Jake M.",
-    role: "Digital Nomad, Berlin",
-    quote: "0% FX markup is real. I've saved over $800 this year compared to my old bank. The virtual cards are instant too.",
-    rating: 5,
-    avatar: "JM",
-  },
-  {
-    name: "Priya S.",
-    role: "Startup Founder, Mumbai",
-    quote: "6% APY on savings with no lock-in? I moved my emergency fund here and haven't looked back.",
-    rating: 5,
-    avatar: "PS",
-  },
-  {
-    name: "Carlos R.",
-    role: "Student, São Paulo",
-    quote: "The $25 welcome bonus actually showed up instantly. I used it to buy my first crypto. Super smooth experience.",
-    rating: 4,
-    avatar: "CR",
-  },
-];
-
-const FAQS = [
   {
     q: "Is ExoSky a real bank?",
     a: "ExoSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
