@@ -835,7 +835,7 @@ export default function LandingPage() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
                   <span className="text-xs font-black text-accent-foreground tracking-tighter">Ξ╳</span>
                 </div>
-                <span className="text-base font-bold">ExoSky</span>
+                <span className="text-base font-bold"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 The everything finance app. Banking, crypto, stocks, and global payments in one place.
