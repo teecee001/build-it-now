@@ -23,14 +23,20 @@ const MOCK_HOLDINGS: Record<string, number> = {
   BTC: 0.0025, ETH: 0.15, SOL: 2.5, DOGE: 500, ADA: 120,
 };
 
+function generateSparkline(code: string): { date: string; price: number }[] {
+  const seed = code.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return Array.from({ length: 7 }, (_, i) => ({
+    date: `D${i}`,
+    price: 100 + Math.sin(seed + i * 0.8) * 15 + Math.cos(seed * 0.3 + i) * 8,
+  }));
+}
+
 function MiniChart({ code }: { code: string }) {
-  const { data } = useCryptoChartData(code);
-  if (!data || data.length === 0) return <div className="w-16 h-8" />;
-  const last7 = data.slice(-7);
-  const isUp = last7[last7.length - 1]?.price >= last7[0]?.price;
+  const sparkline = generateSparkline(code);
+  const isUp = sparkline[sparkline.length - 1].price >= sparkline[0].price;
   return (
     <ResponsiveContainer width={64} height={32}>
-      <LineChart data={last7}>
+      <LineChart data={sparkline}>
         <Line
           type="monotone"
           dataKey="price"
