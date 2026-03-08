@@ -33,6 +33,20 @@ export function useWallet() {
     enabled: !!user,
   });
 
+  // Realtime subscription for cross-tab sync
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('wallet-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${user.id}` },
+        () => queryClient.invalidateQueries({ queryKey: ["wallet"] })
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
+
   const updateBalance = useMutation({
     mutationFn: async ({ balance, savings_balance }: { balance?: number; savings_balance?: number }) => {
       if (!user || !wallet) throw new Error("No wallet");
