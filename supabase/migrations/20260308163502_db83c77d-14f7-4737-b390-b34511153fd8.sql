@@ -1,0 +1,1 @@
+ALTER TABLE public.bills ADD COLUMN account_number TEXT DEFAULT NULL;
