@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -35,6 +36,20 @@ export function useTransactions(limit?: number) {
     },
     enabled: !!user,
   });
+
+  // Realtime subscription for cross-tab sync
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('transactions-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${user.id}` },
+        () => queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
 
   const addTransaction = useMutation({
     mutationFn: async (tx: {
