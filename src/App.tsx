@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ActiveCurrencyProvider } from "@/hooks/useActiveCurrency";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { CountryOnboarding } from "@/components/CountryOnboarding";
