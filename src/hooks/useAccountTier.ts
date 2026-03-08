@@ -91,7 +91,7 @@ export function useAccountTier() {
         .from("account_tiers")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       if (error) {
         // Auto-create if missing (existing user)
         if (error.code === "PGRST116") {

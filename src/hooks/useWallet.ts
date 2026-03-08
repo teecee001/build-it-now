@@ -26,9 +26,9 @@ export function useWallet() {
         .select("*")
         .eq("user_id", user.id)
         .eq("currency", "USD")
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      return data as Wallet;
+      return data as Wallet | null;
     },
     enabled: !!user,
   });
