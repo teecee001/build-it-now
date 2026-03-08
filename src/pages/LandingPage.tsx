@@ -7,8 +7,16 @@ import {
   ArrowRight, Shield, Zap, TrendingUp, CreditCard,
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
   ChevronRight, Star, Lock, Users, Wallet,
-  Check, Sparkles, X
+  Check, Sparkles, X, HelpCircle, MessageSquare,
+  Twitter, Github, Mail, ChevronDown
 } from "lucide-react";
+import { useState } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useEffect, useRef } from "react";
 import { AppShowcase } from "@/components/AppShowcase";
 
@@ -90,6 +98,64 @@ const HOW_IT_WORKS = [
     title: "Grow your money",
     description: "Earn 6% APY, trade crypto & stocks, send money globally — all from one app.",
     icon: TrendingUp,
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    name: "Amara O.",
+    role: "Freelancer, Lagos",
+    quote: "ExoSky replaced three apps for me — my bank, Wise, and Coinbase. The multi-currency wallet alone is worth it.",
+    rating: 5,
+    avatar: "AO",
+  },
+  {
+    name: "Jake M.",
+    role: "Digital Nomad, Berlin",
+    quote: "0% FX markup is real. I've saved over $800 this year compared to my old bank. The virtual cards are instant too.",
+    rating: 5,
+    avatar: "JM",
+  },
+  {
+    name: "Priya S.",
+    role: "Startup Founder, Mumbai",
+    quote: "6% APY on savings with no lock-in? I moved my emergency fund here and haven't looked back.",
+    rating: 5,
+    avatar: "PS",
+  },
+  {
+    name: "Carlos R.",
+    role: "Student, São Paulo",
+    quote: "The $25 welcome bonus actually showed up instantly. I used it to buy my first crypto. Super smooth experience.",
+    rating: 4,
+    avatar: "CR",
+  },
+];
+
+const FAQS = [
+  {
+    q: "Is ExoSky a real bank?",
+    a: "ExoSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
+  },
+  {
+    q: "How does ExoSky offer 6% APY?",
+    a: "We invest your savings in low-risk, high-yield instruments and pass the returns directly to you. With no physical branches and minimal overhead, we can offer significantly higher rates than traditional banks.",
+  },
+  {
+    q: "Are there any hidden fees?",
+    a: "No. ExoSky has zero monthly fees, zero FX markup, and free domestic transfers. International transfers and crypto trades have transparent, industry-low fees shown before you confirm.",
+  },
+  {
+    q: "How long do transfers take?",
+    a: "Internal ExoSky transfers are instant. Bank transfers typically settle in 1–2 business days depending on the destination country. Crypto transactions confirm on-chain in minutes.",
+  },
+  {
+    q: "Is my money safe?",
+    a: "Absolutely. We use bank-grade AES-256 encryption, biometric authentication, and all accounts are KYC/AML verified. Your funds are held in segregated accounts with regulated partners.",
+  },
+  {
+    q: "Which countries does ExoSky support?",
+    a: "ExoSky is available in 150+ countries. Some features like cards or stock trading may vary by region due to local regulations. Check the app for availability in your country.",
   },
 ];
 
@@ -558,6 +624,106 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── Testimonials ─── */}
+      <section className="px-6 py-20">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 mb-6">
+              <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">What People Say</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+              Loved by users{" "}
+              <span className="text-accent">worldwide</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={t.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                className="rounded-2xl border border-border bg-card p-5 hover:border-accent/20 transition-colors"
+              >
+                <div className="flex gap-0.5 mb-3">
+                  {Array.from({ length: 5 }).map((_, s) => (
+                    <Star
+                      key={s}
+                      className={`w-3.5 h-3.5 ${s < t.rating ? "fill-warning text-warning" : "text-border"}`}
+                    />
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">"{t.quote}"</p>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FAQ ─── */}
+      <section className="px-6 py-20">
+        <div className="max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 mb-6">
+              <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">FAQ</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+              Got questions?
+            </h2>
+            <p className="text-muted-foreground mt-3">
+              Everything you need to know before getting started.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <Accordion type="single" collapsible className="space-y-2">
+              {FAQS.map((faq, i) => (
+                <AccordionItem
+                  key={i}
+                  value={`faq-${i}`}
+                  className="border border-border rounded-xl px-5 data-[state=open]:bg-secondary/30 transition-colors"
+                >
+                  <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline py-4">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ─── Trust Section ─── */}
       <section className="px-6 py-16">
         <div className="max-w-4xl mx-auto">
@@ -614,25 +780,75 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-border px-6 py-12">
+      <footer className="border-t border-border px-6 py-16">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
-                <span className="text-[10px] font-black text-accent-foreground tracking-tighter">Ξ╳</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 mb-12">
+            {/* Brand */}
+            <div className="col-span-2 sm:col-span-1">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
+                  <span className="text-xs font-black text-accent-foreground tracking-tighter">Ξ╳</span>
+                </div>
+                <span className="text-base font-bold">ExoSky</span>
               </div>
-              <span className="text-sm font-bold">ExoSky Inc.</span>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                The everything finance app. Banking, crypto, stocks, and global payments in one place.
+              </p>
+              <div className="flex items-center gap-3 mt-5">
+                <a href="#" className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-accent/10 transition-colors">
+                  <Twitter className="w-3.5 h-3.5 text-muted-foreground" />
+                </a>
+                <a href="#" className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-accent/10 transition-colors">
+                  <Github className="w-3.5 h-3.5 text-muted-foreground" />
+                </a>
+                <a href="mailto:support@exosky.app" className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-accent/10 transition-colors">
+                  <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                </a>
+              </div>
             </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
-              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
-              <a href="/disclosures" className="hover:text-foreground transition-colors">Compliance</a>
-              <span>support@exosky.app</span>
+
+            {/* Product */}
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Product</h4>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="/auth" className="hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="/auth" className="hover:text-foreground transition-colors">Cards</a></li>
+                <li><a href="/auth" className="hover:text-foreground transition-colors">Crypto</a></li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Company</h4>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li><a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+                <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
+                <li><a href="/disclosures" className="hover:text-foreground transition-colors">Compliance</a></li>
+              </ul>
+            </div>
+
+            {/* Support */}
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Support</h4>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li><a href="mailto:support@exosky.app" className="hover:text-foreground transition-colors">Contact Us</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Status</a></li>
+              </ul>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground/60 text-center mt-8">
-            © {new Date().getFullYear()} ExoSky Inc. All rights reserved. ExoSky is not a bank. Banking services provided by partner institutions.
-          </p>
+
+          <div className="border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground/60">
+              © {new Date().getFullYear()} ExoSky Inc. All rights reserved. ExoSky is not a bank. Banking services provided by partner institutions.
+            </p>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
+              <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
+              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
+              <a href="/disclosures" className="hover:text-foreground transition-colors">Disclosures</a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

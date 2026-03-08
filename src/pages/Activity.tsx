@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTransactions } from "@/hooks/useTransactions";
 import { StatementExport } from "@/components/StatementExport";
+import { EmptyState } from "@/components/EmptyState";
 import { 
   ArrowUpRight, ArrowDownLeft, Repeat, Gift, Landmark, Send, 
-  CreditCard, Search, ShoppingBag, Percent, Loader2, Download
+  CreditCard, Search, ShoppingBag, Percent, Loader2, Download, Receipt
 } from "lucide-react";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
@@ -124,9 +125,18 @@ export default function Activity() {
               </motion.div>
             );
           })}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && transactions.length === 0 && (
+            <EmptyState
+              icon={Receipt}
+              title="No transactions yet"
+              description="Your transaction history will appear here once you make your first deposit, send money, or trade."
+              actionLabel="Make a Deposit"
+              actionPath="/deposit"
+            />
+          )}
+          {filtered.length === 0 && transactions.length > 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">
-              {transactions.length === 0 ? "No transactions yet" : "No matching transactions"}
+              No matching transactions
             </p>
           )}
         </div>
