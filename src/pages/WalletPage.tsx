@@ -47,6 +47,7 @@ function MiniChart({ code }: { code: string }) {
 }
 
 export default function WalletPage() {
+  const navigate = useNavigate();
   const { rates, isLive } = useExchangeRates();
   const { wallets, getWallet } = useMultiCurrencyWallet();
   const [search, setSearch] = useState("");
