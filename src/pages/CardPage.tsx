@@ -302,7 +302,9 @@ export default function CardPage() {
                 {/* Verified badge */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/10">
                   <CheckCircle2 className="w-4 h-4 text-accent" />
-                  <span className="text-xs font-medium text-accent">Identity Verified · {verification.methodLabel}</span>
+                  <span className="text-xs font-medium text-accent">
+                    Identity Verified · {faceVerified ? "Face ID" : verification.methodLabel}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
