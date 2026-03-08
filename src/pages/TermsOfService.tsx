@@ -49,7 +49,7 @@ export default function TermsOfService() {
     },
     {
       title: "11. Limitation of Liability",
-      content: `To the maximum extent permitted by applicable law, ExoSky Inc. and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability shall not exceed the fees you paid in the 12 months preceding the claim. Some jurisdictions do not allow limitation of liability, so these limitations may not apply to you.`,
+      content: `To the maximum extent permitted by applicable law, Ξ╳oSky Inc. and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability shall not exceed the fees you paid in the 12 months preceding the claim. Some jurisdictions do not allow limitation of liability, so these limitations may not apply to you.`,
     },
     {
       title: "12. Governing Law & Dispute Resolution",
