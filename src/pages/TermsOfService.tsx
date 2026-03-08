@@ -25,7 +25,7 @@ export default function TermsOfService() {
     },
     {
       title: "5. Financial Services",
-      content: `ExoSky provides digital wallet, payment, currency conversion, and money transfer services through licensed partners in applicable jurisdictions. ExoSky is not a bank. Banking services are provided by partner financial institutions in each supported region. Deposit insurance coverage (such as FDIC in the US) depends on your country and applicable local regulations.`,
+      content: `Ξ╳oSky provides digital wallet, payment, currency conversion, and money transfer services through licensed partners in applicable jurisdictions. Ξ╳oSky is not a bank. Banking services are provided by partner financial institutions in each supported region. Deposit insurance coverage (such as FDIC in the US) depends on your country and applicable local regulations.`,
     },
     {
       title: "6. Transaction Limits",
