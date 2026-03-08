@@ -96,7 +96,7 @@ serve(async (req) => {
         user_id: referrerId,
         type: "cashback",
         amount: rewardAmount,
-        description: "Referral bonus — friend joined X Money",
+        description: "Referral bonus — friend joined ExoSky",
         status: "completed",
         metadata: { referral: true, referred_user: userId },
       });

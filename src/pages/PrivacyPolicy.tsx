@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">2. How We Use Your Information</h2>
             <ul className="text-sm text-muted-foreground leading-relaxed space-y-2 list-disc pl-5">
-              <li>To provide and maintain the X Money service</li>
+              <li>To provide and maintain the ExoSky service</li>
               <li>To verify your identity and comply with KYC/AML regulations</li>
               <li>To process transactions and send related notifications</li>
               <li>To detect and prevent fraud and unauthorized access</li>
@@ -61,7 +61,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">6. Your Rights</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Depending on your jurisdiction, you may have the right to: access your personal data, correct inaccurate data, request deletion (subject to legal retention requirements), opt out of marketing communications, and data portability. Contact privacy@x.com to exercise these rights.
+              Depending on your jurisdiction, you may have the right to: access your personal data, correct inaccurate data, request deletion (subject to legal retention requirements), opt out of marketing communications, and data portability. Contact privacy@exosky.app to exercise these rights.
             </p>
           </section>
 
@@ -75,14 +75,14 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">8. Children's Privacy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children.
+              ExoSky is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">9. Contact Us</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              For privacy inquiries: privacy@x.com | Data Protection Officer, X Corp, 1355 Market Street, San Francisco, CA 94103.
+              For privacy inquiries: privacy@exosky.app | Data Protection Officer, ExoSky Inc., 1355 Market Street, San Francisco, CA 94103.
             </p>
           </section>
         </motion.div>

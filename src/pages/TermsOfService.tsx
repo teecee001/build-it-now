@@ -21,14 +21,14 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">1. Acceptance of Terms</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              By accessing or using X Money ("Service"), you agree to be bound by these Terms of Service. X Money is a financial technology platform operated by X Corp. If you do not agree to these terms, do not use the Service.
+              By accessing or using ExoSky ("Service"), you agree to be bound by these Terms of Service. ExoSky is a financial technology platform operated by ExoSky Inc. If you do not agree to these terms, do not use the Service.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">2. Eligibility</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              You must be at least 18 years old and a resident of a jurisdiction where our services are available. You must complete identity verification (KYC) before accessing financial features. By using X Money, you represent that you meet these requirements.
+              You must be at least 18 years old and a resident of a jurisdiction where our services are available. You must complete identity verification (KYC) before accessing financial features. By using ExoSky, you represent that you meet these requirements.
             </p>
           </section>
 
@@ -42,7 +42,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">4. Financial Services</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money provides digital wallet, payment, and money transfer services through licensed banking partners. Deposits are held at FDIC-insured partner banks. X Money is not a bank. Banking services are provided by our partner financial institutions.
+              ExoSky provides digital wallet, payment, and money transfer services through licensed banking partners. Deposits are held at FDIC-insured partner banks. ExoSky is not a bank. Banking services are provided by our partner financial institutions.
             </p>
           </section>
 
@@ -56,21 +56,21 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">6. Prohibited Activities</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              You may not use X Money for illegal activities, money laundering, terrorist financing, fraud, or any activity that violates applicable laws and regulations. We reserve the right to freeze or close accounts suspected of prohibited activities.
+              You may not use ExoSky for illegal activities, money laundering, terrorist financing, fraud, or any activity that violates applicable laws and regulations. We reserve the right to freeze or close accounts suspected of prohibited activities.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">7. Privacy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Your use of X Money is also governed by our Privacy Policy. By using the Service, you consent to the collection, use, and sharing of your information as described in the Privacy Policy.
+              Your use of ExoSky is also governed by our Privacy Policy. By using the Service, you consent to the collection, use, and sharing of your information as described in the Privacy Policy.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">8. Limitation of Liability</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              To the maximum extent permitted by law, X Corp and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.
+              To the maximum extent permitted by law, ExoSky Inc. and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.
             </p>
           </section>
 
@@ -84,7 +84,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">10. Contact</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              For questions about these Terms, contact us at legal@x.com or X Corp, 1355 Market Street, San Francisco, CA 94103.
+              For questions about these Terms, contact us at legal@exosky.app or ExoSky Inc., 1355 Market Street, San Francisco, CA 94103.
             </p>
           </section>
         </motion.div>

@@ -23,7 +23,7 @@ export default function Premium() {
 
   useEffect(() => {
     if (searchParams.get("success") === "true") {
-      toast.success("Welcome to X Money Pro! 🎉");
+      toast.success("Welcome to ExoSky Pro! 🎉");
       checkSubscription();
     }
     if (searchParams.get("canceled") === "true") {
@@ -45,7 +45,7 @@ export default function Premium() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-1">
           <Crown className="w-6 h-6 text-warning" />
-          <h1 className="text-2xl font-bold tracking-tight">X Money Pro</h1>
+          <h1 className="text-2xl font-bold tracking-tight">ExoSky Pro</h1>
           {isSubscribed && (
             <Badge className="bg-warning/10 text-warning border-0 text-xs font-semibold">Active</Badge>
           )}

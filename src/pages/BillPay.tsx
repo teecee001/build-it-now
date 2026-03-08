@@ -226,7 +226,7 @@ export default function BillPay() {
 
       {/* Cashback Notice */}
       <Card className="p-3 bg-warning/5 border-warning/10">
-        <p className="text-xs text-warning text-center">💰 Earn 1% cashback on all bill payments with your X Money card</p>
+        <p className="text-xs text-warning text-center">💰 Earn 1% cashback on all bill payments with your ExoSky card</p>
       </Card>
     </div>
   );

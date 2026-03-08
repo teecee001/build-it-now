@@ -143,7 +143,7 @@ export default function Dashboard() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold">$25 Welcome Bonus</p>
-              <p className="text-xs text-muted-foreground">Credited to your X Money wallet</p>
+              <p className="text-xs text-muted-foreground">Credited to your ExoSky wallet</p>
             </div>
             <Badge className="bg-warning/20 text-warning border-0 text-xs">Claimed</Badge>
           </Card>

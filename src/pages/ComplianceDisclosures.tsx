@@ -44,14 +44,14 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Banking Relationship</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money is a financial technology company, not a bank. Banking services are provided by our partner institutions. Funds held in your X Money wallet are deposited in pooled accounts at FDIC-insured banks. Your deposits are eligible for pass-through FDIC insurance up to $250,000 per depositor per institution.
+              ExoSky is a financial technology company, not a bank. Banking services are provided by our partner institutions. Funds held in your ExoSky wallet are deposited in pooled accounts at FDIC-insured banks. Your deposits are eligible for pass-through FDIC insurance up to $250,000 per depositor per institution.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Anti-Money Laundering (AML)</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money maintains a comprehensive AML compliance program in accordance with the Bank Secrecy Act (BSA) and USA PATRIOT Act. This includes Customer Identification Program (CIP), Customer Due Diligence (CDD), ongoing transaction monitoring, and Suspicious Activity Report (SAR) filing obligations.
+              ExoSky maintains a comprehensive AML compliance program in accordance with the Bank Secrecy Act (BSA) and USA PATRIOT Act. This includes Customer Identification Program (CIP), Customer Due Diligence (CDD), ongoing transaction monitoring, and Suspicious Activity Report (SAR) filing obligations.
             </p>
           </section>
 
@@ -65,14 +65,14 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">OFAC Compliance</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money screens all users and transactions against the Office of Foreign Assets Control (OFAC) Specially Designated Nationals (SDN) list and other sanctions lists. Transactions involving sanctioned entities or jurisdictions are prohibited.
+              ExoSky screens all users and transactions against the Office of Foreign Assets Control (OFAC) Specially Designated Nationals (SDN) list and other sanctions lists. Transactions involving sanctioned entities or jurisdictions are prohibited.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Electronic Fund Transfer Act (Regulation E)</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Your rights regarding electronic fund transfers are protected under Regulation E. In case of unauthorized transactions, contact us immediately at support@x.com. You may be entitled to provisional credit while we investigate.
+              Your rights regarding electronic fund transfers are protected under Regulation E. In case of unauthorized transactions, contact us immediately at support@exosky.app. You may be entitled to provisional credit while we investigate.
             </p>
           </section>
 
@@ -86,7 +86,7 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Complaints</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              If you have a complaint, contact us at compliance@x.com. If we cannot resolve your issue, you may file a complaint with the Consumer Financial Protection Bureau (CFPB) at consumerfinance.gov or your state's financial regulator.
+              If you have a complaint, contact us at compliance@exosky.app. If we cannot resolve your issue, you may file a complaint with the Consumer Financial Protection Bureau (CFPB) at consumerfinance.gov or your state's financial regulator.
             </p>
           </section>
         </motion.div>
