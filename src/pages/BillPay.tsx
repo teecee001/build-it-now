@@ -293,7 +293,7 @@ export default function BillPay() {
                         <p className="text-sm font-bold font-mono">${Number(bill.amount).toFixed(2)}</p>
                         <Button
                           size="sm"
-                          onClick={() => handlePay(bill)}
+                          onClick={() => handlePayClick(bill)}
                           disabled={payingId === bill.id}
                           className="bg-foreground text-background hover:bg-foreground/90 h-8 gap-1"
                         >
