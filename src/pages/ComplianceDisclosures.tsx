@@ -72,7 +72,7 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Electronic Fund Transfer Act (Regulation E)</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Your rights regarding electronic fund transfers are protected under Regulation E. In case of unauthorized transactions, contact us immediately at support@x.com. You may be entitled to provisional credit while we investigate.
+              Your rights regarding electronic fund transfers are protected under Regulation E. In case of unauthorized transactions, contact us immediately at support@exosky.app. You may be entitled to provisional credit while we investigate.
             </p>
           </section>
 
