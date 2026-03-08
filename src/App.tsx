@@ -40,7 +40,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  const { geoStatus, isCheckingGeo, hasCompletedGeoSetup, isBlocked, vpnDetected } = useGeoVerification();
+  const { isCheckingGeo, hasCompletedGeoSetup } = useGeoVerification();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   if (isLoading || isCheckingGeo) {
@@ -52,11 +52,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
-
-  // Show block screen if VPN detected or location mismatch
-  if (isBlocked) {
-    return <GeoBlockScreen vpnDetected={vpnDetected} locationMismatch={geoStatus?.location_mismatch ?? false} />;
-  }
 
   // Show country onboarding if user hasn't set up their country yet
   if (!hasCompletedGeoSetup && !onboardingComplete) {
