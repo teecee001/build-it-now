@@ -141,12 +141,19 @@ export default function LandingPage() {
   });
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
+  const [waitlistCount, setWaitlistCount] = useState(0);
 
   useEffect(() => {
     if (!isLoading && user) {
       navigate("/dashboard", { replace: true });
     }
   }, [user, isLoading, navigate]);
+
+  useEffect(() => {
+    supabase.rpc("get_waitlist_count").then(({ data }) => {
+      if (data != null) setWaitlistCount(data);
+    });
+  }, []);
 
   if (isLoading) return null;
 
@@ -641,6 +648,7 @@ export default function LandingPage() {
                   } else {
                     toast.success("You're on the list! We'll be in touch soon.");
                     emailInput.value = "";
+                    setWaitlistCount((prev) => prev + 1);
                   }
                 }}
                 className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"
@@ -660,7 +668,13 @@ export default function LandingPage() {
                   Join Waitlist <ArrowRight className="w-4 h-4" />
                 </Button>
               </form>
-              <p className="text-xs text-muted-foreground mt-4">
+              {waitlistCount > 0 && (
+                <p className="text-sm text-accent font-medium mt-4 flex items-center justify-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  Join {waitlistCount.toLocaleString()}+ others on the waitlist
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
                 No spam · Unsubscribe anytime · Beta users get $25 welcome bonus
               </p>
             </div>
