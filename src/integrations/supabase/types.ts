@@ -197,6 +197,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_alerts: {
+        Row: {
+          created_at: string
+          direction: string
+          from_currency: string
+          id: string
+          is_active: boolean
+          is_triggered: boolean
+          target_rate: number
+          to_currency: string
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          direction?: string
+          from_currency?: string
+          id?: string
+          is_active?: boolean
+          is_triggered?: boolean
+          target_rate: number
+          to_currency: string
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          from_currency?: string
+          id?: string
+          is_active?: boolean
+          is_triggered?: boolean
+          target_rate?: number
+          to_currency?: string
+          triggered_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       recurring_payments: {
         Row: {
           amount: number
