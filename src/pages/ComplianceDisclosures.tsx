@@ -40,7 +40,7 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "OFAC & International Sanctions Compliance",
-      content: `ExoSky screens all users and transactions against: the US OFAC Specially Designated Nationals (SDN) list, EU Consolidated Sanctions List, UN Security Council Consolidated List, UK HM Treasury Financial Sanctions List, and applicable national sanctions lists in operating jurisdictions. Transactions involving sanctioned entities, individuals, or jurisdictions are automatically blocked. False positives are reviewed by our compliance team within 24 hours.`,
+      content: `Ξ╳oSky screens all users and transactions against: the US OFAC Specially Designated Nationals (SDN) list, EU Consolidated Sanctions List, UN Security Council Consolidated List, UK HM Treasury Financial Sanctions List, and applicable national sanctions lists in operating jurisdictions. Transactions involving sanctioned entities, individuals, or jurisdictions are automatically blocked. False positives are reviewed by our compliance team within 24 hours.`,
     },
     {
       title: "Country-Specific Regulatory Notes",
