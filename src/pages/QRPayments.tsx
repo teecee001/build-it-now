@@ -286,7 +286,7 @@ export default function QRPayments() {
                 <div>
                   <p className="text-sm font-semibold">Instant P2P Transfers</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Share your QR code to receive payments. Scan any ExoSky QR or external payment QR to send money instantly.
+                    Share your QR code to receive payments. Scan any Ξ╳oSky QR or external payment QR to send money instantly.
                   </p>
                 </div>
               </div>
