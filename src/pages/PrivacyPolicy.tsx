@@ -61,7 +61,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">6. Your Rights</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Depending on your jurisdiction, you may have the right to: access your personal data, correct inaccurate data, request deletion (subject to legal retention requirements), opt out of marketing communications, and data portability. Contact privacy@x.com to exercise these rights.
+              Depending on your jurisdiction, you may have the right to: access your personal data, correct inaccurate data, request deletion (subject to legal retention requirements), opt out of marketing communications, and data portability. Contact privacy@exosky.app to exercise these rights.
             </p>
           </section>
 
