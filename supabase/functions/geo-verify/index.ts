@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
       if (!geo) {
         return new Response(
           JSON.stringify({ success: false, error: "No geo verification found", code: "NO_GEO" }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
