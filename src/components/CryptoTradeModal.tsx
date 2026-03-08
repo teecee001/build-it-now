@@ -180,13 +180,27 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         {/* Wallet Address for Send */}
         {type === "send" && (
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground font-medium">Recipient Wallet Address</label>
+            <label className="text-sm text-muted-foreground font-medium">
+              Recipient {network.label} Address
+            </label>
             <Input
-              placeholder="0x... or wallet address"
+              placeholder={network.placeholder}
               value={walletAddress}
-              onChange={(e) => setWalletAddress(e.target.value)}
-              className="h-12 bg-secondary border-border font-mono text-sm"
+              onChange={(e) => setWalletAddress(e.target.value.trim())}
+              className={`h-12 bg-secondary border-border font-mono text-sm ${
+                walletAddress && !addressValidation.valid ? "border-destructive" : 
+                walletAddress && addressValidation.valid ? "border-success" : ""
+              }`}
             />
+            {walletAddress && addressValidation.error && (
+              <p className="text-xs text-destructive">{addressValidation.error}</p>
+            )}
+            {walletAddress && addressValidation.valid && (
+              <p className="text-xs text-success">✓ Valid {network.label} address</p>
+            )}
+            <p className="text-[10px] text-muted-foreground">
+              Only send {code} to a compatible {network.label} wallet
+            </p>
           </div>
         )}
 
