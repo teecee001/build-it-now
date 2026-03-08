@@ -53,7 +53,9 @@ export default function CardPage() {
   const openDetail = async (c: CardData) => {
     setSelectedCard(c);
     setShowNumber(false);
-    biometric.reset();
+    setPasswordInput("");
+    setVerifyMode("smart");
+    verification.reset();
     setView("detail");
   };
   const openSettings = (c: CardData) => { setSelectedCard(c); setView("settings"); };
