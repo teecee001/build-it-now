@@ -29,9 +29,9 @@ export default function Referrals() {
   };
 
   const shareLink = () => {
-    const text = `Join ExoSky and we both get $10! Use my referral code: ${referralCode}`;
+    const text = `Join Ξ╳oSky and we both get $10! Use my referral code: ${referralCode}`;
     if (navigator.share) {
-      navigator.share({ title: "ExoSky Referral", text });
+      navigator.share({ title: "Ξ╳oSky Referral", text });
     } else {
       navigator.clipboard.writeText(text);
       toast.success("Share text copied to clipboard!");

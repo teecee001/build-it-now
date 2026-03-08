@@ -887,7 +887,7 @@ export default function LandingPage() {
 
           <div className="border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground/60">
-              © {new Date().getFullYear()} ExoSky Inc. All rights reserved. ExoSky is not a bank. Banking services provided by partner institutions.
+              © {new Date().getFullYear()} Ξ╳oSky Inc. All rights reserved. Ξ╳oSky is not a bank. Banking services provided by partner institutions.
             </p>
             <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
               <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>

@@ -356,7 +356,7 @@ export default function AdminWaitlist() {
         {/* Footer */}
         <div className="mt-8 pt-6 border-t border-border/30 flex items-center justify-between">
           <p className="text-[11px] text-muted-foreground/50">
-            ExoSky Admin · Waitlist v1.0
+            Ξ╳oSky Admin · Waitlist v1.0
           </p>
           <p className="text-[11px] text-muted-foreground/50">
             Showing {filtered.length} of {totalCount} entries
