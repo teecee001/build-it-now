@@ -156,6 +156,7 @@ export default function LandingPage() {
               <span className="text-sm font-black text-accent-foreground tracking-tighter">Ξ╳</span>
             </div>
             <span className="text-lg font-bold tracking-tight">ExoSky</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
