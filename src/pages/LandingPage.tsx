@@ -158,6 +158,8 @@ const FAQS = [
     a: "ExoSky is available in 150+ countries. Some features like cards or stock trading may vary by region due to local regulations. Check the app for availability in your country.",
   },
 ];
+
+export default function LandingPage() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
