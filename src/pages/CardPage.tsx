@@ -25,6 +25,7 @@ export default function CardPage() {
   const { cards, isLoading, toggleFreeze, addCard, updateCardName } = useCard();
   const { tier, config, limits } = useAccountTier();
   const [view, setView] = useState<View>("list");
+  const [pinInput, setPinInput] = useState("");
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [showNumber, setShowNumber] = useState(false);
   const [newCardFormat, setNewCardFormat] = useState<"virtual" | "physical">("virtual");
