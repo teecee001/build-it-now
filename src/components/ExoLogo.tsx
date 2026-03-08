@@ -29,7 +29,9 @@ export function ExoLogo({ size = "md", variant = "full", className }: ExoLogoPro
         <span className={cn(s.mark, "leading-none")}>Ξ╳</span>
       </div>
       {variant === "full" && (
-        <span className={cn(s.word, "font-bold tracking-tight")}>ExoSky</span>
+        <span className={cn(s.word, "font-bold tracking-tight")}>
+          <span className="bg-gradient-accent bg-clip-text text-transparent">Ξ╳</span>oSky
+        </span>
       )}
     </div>
   );
