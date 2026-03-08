@@ -179,6 +179,8 @@ export function AppLayout() {
           <Outlet />
         </div>
       </main>
+
+      <BetaFeedback />
     </div>
   );
 }
