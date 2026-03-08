@@ -348,9 +348,52 @@ export default function BillPay() {
       )}
 
       {/* Cashback Notice */}
-      <Card className="p-3 bg-warning/5 border-warning/10">
-        <p className="text-xs text-warning text-center">💰 Earn 1% cashback on all bill payments with your ExoSky card</p>
-      </Card>
+      {/* Payment Confirmation Dialog */}
+      <Dialog open={!!confirmBill} onOpenChange={(open) => !open && setConfirmBill(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" /> Confirm Payment
+            </DialogTitle>
+            <DialogDescription>Please review your payment details before proceeding.</DialogDescription>
+          </DialogHeader>
+          {confirmBill && (
+            <div className="space-y-3 py-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Provider</span>
+                <span className="font-semibold">{confirmBill.biller_name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Account</span>
+                <span className="font-mono">•••• {(confirmBill.account_number || "").slice(-4)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Category</span>
+                <Badge variant="secondary" className="text-[10px]">{confirmBill.category}</Badge>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-bold font-mono">${Number(confirmBill.amount).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Cashback (1%)</span>
+                <span className="text-success font-mono">+${(confirmBill.amount * 0.01).toFixed(2)}</span>
+              </div>
+              <div className="border-t border-border pt-2 mt-2">
+                <p className="text-[10px] text-muted-foreground text-center">
+                  By confirming, you authorize this payment from your ExoSky wallet.
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmBill(null)}>Cancel</Button>
+            <Button onClick={handleConfirmPay} className="bg-foreground text-background hover:bg-foreground/90 gap-1">
+              <ArrowRight className="w-4 h-4" /> Pay Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
