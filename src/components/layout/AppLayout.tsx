@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { path: "/card", icon: CreditCard, label: "Card" },
   { path: "/bills", icon: Receipt, label: "Bills" },
   { path: "/markets", icon: TrendingUp, label: "Markets" },
+  { path: "/referrals", icon: Users, label: "Refer & Earn" },
   { path: "/advisor", icon: Bot, label: "AI Advisor" },
 ];
 

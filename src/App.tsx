@@ -72,6 +72,7 @@ const App = () => (
               <Route path="/markets" element={<Markets />} />
               <Route path="/advisor" element={<AIAdvisor />} />
               <Route path="/savings" element={<Savings />} />
+              <Route path="/referrals" element={<Referrals />} />
               <Route path="/verify" element={<KYCVerification />} />
             </Route>
             <Route path="*" element={<NotFound />} />
