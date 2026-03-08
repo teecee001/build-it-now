@@ -105,7 +105,7 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
     const coverage = Math.max(faceW, faceH);
 
     const centered = Math.abs(faceCX - 0.5) < 0.15 && Math.abs(faceCY - 0.5) < 0.18;
-    const sizeOk = coverage > 0.3 && coverage < 0.85;
+    const sizeOk = coverage > 0.15 && coverage < 0.95;
 
     return { detected, centered, sizeOk, centerX: faceCX, centerY: faceCY, coverage };
   }
