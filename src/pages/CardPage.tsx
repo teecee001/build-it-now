@@ -12,11 +12,12 @@ import {
   Snowflake, Settings, Copy, CheckCircle2, Loader2,
   ArrowLeft, ShieldCheck, Smartphone, MapPin, ShoppingBag,
   Fuel, Utensils, Plane, DollarSign, AlertTriangle,
-  Plus, Wifi, Package, Truck, Crown, Fingerprint, ScanFace, KeyRound
+  Plus, Wifi, Package, Truck, Crown, Fingerprint, ScanFace, KeyRound,
+  Brain, ShieldAlert, RefreshCw, LockKeyhole
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useBiometricAuth } from "@/hooks/useBiometricAuth";
+import { useSecureVerification } from "@/hooks/useSecureVerification";
 
 type View = "list" | "detail" | "settings" | "add" | "tiers";
 
