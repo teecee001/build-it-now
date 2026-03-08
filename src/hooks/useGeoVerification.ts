@@ -57,11 +57,16 @@ export function useGeoVerification() {
     queryKey: ["geo-verification", user?.id],
     queryFn: async (): Promise<GeoVerification | null> => {
       if (!user) return null;
-      const { data, error } = await supabase.functions.invoke("geo-verify", {
-        body: { action: "session_check", user_id: user.id },
-      });
-      if (error || !data?.success) return null;
-      return data.geo as GeoVerification;
+      try {
+        const { data, error } = await supabase.functions.invoke("geo-verify", {
+          body: { action: "session_check", user_id: user.id },
+        });
+        if (error) return null;
+        if (!data?.success) return null;
+        return data.geo as GeoVerification;
+      } catch {
+        return null;
+      }
     },
     enabled: !!user,
     refetchInterval: 5 * 60 * 1000, // re-check every 5 min
