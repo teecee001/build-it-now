@@ -4,6 +4,7 @@ import { useActiveCurrency } from "@/hooks/useActiveCurrency";
 import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { TravelMode } from "@/components/TravelMode";
 import { Card } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import {
   ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, 
   Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
   DollarSign, Percent, Eye, EyeOff, Loader2, BarChart3, QrCode,
-  RefreshCw, Globe
+  RefreshCw, Globe, CheckCircle2, XCircle, Briefcase, Bitcoin
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const { activeCurrency, activeBalance, activeSymbol, formatBalance, fromUSD, wallets } = useActiveCurrency();
   const { transactions, isLoading: txLoading } = useTransactions(5);
   const { rates, isLive } = useExchangeRates();
+  const { isFeatureAvailable, geoStatus } = useGeoVerification();
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
   
@@ -211,10 +213,65 @@ export default function Dashboard() {
         )}
       </motion.div>
 
+      {/* Country & Feature Availability */}
+      {geoStatus?.country && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+          <Card className="p-4 bg-card border-border">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Available in {geoStatus.country.name}</h3>
+              </div>
+              <Badge variant="secondary" className="text-xs">{geoStatus.country.region}</Badge>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_crypto") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_crypto") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Crypto</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_stocks") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_stocks") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Stocks</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_send_money") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_send_money") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Transfers</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_cards") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_cards") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Cards</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_savings") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_savings") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Savings</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_bill_pay") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_bill_pay") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Bill Pay</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_forex") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_forex") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Forex</span>
+              </div>
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${isFeatureAvailable("features_premium") ? "bg-success/5" : "bg-muted/30"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isFeatureAvailable("features_premium") ? "bg-success" : "bg-muted-foreground"}`} />
+                <span className="text-xs">Premium</span>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Feature Cards */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/card")}>
-          <CreditCard className="w-5 h-5 text-accent mb-2" />
+        <Card 
+          className={`p-4 border-border transition-all ${isFeatureAvailable("features_cards") ? "bg-card cursor-pointer hover:bg-secondary/50" : "bg-muted/20 cursor-not-allowed opacity-60"}`}
+          onClick={() => isFeatureAvailable("features_cards") && navigate("/card")}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <CreditCard className={`w-5 h-5 ${isFeatureAvailable("features_cards") ? "text-accent" : "text-muted-foreground"}`} />
+            {!isFeatureAvailable("features_cards") && <XCircle className="w-3 h-3 text-muted-foreground ml-auto" />}
+          </div>
           <p className="text-sm font-semibold">Debit Card</p>
           <p className="text-xs text-muted-foreground">Metal card by Visa</p>
         </Card>
@@ -243,8 +300,14 @@ export default function Dashboard() {
           <p className="text-sm font-semibold">Rewards</p>
           <p className="text-xs text-muted-foreground">Cashback & APY</p>
         </Card>
-        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/bills")}>
-          <Landmark className="w-5 h-5 text-primary mb-2" />
+        <Card 
+          className={`p-4 border-border transition-all ${isFeatureAvailable("features_bill_pay") ? "bg-card cursor-pointer hover:bg-secondary/50" : "bg-muted/20 cursor-not-allowed opacity-60"}`}
+          onClick={() => isFeatureAvailable("features_bill_pay") && navigate("/bills")}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Landmark className={`w-5 h-5 ${isFeatureAvailable("features_bill_pay") ? "text-primary" : "text-muted-foreground"}`} />
+            {!isFeatureAvailable("features_bill_pay") && <XCircle className="w-3 h-3 text-muted-foreground ml-auto" />}
+          </div>
           <p className="text-sm font-semibold">Pay Bills</p>
           <p className="text-xs text-muted-foreground">Utilities & more</p>
         </Card>
@@ -252,6 +315,28 @@ export default function Dashboard() {
           <Bot className="w-5 h-5 text-accent mb-2" />
           <p className="text-sm font-semibold">AI Advisor</p>
           <p className="text-xs text-muted-foreground">Smart insights</p>
+        </Card>
+        <Card 
+          className={`p-4 border-border transition-all ${isFeatureAvailable("features_crypto") ? "bg-card cursor-pointer hover:bg-secondary/50" : "bg-muted/20 cursor-not-allowed opacity-60"}`}
+          onClick={() => isFeatureAvailable("features_crypto") && navigate("/wallet")}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Bitcoin className={`w-5 h-5 ${isFeatureAvailable("features_crypto") ? "text-warning" : "text-muted-foreground"}`} />
+            {!isFeatureAvailable("features_crypto") && <XCircle className="w-3 h-3 text-muted-foreground ml-auto" />}
+          </div>
+          <p className="text-sm font-semibold">Crypto</p>
+          <p className="text-xs text-muted-foreground">Trade digital assets</p>
+        </Card>
+        <Card 
+          className={`p-4 border-border transition-all ${isFeatureAvailable("features_stocks") ? "bg-card cursor-pointer hover:bg-secondary/50" : "bg-muted/20 cursor-not-allowed opacity-60"}`}
+          onClick={() => isFeatureAvailable("features_stocks") && navigate("/stocks")}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Briefcase className={`w-5 h-5 ${isFeatureAvailable("features_stocks") ? "text-success" : "text-muted-foreground"}`} />
+            {!isFeatureAvailable("features_stocks") && <XCircle className="w-3 h-3 text-muted-foreground ml-auto" />}
+          </div>
+          <p className="text-sm font-semibold">Stocks</p>
+          <p className="text-xs text-muted-foreground">Invest in markets</p>
         </Card>
       </motion.div>
     </div>
