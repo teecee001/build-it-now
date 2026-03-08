@@ -141,12 +141,19 @@ export default function LandingPage() {
   });
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
+  const [waitlistCount, setWaitlistCount] = useState(0);
 
   useEffect(() => {
     if (!isLoading && user) {
       navigate("/dashboard", { replace: true });
     }
   }, [user, isLoading, navigate]);
+
+  useEffect(() => {
+    supabase.rpc("get_waitlist_count").then(({ data }) => {
+      if (data != null) setWaitlistCount(data);
+    });
+  }, []);
 
   if (isLoading) return null;
 
