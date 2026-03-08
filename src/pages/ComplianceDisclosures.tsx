@@ -86,7 +86,7 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Complaints</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              If you have a complaint, contact us at compliance@x.com. If we cannot resolve your issue, you may file a complaint with the Consumer Financial Protection Bureau (CFPB) at consumerfinance.gov or your state's financial regulator.
+              If you have a complaint, contact us at compliance@exosky.app. If we cannot resolve your issue, you may file a complaint with the Consumer Financial Protection Bureau (CFPB) at consumerfinance.gov or your state's financial regulator.
             </p>
           </section>
         </motion.div>

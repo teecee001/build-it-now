@@ -105,9 +105,9 @@ export function AppLayout() {
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-card/80 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-gradient-accent flex items-center justify-center font-bold text-xs text-primary-foreground">
-            X
+            E
           </div>
-          <span className="text-base font-bold">Money</span>
+          <span className="text-base font-bold">ExoSky</span>
         </div>
         <div className="flex items-center gap-1">
           <NotificationBell />

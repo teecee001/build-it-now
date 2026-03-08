@@ -84,7 +84,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">10. Contact</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              For questions about these Terms, contact us at legal@x.com or X Corp, 1355 Market Street, San Francisco, CA 94103.
+              For questions about these Terms, contact us at legal@exosky.app or ExoSky Inc., 1355 Market Street, San Francisco, CA 94103.
             </p>
           </section>
         </motion.div>

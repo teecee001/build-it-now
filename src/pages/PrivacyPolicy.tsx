@@ -82,7 +82,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">9. Contact Us</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              For privacy inquiries: privacy@x.com | Data Protection Officer, X Corp, 1355 Market Street, San Francisco, CA 94103.
+              For privacy inquiries: privacy@exosky.app | Data Protection Officer, ExoSky Inc., 1355 Market Street, San Francisco, CA 94103.
             </p>
           </section>
         </motion.div>

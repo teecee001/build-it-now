@@ -226,7 +226,7 @@ export default function QRPayments() {
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={() => {
                   if (navigator.share) {
-                    navigator.share({ title: "Pay me on X Money", text: `Pay ${handle} on X Money`, url: qrData });
+                    navigator.share({ title: "Pay me on ExoSky", text: `Pay ${handle} on ExoSky`, url: qrData });
                   } else {
                     navigator.clipboard.writeText(qrData);
                     toast.success("Copied to share");
