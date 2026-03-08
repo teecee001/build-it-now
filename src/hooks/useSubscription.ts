@@ -36,12 +36,16 @@ export function useSubscription() {
       const { data, error } = await supabase.functions.invoke("check-subscription", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (error) throw error;
+      if (error) {
+        console.warn("Subscription check failed:", error);
+        setIsLoading(false);
+        return;
+      }
       setIsSubscribed(data?.subscribed ?? false);
       setProductId(data?.product_id ?? null);
       setSubscriptionEnd(data?.subscription_end ?? null);
     } catch (err) {
-      console.error("Subscription check failed:", err);
+      console.warn("Subscription check failed:", err);
     } finally {
       setIsLoading(false);
     }
