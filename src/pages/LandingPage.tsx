@@ -387,7 +387,7 @@ export default function LandingPage() {
               <span className="text-muted-foreground">Nothing you don't.</span>
             </h2>
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-              From everyday spending to building wealth — ExoSky replaces your bank, broker, and payment apps.
+              From everyday spending to building wealth — Ξ╳oSky replaces your bank, broker, and payment apps.
             </p>
           </motion.div>
 
