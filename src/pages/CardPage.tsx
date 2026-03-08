@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSecureVerification } from "@/hooks/useSecureVerification";
+import { FaceScanner } from "@/components/FaceScanner";
 
 type View = "list" | "detail" | "settings" | "add" | "tiers";
 
@@ -31,7 +32,8 @@ export default function CardPage() {
   const [newCardFormat, setNewCardFormat] = useState<"virtual" | "physical">("virtual");
   const [newCardName, setNewCardName] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
-  const [verifyMode, setVerifyMode] = useState<"smart" | "password">("smart");
+  const [verifyMode, setVerifyMode] = useState<"face" | "password">("face");
+  const [faceVerified, setFaceVerified] = useState(false);
   const handle = "@" + (user?.email?.split("@")[0] || "user");
   const verification = useSecureVerification();
 
@@ -54,7 +56,8 @@ export default function CardPage() {
     setSelectedCard(c);
     setShowNumber(false);
     setPasswordInput("");
-    setVerifyMode("smart");
+    setVerifyMode("face");
+    setFaceVerified(false);
     verification.reset();
     setView("detail");
   };
@@ -213,7 +216,7 @@ export default function CardPage() {
         {view === "detail" && selectedCard && (
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => { setView("list"); setShowNumber(false); verification.reset(); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+              <button onClick={() => { setView("list"); setShowNumber(false); setFaceVerified(false); verification.reset(); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -224,135 +227,24 @@ export default function CardPage() {
 
             <CardVisual c={selectedCard} />
 
-            {/* AI-Powered Verification Gate */}
-            {!verification.isVerified ? (
+            {/* Face ID / Password Verification Gate */}
+            {!faceVerified && !verification.isVerified ? (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
                 <Card className="p-6 bg-card border-border text-center space-y-4">
-                  {/* Step: Idle — Choose verification method */}
-                  {verification.step === "idle" && (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
-                        <Brain className="w-8 h-8 text-accent" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold">Secure Card Access</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Verify your identity to view card details, CVV, and manage settings.
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Button
-                          onClick={() => { setVerifyMode("smart"); verification.startVerification(); }}
-                          className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
-                        >
-                          <Brain className="w-4 h-4" />
-                          Smart Verification
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setVerifyMode("password")}
-                          className="w-full gap-2"
-                        >
-                          <LockKeyhole className="w-4 h-4" />
-                          Verify with Password
-                        </Button>
-                      </div>
-                    </>
+                  {/* Face ID Mode */}
+                  {verifyMode === "face" && (
+                    <FaceScanner
+                      onVerified={() => {
+                        setFaceVerified(true);
+                        toast.success("Face verified successfully");
+                      }}
+                      onFailed={(err) => toast.error(err)}
+                      onCancel={() => setVerifyMode("password")}
+                    />
                   )}
 
-                  {/* Step: Loading */}
-                  {verification.step === "loading" && (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
-                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
-                          <Brain className="w-8 h-8 text-accent" />
-                        </motion.div>
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold">Generating Challenge…</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          AI is creating a personalized security question based on your account activity.
-                        </p>
-                      </div>
-                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
-                    </>
-                  )}
-
-                  {/* Step: AI Challenge */}
-                  {verification.step === "challenge" && verification.challenge && (
-                    <>
-                      <div className="flex items-center gap-2 justify-center">
-                        <ShieldCheck className="w-5 h-5 text-accent" />
-                        <h3 className="text-base font-bold">Security Challenge</h3>
-                      </div>
-                      <p className="text-sm text-foreground font-medium">
-                        {verification.challenge.question}
-                      </p>
-                      <div className="space-y-2 text-left">
-                        {verification.challenge.options.map((option, idx) => (
-                          <button
-                            key={idx}
-                            onClick={async () => {
-                              const success = await verification.submitAnswer(idx);
-                              if (success) {
-                                toast.success("Identity verified successfully");
-                              } else {
-                                toast.error("Incorrect — please try again");
-                              }
-                            }}
-                            className="w-full p-3 rounded-lg border border-border bg-secondary/50 hover:bg-accent/10 hover:border-accent/30 transition-all text-sm text-left"
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                      <Badge className="bg-accent/10 text-accent border-0 text-[10px] gap-1">
-                        <Brain className="w-3 h-3" /> AI-Powered · {verification.challenge.challengeType}
-                      </Badge>
-                    </>
-                  )}
-
-                  {/* Step: Verifying */}
-                  {verification.step === "verifying" && (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-accent animate-spin" />
-                      </div>
-                      <h3 className="text-base font-bold">Verifying…</h3>
-                    </>
-                  )}
-
-                  {/* Step: Failed */}
-                  {verification.step === "failed" && (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-destructive/10 mx-auto flex items-center justify-center">
-                        <ShieldAlert className="w-8 h-8 text-destructive" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold">Verification Failed</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{verification.error}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Button
-                          onClick={() => { verification.reset(); verification.startVerification(); }}
-                          className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
-                        >
-                          <RefreshCw className="w-4 h-4" /> Try Again
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => { verification.reset(); setVerifyMode("password"); }}
-                          className="w-full gap-2"
-                        >
-                          <LockKeyhole className="w-4 h-4" /> Use Password Instead
-                        </Button>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Password mode (when idle and password selected) */}
-                  {verification.step === "idle" && verifyMode === "password" && (
+                  {/* Password Mode */}
+                  {verifyMode === "password" && (
                     <>
                       <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
                         <LockKeyhole className="w-8 h-8 text-accent" />
@@ -392,17 +284,17 @@ export default function CardPage() {
                         <LockKeyhole className="w-4 h-4" /> Verify
                       </Button>
                       <button
-                        onClick={() => setVerifyMode("smart")}
+                        onClick={() => setVerifyMode("face")}
                         className="text-xs text-accent hover:underline"
                       >
-                        ← Use Smart Verification instead
+                        ← Use Face ID instead
                       </button>
                     </>
                   )}
                 </Card>
 
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Secured by AI-powered identity verification
+                  <ScanFace className="w-3 h-3" /> Secured by Face ID verification
                 </p>
               </motion.div>
             ) : (
@@ -410,7 +302,9 @@ export default function CardPage() {
                 {/* Verified badge */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/10">
                   <CheckCircle2 className="w-4 h-4 text-accent" />
-                  <span className="text-xs font-medium text-accent">Identity Verified · {verification.methodLabel}</span>
+                  <span className="text-xs font-medium text-accent">
+                    Identity Verified · {faceVerified ? "Face ID" : verification.methodLabel}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
