@@ -520,7 +520,7 @@ export default function LandingPage() {
               <span className="text-xs font-semibold text-accent">Side by Side</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
-              ExoSky vs. Traditional Banks
+              Ξ╳oSky vs. Traditional Banks
             </h2>
             <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
               See why thousands are making the switch.
