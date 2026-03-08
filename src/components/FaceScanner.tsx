@@ -64,8 +64,8 @@ function analyzeFace(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
   const faceW = (maxX - minX) / w;
   const faceH = (maxY - minY) / h;
   const coverage = Math.max(faceW, faceH);
-  const centered = Math.abs(avgX - 0.5) < 0.15 && Math.abs(avgY - 0.5) < 0.18;
-  const sizeOk = coverage > 0.15 && coverage < 0.95;
+  const centered = Math.abs(avgX - 0.5) < 0.25 && Math.abs(avgY - 0.5) < 0.25;
+  const sizeOk = coverage > 0.10 && coverage < 0.98;
 
   return { detected, centerX: avgX, centerY: avgY, coverage, centered, sizeOk };
 }
@@ -126,7 +126,7 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
 
   const startPositioning = useCallback(() => {
     let stableFrames = 0;
-    const THRESHOLD = 12;
+    const THRESHOLD = 6;
 
     intervalRef.current = setInterval(() => {
       if (!videoRef.current || !canvasRef.current) return;
