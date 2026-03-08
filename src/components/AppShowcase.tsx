@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Wallet, TrendingUp, CreditCard, PiggyBank, Globe,
   ArrowUpRight, ArrowDownLeft, BarChart3, Send, QrCode,
