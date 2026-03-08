@@ -72,9 +72,12 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
   const cryptoAmount = type === "buy" ? numAmount / price : numAmount;
   const usdValue = type === "sell" ? numAmount * price : numAmount;
 
+  const network = getNetworkInfo(code);
+  const addressValidation = type === "send" ? validateAddress(code, walletAddress) : { valid: true };
+
   const canProceed = numAmount > 0 && (
     type === "buy" ? usdBalance >= numAmount :
-    type === "send" ? currentHolding >= numAmount && walletAddress.length >= 10 :
+    type === "send" ? currentHolding >= numAmount && addressValidation.valid :
     currentHolding >= numAmount
   );
 
