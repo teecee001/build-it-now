@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Check IP vs claimed country
+      // Check IP vs claimed country - NON-BLOCKING for onboarding
       const ipMismatch = ipCountry !== "unknown" && ipCountry !== country_code;
 
       return new Response(
@@ -83,6 +83,8 @@ Deno.serve(async (req) => {
           ip_mismatch: ipMismatch,
           isp,
           country: countryData,
+          // Warning flags but don't block during initial verification
+          warning: isVpn ? "VPN/proxy detected - this may be restricted for certain features" : null,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
