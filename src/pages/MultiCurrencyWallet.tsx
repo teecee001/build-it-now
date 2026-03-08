@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { CURRENCIES } from "@/constants/currencies";
+import { RateAlerts } from "@/components/RateAlerts";
 import {
   Plus, ArrowLeftRight, Globe, Loader2, DollarSign, Briefcase
 } from "lucide-react";
@@ -334,6 +335,11 @@ export default function MultiCurrencyWallet() {
             );
           })}
         </div>
+      </motion.div>
+
+      {/* Rate Alerts */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <RateAlerts />
       </motion.div>
     </div>
   );
