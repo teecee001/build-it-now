@@ -12,20 +12,104 @@ import {
   Snowflake, Settings, Copy, CheckCircle2, Loader2,
   ArrowLeft, ShieldCheck, Smartphone, MapPin, ShoppingBag,
   Fuel, Utensils, Plane, DollarSign, AlertTriangle,
-  Plus, Wifi, Package, Truck, Crown, Fingerprint, ScanFace, KeyRound,
-  Brain, ShieldAlert, RefreshCw, LockKeyhole, Timer, Ban
+  Plus, Wifi, Package, Truck, Crown, KeyRound,
+  Timer, Ban, Check, Palette
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
-import { useSecureVerification } from "@/hooks/useSecureVerification";
-import { FaceScanner } from "@/components/FaceScanner";
 import { supabase } from "@/integrations/supabase/client";
 
 type View = "list" | "detail" | "settings" | "add" | "tiers";
 
 const MAX_ATTEMPTS = 3;
-const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
-const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const LOCKOUT_DURATION = 15 * 60 * 1000;
+const SESSION_TIMEOUT = 5 * 60 * 1000;
+
+// ─── Card Designs ───
+const CARD_DESIGNS = [
+  {
+    id: "classic-dark",
+    name: "Classic Dark",
+    bg: "linear-gradient(135deg, hsl(240 6% 14%), hsl(240 6% 8%))",
+    accent: "radial-gradient(circle at 30% 70%, hsl(220 80% 55% / 0.3), transparent 50%)",
+    border: "hsl(240 4% 22%)",
+  },
+  {
+    id: "midnight-blue",
+    name: "Midnight Blue",
+    bg: "linear-gradient(135deg, hsl(220 50% 15%), hsl(230 60% 8%))",
+    accent: "radial-gradient(circle at 70% 30%, hsl(210 90% 50% / 0.4), transparent 60%)",
+    border: "hsl(220 40% 25%)",
+  },
+  {
+    id: "emerald",
+    name: "Emerald",
+    bg: "linear-gradient(135deg, hsl(160 30% 12%), hsl(150 40% 6%))",
+    accent: "radial-gradient(circle at 20% 80%, hsl(142 71% 45% / 0.4), transparent 50%), radial-gradient(circle at 80% 20%, hsl(160 60% 40% / 0.2), transparent 50%)",
+    border: "hsl(150 30% 20%)",
+  },
+  {
+    id: "rose-gold",
+    name: "Rose Gold",
+    bg: "linear-gradient(135deg, hsl(350 20% 16%), hsl(340 15% 8%))",
+    accent: "radial-gradient(circle at 60% 40%, hsl(350 60% 55% / 0.3), transparent 55%)",
+    border: "hsl(350 20% 25%)",
+  },
+  {
+    id: "arctic",
+    name: "Arctic",
+    bg: "linear-gradient(135deg, hsl(200 20% 18%), hsl(210 25% 10%))",
+    accent: "radial-gradient(circle at 40% 60%, hsl(195 80% 60% / 0.3), transparent 50%), radial-gradient(circle at 80% 20%, hsl(180 50% 50% / 0.15), transparent 50%)",
+    border: "hsl(200 20% 28%)",
+  },
+  {
+    id: "sunset",
+    name: "Sunset",
+    bg: "linear-gradient(135deg, hsl(25 40% 14%), hsl(15 30% 7%))",
+    accent: "radial-gradient(circle at 30% 70%, hsl(30 80% 50% / 0.35), transparent 55%), radial-gradient(circle at 80% 30%, hsl(350 60% 50% / 0.2), transparent 50%)",
+    border: "hsl(25 30% 22%)",
+  },
+  {
+    id: "purple-haze",
+    name: "Purple Haze",
+    bg: "linear-gradient(135deg, hsl(270 30% 15%), hsl(280 25% 7%))",
+    accent: "radial-gradient(circle at 50% 50%, hsl(270 70% 55% / 0.35), transparent 55%)",
+    border: "hsl(270 25% 23%)",
+  },
+  {
+    id: "stealth",
+    name: "Stealth",
+    bg: "linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 4%))",
+    accent: "radial-gradient(circle at 50% 50%, hsl(0 0% 30% / 0.15), transparent 60%)",
+    border: "hsl(0 0% 16%)",
+  },
+];
+
+function getCardDesign(designId?: string) {
+  return CARD_DESIGNS.find(d => d.id === designId) || CARD_DESIGNS[0];
+}
+
+// ─── PIN helpers (per-card) ───
+function getCardPinHash(cardId: string): string | null {
+  return localStorage.getItem(`card_pin_${cardId}`);
+}
+function setCardPinHash(cardId: string, pin: string) {
+  localStorage.setItem(`card_pin_${cardId}`, simpleHash(pin));
+}
+function simpleHash(pin: string): string {
+  let hash = 0;
+  for (let i = 0; i < pin.length; i++) {
+    const char = pin.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return String(hash);
+}
+function verifyCardPin(cardId: string, pin: string): boolean {
+  const stored = getCardPinHash(cardId);
+  if (!stored) return false;
+  return simpleHash(pin) === stored;
+}
 
 function getLockedUntil(): number | null {
   const raw = localStorage.getItem("card_lockout");
@@ -38,11 +122,9 @@ function getLockedUntil(): number | null {
   }
   return until;
 }
-
 function getFailCount(): number {
   return parseInt(localStorage.getItem("card_fail_count") || "0", 10);
 }
-
 function recordFailure(): { locked: boolean; remaining: number } {
   const count = getFailCount() + 1;
   localStorage.setItem("card_fail_count", String(count));
@@ -53,7 +135,6 @@ function recordFailure(): { locked: boolean; remaining: number } {
   }
   return { locked: false, remaining: MAX_ATTEMPTS - count };
 }
-
 function clearFailures() {
   localStorage.removeItem("card_fail_count");
   localStorage.removeItem("card_lockout");
@@ -68,11 +149,16 @@ export default function CardPage() {
   const [showNumber, setShowNumber] = useState(false);
   const [newCardFormat, setNewCardFormat] = useState<"virtual" | "physical">("virtual");
   const [newCardName, setNewCardName] = useState("");
-  const [passwordInput, setPasswordInput] = useState("");
-  const [verifyMode, setVerifyMode] = useState<"face" | "password">("face");
-  const [faceVerified, setFaceVerified] = useState(false);
+  const [newCardDesign, setNewCardDesign] = useState(CARD_DESIGNS[0].id);
+  const [newCardPin, setNewCardPin] = useState("");
+  const [newCardPinConfirm, setNewCardPinConfirm] = useState("");
+  const [pinError, setPinError] = useState("");
   const handle = "@" + (user?.email?.split("@")[0] || "user");
-  const verification = useSecureVerification();
+
+  // PIN verification state
+  const [pinInput, setPinInput] = useState("");
+  const [pinVerified, setPinVerified] = useState(false);
+  const [pinVerifyError, setPinVerifyError] = useState("");
 
   // Attempt limiting
   const [isLocked, setIsLocked] = useState(false);
@@ -89,7 +175,9 @@ export default function CardPage() {
   const [atmWithdrawals, setAtmWithdrawals] = useState(true);
   const [txAlerts, setTxAlerts] = useState(true);
 
-  // Check lockout on mount and periodically
+  // Add card creation step
+  const [addStep, setAddStep] = useState<"format" | "design" | "pin">("format");
+
   useEffect(() => {
     const check = () => {
       const until = getLockedUntil();
@@ -106,18 +194,16 @@ export default function CardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Session timeout: auto-relock after 5 min
   const startSessionTimer = useCallback(() => {
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
     setVerifiedAt(Date.now());
     sessionTimerRef.current = setTimeout(() => {
-      setFaceVerified(false);
-      verification.reset();
+      setPinVerified(false);
       setShowNumber(false);
       setVerifiedAt(null);
       toast.info("Session expired — please verify again", { icon: <Timer className="w-4 h-4" /> });
     }, SESSION_TIMEOUT);
-  }, [verification]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -125,7 +211,6 @@ export default function CardPage() {
     };
   }, []);
 
-  // Session countdown display
   const [sessionTimeLeft, setSessionTimeLeft] = useState(0);
   useEffect(() => {
     if (!verifiedAt) { setSessionTimeLeft(0); return; }
@@ -137,28 +222,30 @@ export default function CardPage() {
     return () => clearInterval(interval);
   }, [verifiedAt]);
 
-  const handleVerificationSuccess = (method: string) => {
-    clearFailures();
-    startSessionTimer();
-    toast.success(`Identity verified via ${method}`);
-  };
-
-  const handleVerificationFailure = (errorMsg?: string) => {
-    const result = recordFailure();
-    if (result.locked) {
-      setIsLocked(true);
-      toast.error("Too many failed attempts. Card locked for 15 minutes.", { icon: <Ban className="w-4 h-4" /> });
+  const handlePinVerify = () => {
+    if (!selectedCard) return;
+    if (verifyCardPin(selectedCard.id, pinInput)) {
+      clearFailures();
+      setPinVerified(true);
+      setPinInput("");
+      setPinVerifyError("");
+      startSessionTimer();
+      toast.success("PIN verified successfully");
     } else {
-      toast.error(errorMsg || `Verification failed. ${result.remaining} attempt${result.remaining !== 1 ? "s" : ""} remaining.`);
+      const result = recordFailure();
+      if (result.locked) {
+        setIsLocked(true);
+        toast.error("Too many failed attempts. Card locked for 15 minutes.", { icon: <Ban className="w-4 h-4" /> });
+      } else {
+        setPinVerifyError(`Incorrect PIN. ${result.remaining} attempt${result.remaining !== 1 ? "s" : ""} remaining.`);
+      }
+      setPinInput("");
     }
   };
 
-  // Card freeze with notification
   const handleFreezeToggle = async (card: CardData) => {
     const wasFrozen = card.is_frozen;
     toggleFreeze.mutate(card.id);
-    
-    // Insert notification
     if (user) {
       await supabase.from("notifications").insert({
         user_id: user.id,
@@ -179,13 +266,12 @@ export default function CardPage() {
     );
   }
 
-  const openDetail = async (c: CardData) => {
+  const openDetail = (c: CardData) => {
     setSelectedCard(c);
     setShowNumber(false);
-    setPasswordInput("");
-    setVerifyMode("face");
-    setFaceVerified(false);
-    verification.reset();
+    setPinInput("");
+    setPinVerified(false);
+    setPinVerifyError("");
     setView("detail");
   };
   const openSettings = (c: CardData) => { setSelectedCard(c); setView("settings"); };
@@ -197,35 +283,33 @@ export default function CardPage() {
     bank: "text-primary",
   };
 
-  const isVerified = faceVerified || verification.isVerified;
-
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${String(s).padStart(2, "0")}`;
   };
 
+  const getDesignForCard = (c: CardData) => {
+    // Try to get design from metadata or fallback
+    const designId = (c as any).card_design || "classic-dark";
+    return getCardDesign(designId);
+  };
+
   /* ─── Card Visual ─── */
   const CardVisual = ({ c, compact = false }: { c: CardData; compact?: boolean }) => {
     const expiry = `${String(c.expiry_month).padStart(2, "0")}/${String(c.expiry_year).slice(-2)}`;
     const isVirtual = c.card_format === "virtual";
+    const design = getDesignForCard(c);
     return (
       <div
         className={`relative rounded-2xl p-${compact ? "4" : "6"} overflow-hidden ${compact ? "aspect-[2/1]" : "aspect-[1.586/1]"} flex flex-col justify-between ${c.is_frozen ? "opacity-60" : ""}`}
         style={{
-          background: isVirtual
-            ? "linear-gradient(135deg, hsl(240 6% 14%), hsl(240 6% 8%))"
-            : "linear-gradient(135deg, hsl(240 6% 12%), hsl(240 6% 6%))",
-          border: `1px solid hsl(240 4% ${isVirtual ? "22" : "20"}%)`,
+          background: design.bg,
+          border: `1px solid ${design.border}`,
         }}
       >
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: isVirtual
-            ? "radial-gradient(circle at 30% 70%, hsl(220 80% 55% / 0.3), transparent 50%)"
-            : "radial-gradient(circle at 20% 80%, hsl(142 71% 45% / 0.3), transparent 50%), radial-gradient(circle at 80% 20%, hsl(0 0% 100% / 0.1), transparent 50%)",
-        }} />
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: design.accent }} />
 
-        {/* Centered Ex watermark stamp */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <img src="/favicon.png" alt="" className={`${compact ? "w-12 h-12" : "w-20 h-20"} opacity-[0.08] select-none`} draggable={false} />
         </div>
@@ -271,6 +355,73 @@ export default function CardPage() {
         </div>
       </div>
     );
+  };
+
+  /* ─── Card Design Preview (for selection) ─── */
+  const CardDesignPreview = ({ design, selected, onClick }: { design: typeof CARD_DESIGNS[0]; selected: boolean; onClick: () => void }) => (
+    <button
+      onClick={onClick}
+      className={`relative rounded-xl overflow-hidden aspect-[1.6/1] transition-all ${
+        selected ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : "ring-1 ring-border hover:ring-accent/50"
+      }`}
+    >
+      <div className="absolute inset-0" style={{ background: design.bg }}>
+        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: design.accent }} />
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img src="/favicon.png" alt="" className="w-8 h-8 opacity-[0.12]" />
+      </div>
+      {selected && (
+        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
+          <Check className="w-3 h-3 text-accent-foreground" />
+        </div>
+      )}
+      <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+        <p className="text-[10px] font-medium text-white/90">{design.name}</p>
+      </div>
+    </button>
+  );
+
+  const handleCreateCard = async () => {
+    if (newCardPin.length < 4 || newCardPin.length > 6) {
+      setPinError("PIN must be 4-6 digits");
+      return;
+    }
+    if (!/^\d+$/.test(newCardPin)) {
+      setPinError("PIN must be digits only");
+      return;
+    }
+    if (newCardPin !== newCardPinConfirm) {
+      setPinError("PINs do not match");
+      return;
+    }
+
+    const result = await addCard.mutateAsync({
+      format: newCardFormat,
+      name: newCardName || undefined,
+    });
+
+    // Store the PIN for the newly created card
+    // We need to get the card ID — refetch and find the newest card
+    // For now, store with a temp key and associate on next load
+    const { data: latestCards } = await supabase
+      .from("cards")
+      .select("id")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (latestCards && latestCards[0]) {
+      setCardPinHash(latestCards[0].id, newCardPin);
+    }
+
+    setNewCardName("");
+    setNewCardPin("");
+    setNewCardPinConfirm("");
+    setPinError("");
+    setNewCardDesign(CARD_DESIGNS[0].id);
+    setAddStep("format");
+    setView("list");
   };
 
   return (
@@ -332,7 +483,7 @@ export default function CardPage() {
             </div>
 
             {cards.length < limits.maxCards && (
-              <Button variant="outline" onClick={() => setView("add")} className="w-full border-dashed gap-2">
+              <Button variant="outline" onClick={() => { setAddStep("format"); setView("add"); }} className="w-full border-dashed gap-2">
                 <Plus className="w-4 h-4" /> Add New Card
               </Button>
             )}
@@ -349,7 +500,7 @@ export default function CardPage() {
         {view === "detail" && selectedCard && (
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => { setView("list"); setShowNumber(false); setFaceVerified(false); verification.reset(); if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current); setVerifiedAt(null); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+              <button onClick={() => { setView("list"); setShowNumber(false); setPinVerified(false); if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current); setVerifiedAt(null); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -369,9 +520,7 @@ export default function CardPage() {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-destructive">Card Access Locked</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Too many failed verification attempts.
-                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">Too many failed verification attempts.</p>
                   </div>
                   <div className="p-3 rounded-lg bg-destructive/10">
                     <p className="text-xs text-muted-foreground">Try again in</p>
@@ -379,10 +528,9 @@ export default function CardPage() {
                   </div>
                 </Card>
               </motion.div>
-            ) : !isVerified ? (
+            ) : !pinVerified ? (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
                 <Card className="p-6 bg-card border-border text-center space-y-4">
-                  {/* Attempt counter */}
                   {getFailCount() > 0 && (
                     <div className="p-2 rounded-lg bg-warning/10 flex items-center justify-center gap-2">
                       <AlertTriangle className="w-3.5 h-3.5 text-warning" />
@@ -392,70 +540,37 @@ export default function CardPage() {
                     </div>
                   )}
 
-                  {/* Face ID Mode */}
-                  {verifyMode === "face" && (
-                    <FaceScanner
-                      onVerified={() => {
-                        setFaceVerified(true);
-                        handleVerificationSuccess("Face ID");
-                      }}
-                      onFailed={(err) => handleVerificationFailure(err)}
-                      onCancel={() => setVerifyMode("password")}
-                    />
-                  )}
-
-                  {/* Password Mode */}
-                  {verifyMode === "password" && (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
-                        <LockKeyhole className="w-8 h-8 text-accent" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold">Enter Your Password</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Re-enter your account password to access card details.
-                        </p>
-                      </div>
-                      <Input
-                        type="password"
-                        placeholder="Your account password"
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
-                        onKeyDown={async (e) => {
-                          if (e.key === "Enter" && passwordInput) {
-                            const ok = await verification.verifyPassword(passwordInput);
-                            if (ok) handleVerificationSuccess("Password");
-                            else handleVerificationFailure("Incorrect password");
-                            setPasswordInput("");
-                          }
-                        }}
-                        className="bg-secondary border-border"
-                      />
-                      <Button
-                        onClick={async () => {
-                          if (!passwordInput) return;
-                          const ok = await verification.verifyPassword(passwordInput);
-                          if (ok) handleVerificationSuccess("Password");
-                          else handleVerificationFailure("Incorrect password");
-                          setPasswordInput("");
-                        }}
-                        disabled={!passwordInput}
-                        className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
-                      >
-                        <LockKeyhole className="w-4 h-4" /> Verify
-                      </Button>
-                      <button
-                        onClick={() => setVerifyMode("face")}
-                        className="text-xs text-accent hover:underline"
-                      >
-                        ← Use Face ID instead
-                      </button>
-                    </>
-                  )}
+                  <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
+                    <KeyRound className="w-8 h-8 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold">Enter Card PIN</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Enter your 4-6 digit PIN to view card details.
+                    </p>
+                  </div>
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Enter PIN"
+                    value={pinInput}
+                    onChange={(e) => { setPinInput(e.target.value.replace(/\D/g, "")); setPinVerifyError(""); }}
+                    onKeyDown={(e) => e.key === "Enter" && pinInput.length >= 4 && handlePinVerify()}
+                    className="text-center text-2xl tracking-[0.5em] font-mono bg-secondary border-border h-14"
+                    autoFocus
+                  />
+                  {pinVerifyError && <p className="text-xs text-destructive">{pinVerifyError}</p>}
+                  <Button
+                    onClick={handlePinVerify}
+                    disabled={pinInput.length < 4}
+                    className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
+                  >
+                    <KeyRound className="w-4 h-4" /> Verify PIN
+                  </Button>
                 </Card>
-
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
-                  <ScanFace className="w-3 h-3" /> Secured by Face ID verification
+                  <ShieldCheck className="w-3 h-3" /> Secured by PIN verification
                 </p>
               </motion.div>
             ) : (
@@ -464,9 +579,7 @@ export default function CardPage() {
                 <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent/10">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-accent" />
-                    <span className="text-xs font-medium text-accent">
-                      Identity Verified · {faceVerified ? "Face ID" : verification.methodLabel}
-                    </span>
+                    <span className="text-xs font-medium text-accent">PIN Verified</span>
                   </div>
                   {sessionTimeLeft > 0 && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -649,71 +762,168 @@ export default function CardPage() {
           </motion.div>
         )}
 
-        {/* ─── ADD CARD VIEW ─── */}
+        {/* ─── ADD CARD VIEW (Multi-Step) ─── */}
         {view === "add" && (
           <motion.div key="add" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => setView("list")} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+              <button onClick={() => {
+                if (addStep === "pin") setAddStep("design");
+                else if (addStep === "design") setAddStep("format");
+                else setView("list");
+              }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold tracking-tight">Add Card</h1>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setNewCardFormat("virtual")}
-                className={`p-5 rounded-xl border-2 text-left transition-all ${
-                  newCardFormat === "virtual" ? "border-accent bg-accent/5" : "border-border bg-card"
-                }`}
-              >
-                <Wifi className="w-8 h-8 text-blue-400 mb-3" />
-                <p className="text-sm font-bold">Virtual Card</p>
-                <p className="text-xs text-muted-foreground mt-1">Instant. Use online & mobile wallets.</p>
-              </button>
-              <button
-                onClick={() => setNewCardFormat("physical")}
-                className={`p-5 rounded-xl border-2 text-left transition-all ${
-                  newCardFormat === "physical" ? "border-accent bg-accent/5" : "border-border bg-card"
-                }`}
-              >
-                <CreditCard className="w-8 h-8 text-foreground/70 mb-3" />
-                <p className="text-sm font-bold">Physical Card</p>
-                <p className="text-xs text-muted-foreground mt-1">Premium metal. Ships in 5-7 days.</p>
-              </button>
-            </div>
-
-            <Card className="p-5 bg-card border-border space-y-3">
-              <label className="text-xs text-muted-foreground">Card Name</label>
-              <Input
-                value={newCardName}
-                onChange={(e) => setNewCardName(e.target.value)}
-                placeholder={newCardFormat === "virtual" ? "e.g. Online Shopping" : "e.g. Main Card"}
-                className="bg-secondary border-border"
-              />
-            </Card>
-
-            {newCardFormat === "physical" && (
-              <Card className="p-4 bg-warning/5 border-warning/10 flex items-start gap-2">
-                <Package className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-                <p className="text-xs text-warning">
-                  Physical cards are shipped via express mail. You'll receive tracking information once shipped.
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {addStep === "format" ? "Add Card" : addStep === "design" ? "Choose Design" : "Set PIN"}
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                  Step {addStep === "format" ? "1" : addStep === "design" ? "2" : "3"} of 3
                 </p>
-              </Card>
+              </div>
+            </div>
+
+            {/* Step indicator */}
+            <div className="flex items-center gap-2">
+              {["format", "design", "pin"].map((step, i) => (
+                <div key={step} className="flex items-center gap-2 flex-1">
+                  <div className={`h-1.5 rounded-full flex-1 transition-colors ${
+                    (addStep === "format" && i === 0) || (addStep === "design" && i <= 1) || (addStep === "pin")
+                      ? "bg-accent" : "bg-secondary"
+                  }`} />
+                </div>
+              ))}
+            </div>
+
+            {/* Step 1: Format */}
+            {addStep === "format" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setNewCardFormat("virtual")}
+                    className={`p-5 rounded-xl border-2 text-left transition-all ${
+                      newCardFormat === "virtual" ? "border-accent bg-accent/5" : "border-border bg-card"
+                    }`}
+                  >
+                    <Wifi className="w-8 h-8 text-blue-400 mb-3" />
+                    <p className="text-sm font-bold">Virtual Card</p>
+                    <p className="text-xs text-muted-foreground mt-1">Instant. Use online & mobile wallets.</p>
+                  </button>
+                  <button
+                    onClick={() => setNewCardFormat("physical")}
+                    className={`p-5 rounded-xl border-2 text-left transition-all ${
+                      newCardFormat === "physical" ? "border-accent bg-accent/5" : "border-border bg-card"
+                    }`}
+                  >
+                    <CreditCard className="w-8 h-8 text-foreground/70 mb-3" />
+                    <p className="text-sm font-bold">Physical Card</p>
+                    <p className="text-xs text-muted-foreground mt-1">Premium metal. Ships in 5-7 days.</p>
+                  </button>
+                </div>
+
+                <Card className="p-5 bg-card border-border space-y-3">
+                  <label className="text-xs text-muted-foreground">Card Name</label>
+                  <Input
+                    value={newCardName}
+                    onChange={(e) => setNewCardName(e.target.value)}
+                    placeholder={newCardFormat === "virtual" ? "e.g. Online Shopping" : "e.g. Main Card"}
+                    className="bg-secondary border-border"
+                    maxLength={50}
+                  />
+                </Card>
+
+                {newCardFormat === "physical" && (
+                  <Card className="p-4 bg-warning/5 border-warning/10 flex items-start gap-2">
+                    <Package className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                    <p className="text-xs text-warning">
+                      Physical cards are shipped via express mail. You'll receive tracking information once shipped.
+                    </p>
+                  </Card>
+                )}
+
+                <Button onClick={() => setAddStep("design")} className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2">
+                  Next: Choose Design <Palette className="w-4 h-4" />
+                </Button>
+              </motion.div>
             )}
 
-            <Button
-              onClick={async () => {
-                await addCard.mutateAsync({ format: newCardFormat, name: newCardName || undefined });
-                setNewCardName("");
-                setView("list");
-              }}
-              disabled={addCard.isPending}
-              className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
-            >
-              {addCard.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                <>{newCardFormat === "virtual" ? <Wifi className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />} Create {newCardFormat === "virtual" ? "Virtual" : "Physical"} Card</>
-              )}
-            </Button>
+            {/* Step 2: Design Selection */}
+            {addStep === "design" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                <p className="text-sm text-muted-foreground">Pick a design for your card</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {CARD_DESIGNS.map((design) => (
+                    <CardDesignPreview
+                      key={design.id}
+                      design={design}
+                      selected={newCardDesign === design.id}
+                      onClick={() => setNewCardDesign(design.id)}
+                    />
+                  ))}
+                </div>
+
+                <Button onClick={() => setAddStep("pin")} className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2">
+                  Next: Set PIN <KeyRound className="w-4 h-4" />
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Step 3: PIN Setup */}
+            {addStep === "pin" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                <Card className="p-5 bg-card border-border space-y-4">
+                  <div className="text-center space-y-2">
+                    <div className="w-14 h-14 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
+                      <KeyRound className="w-7 h-7 text-accent" />
+                    </div>
+                    <h3 className="text-base font-bold">Set Your Card PIN</h3>
+                    <p className="text-sm text-muted-foreground">
+                      This PIN will be required to view your card details.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Enter PIN (4-6 digits)</label>
+                      <Input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="Enter PIN"
+                        value={newCardPin}
+                        onChange={(e) => { setNewCardPin(e.target.value.replace(/\D/g, "")); setPinError(""); }}
+                        className="text-center text-2xl tracking-[0.5em] font-mono bg-secondary border-border h-14"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Confirm PIN</label>
+                      <Input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="Confirm PIN"
+                        value={newCardPinConfirm}
+                        onChange={(e) => { setNewCardPinConfirm(e.target.value.replace(/\D/g, "")); setPinError(""); }}
+                        className="text-center text-2xl tracking-[0.5em] font-mono bg-secondary border-border h-14"
+                      />
+                    </div>
+                  </div>
+
+                  {pinError && <p className="text-xs text-destructive text-center">{pinError}</p>}
+                </Card>
+
+                <Button
+                  onClick={handleCreateCard}
+                  disabled={newCardPin.length < 4 || newCardPinConfirm.length < 4 || addCard.isPending}
+                  className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
+                >
+                  {addCard.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                    <>{newCardFormat === "virtual" ? <Wifi className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />} Create Card</>
+                  )}
+                </Button>
+              </motion.div>
+            )}
           </motion.div>
         )}
 
@@ -724,61 +934,38 @@ export default function CardPage() {
               <button onClick={() => setView("list")} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Account Tiers</h1>
-                <p className="text-muted-foreground text-sm">Higher tiers unlock greater limits</p>
-              </div>
+              <h1 className="text-2xl font-bold tracking-tight">Account Tiers</h1>
             </div>
 
-            <div className="space-y-3">
-              {(Object.entries(TIER_CONFIG) as [AccountTierType, typeof TIER_CONFIG[AccountTierType]][]).map(([key, t]) => {
-                const isCurrent = key === tier;
-                return (
-                  <Card key={key} className={`p-5 bg-card border-border relative overflow-hidden ${isCurrent ? "border-accent/30" : ""}`}>
-                    {isCurrent && <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none" />}
-                    <div className="relative space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Crown className={`w-5 h-5 ${t.color}`} />
-                          <h3 className="text-base font-bold">{t.label}</h3>
-                        </div>
-                        {isCurrent && (
-                          <Badge className="bg-accent/10 text-accent border-0 text-xs">Current</Badge>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="p-2 rounded bg-secondary/50">
-                          <p className="text-[10px] text-muted-foreground">Per Transaction</p>
-                          <p className="font-mono font-semibold">${t.single.toLocaleString()}</p>
-                        </div>
-                        <div className="p-2 rounded bg-secondary/50">
-                          <p className="text-[10px] text-muted-foreground">Daily</p>
-                          <p className="font-mono font-semibold">${t.daily.toLocaleString()}</p>
-                        </div>
-                        <div className="p-2 rounded bg-secondary/50">
-                          <p className="text-[10px] text-muted-foreground">Monthly</p>
-                          <p className="font-mono font-semibold">${t.monthly.toLocaleString()}</p>
-                        </div>
-                        <div className="p-2 rounded bg-secondary/50">
-                          <p className="text-[10px] text-muted-foreground">Max Cards</p>
-                          <p className="font-mono font-semibold">{t.maxCards}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        {t.features.map((f) => (
-                          <div key={f} className="flex items-center gap-2">
-                            <CheckCircle2 className={`w-3 h-3 ${isCurrent ? "text-accent" : "text-muted-foreground"}`} />
-                            <span className="text-xs">{f}</span>
-                          </div>
-                        ))}
-                      </div>
+            {(["personal", "pro", "business", "bank"] as AccountTierType[]).map((t) => {
+              const tc = TIER_CONFIG[t];
+              const isCurrent = t === tier;
+              return (
+                <Card key={t} className={`p-5 border-border space-y-2 ${isCurrent ? "border-accent bg-accent/5" : "bg-card"}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Crown className={`w-4 h-4 ${tierColors[t]}`} />
+                      <h3 className={`text-sm font-bold ${tierColors[t]}`}>{tc.label}</h3>
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
+                    {isCurrent && <Badge className="bg-accent/20 text-accent border-0 text-[10px]">Current</Badge>}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Per Tx</p>
+                      <p className="text-xs font-bold font-mono">${tc.single.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Daily</p>
+                      <p className="text-xs font-bold font-mono">${tc.daily.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Cards</p>
+                      <p className="text-xs font-bold font-mono">{tc.maxCards}</p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
