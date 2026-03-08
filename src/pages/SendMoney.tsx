@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import { ArrowRight, QrCode, Users, Loader2, CheckCircle2, ShieldCheck } from "l
 import { toast } from "sonner";
 
 export default function SendMoney() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { activeCurrency, activeBalance, activeSymbol, formatBalance, toUSD } = useActiveCurrency();
   const { wallets } = useMultiCurrencyWallet();
@@ -133,7 +135,7 @@ export default function SendMoney() {
                 className="h-12 bg-secondary border-border pr-20"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                <button className="p-2 hover:bg-background/50 rounded-md transition-colors">
+              <button onClick={() => navigate("/qr")} className="p-2 hover:bg-background/50 rounded-md transition-colors" title="Scan QR">
                   <QrCode className="w-4 h-4 text-muted-foreground" />
                 </button>
                 <button className="p-2 hover:bg-background/50 rounded-md transition-colors">
