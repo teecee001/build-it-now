@@ -1,4 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { BetaFeedback } from "@/components/BetaFeedback";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
   Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase,
