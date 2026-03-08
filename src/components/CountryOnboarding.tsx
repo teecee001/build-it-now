@@ -53,11 +53,13 @@ export function CountryOnboarding({ onComplete }: Props) {
     try {
       const result = await checkIp.mutateAsync(code);
       
-      // Show warning if VPN detected but allow to continue
+      // Block if VPN detected
       if (result.vpn_detected) {
-        toast.warning("VPN/proxy detected. Some features may be restricted.", {
+        toast.error("VPN or proxy detected. Please disable it to continue.", {
           duration: 5000,
         });
+        setSelectedCountry("");
+        return;
       }
       
       // Show warning for IP mismatch but allow to continue

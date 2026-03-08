@@ -241,7 +241,8 @@ Deno.serve(async (req) => {
       }
 
       const locationMismatch = ipCountry !== "unknown" && ipCountry !== geo.country_code;
-      const isBlocked = isVpn || locationMismatch;
+      // Block only on VPN, not on location mismatch alone
+      const isBlocked = isVpn;
 
       // Update check
       await supabase
