@@ -6,6 +6,51 @@
 
 @layer base {
   :root {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    --primary: 240 10% 10%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 5% 93%;
+    --secondary-foreground: 240 6% 30%;
+
+    --muted: 240 5% 93%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 142 71% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 240 6% 88%;
+    --input: 240 6% 88%;
+    --ring: 240 10% 10%;
+
+    --radius: 0.75rem;
+
+    --gradient-primary: linear-gradient(135deg, hsl(240 10% 10%), hsl(240 5% 30%));
+    --gradient-accent: linear-gradient(135deg, hsl(142 71% 45%), hsl(160 84% 39%));
+    --gradient-gold: linear-gradient(135deg, hsl(38 92% 50%), hsl(32 95% 44%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(240 5% 96%));
+    --shadow-glow: 0 0 60px hsl(142 71% 45% / 0.1);
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.08), 0 4px 12px hsl(0 0% 0% / 0.05);
+  }
+
+  .dark {
     --background: 240 10% 4%;
     --foreground: 0 0% 95%;
 
