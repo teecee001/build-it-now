@@ -166,7 +166,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
               <span className="text-sm font-black text-accent-foreground tracking-tighter">Ξ╳</span>
             </div>
-            <span className="text-lg font-bold tracking-tight">ExoSky</span>
+            <span className="text-lg font-bold tracking-tight"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
           </div>
           <div className="flex items-center gap-2">
