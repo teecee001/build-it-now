@@ -42,12 +42,7 @@ export function AppLayout() {
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4">
         {/* Logo */}
         <div className="flex items-center justify-between px-3 py-4 mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-accent flex items-center justify-center font-bold text-sm text-primary-foreground">
-              E
-            </div>
-            <span className="text-lg font-bold tracking-tight">ExoSky</span>
-          </div>
+          <ExoLogo size="md" />
           <NotificationBell />
         </div>
 
