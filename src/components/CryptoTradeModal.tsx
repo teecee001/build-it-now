@@ -61,8 +61,45 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
   const [amount, setAmount] = useState("");
   const [swapTo, setSwapTo] = useState(code === "BTC" ? "ETH" : "BTC");
   const [walletAddress, setWalletAddress] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
+
+  const startScanner = useCallback(async () => {
+    setShowScanner(true);
+    // Wait for DOM element to mount
+    setTimeout(async () => {
+      try {
+        const scanner = new Html5Qrcode("qr-reader-send");
+        scannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 200, height: 200 } },
+          (decodedText) => {
+            // Strip common crypto URI prefixes like "bitcoin:", "ethereum:"
+            const cleaned = decodedText.replace(/^(bitcoin|ethereum|solana|dogecoin|cardano|ripple|bnb):\/?\/?/i, "").split("?")[0];
+            setWalletAddress(cleaned.trim());
+            stopScanner();
+            toast.success("Address scanned!");
+          },
+          () => {} // ignore scan errors
+        );
+      } catch (err) {
+        toast.error("Camera access denied or unavailable");
+        setShowScanner(false);
+      }
+    }, 100);
+  }, []);
+
+  const stopScanner = useCallback(() => {
+    if (scannerRef.current) {
+      scannerRef.current.stop().catch(() => {});
+      scannerRef.current.clear().catch(() => {});
+      scannerRef.current = null;
+    }
+    setShowScanner(false);
+  }, []);
 
   const usdWallet = getWallet("USD");
   const usdBalance = usdWallet?.balance ?? 0;
