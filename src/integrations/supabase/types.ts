@@ -596,16 +596,19 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_approved: boolean
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          is_approved?: boolean
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          is_approved?: boolean
         }
         Relationships: []
       }
@@ -644,6 +647,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_waitlist_approved: {
+        Args: { check_email: string }
+        Returns: boolean
+      }
       get_waitlist_count: { Args: never; Returns: number }
     }
     Enums: {
