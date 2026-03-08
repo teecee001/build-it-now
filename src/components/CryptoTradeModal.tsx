@@ -14,6 +14,37 @@ import { CRYPTO_LIST } from "@/constants/cryptoList";
 
 type TradeType = "buy" | "sell" | "swap" | "send";
 
+// Address validation patterns per network
+const NETWORK_PATTERNS: Record<string, { pattern: RegExp; label: string; placeholder: string }> = {
+  BTC: { pattern: /^(1|3|bc1)[a-zA-HJ-NP-Z0-9]{25,62}$/, label: "Bitcoin", placeholder: "1A1zP1... or bc1q..." },
+  ETH: { pattern: /^0x[a-fA-F0-9]{40}$/, label: "Ethereum (ERC-20)", placeholder: "0x..." },
+  SOL: { pattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/, label: "Solana", placeholder: "So1..." },
+  BNB: { pattern: /^(0x[a-fA-F0-9]{40}|bnb1[a-z0-9]{38})$/, label: "BNB Chain", placeholder: "0x... or bnb1..." },
+  XRP: { pattern: /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/, label: "XRP Ledger", placeholder: "rN7..." },
+  ADA: { pattern: /^(addr1|DdzFF)[a-zA-Z0-9]{50,}$/, label: "Cardano", placeholder: "addr1..." },
+  DOGE: { pattern: /^D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}$/, label: "Dogecoin", placeholder: "D..." },
+  AVAX: { pattern: /^(0x[a-fA-F0-9]{40}|X-avax1[a-z0-9]{38})$/, label: "Avalanche", placeholder: "0x... or X-avax1..." },
+};
+
+// ERC-20 tokens share Ethereum address format
+const ERC20_TOKENS = ["LINK", "UNI", "AAVE", "MKR", "SHIB", "MATIC", "CRO", "LDO", "ARB", "OP"];
+
+function getNetworkInfo(code: string) {
+  if (NETWORK_PATTERNS[code]) return NETWORK_PATTERNS[code];
+  if (ERC20_TOKENS.includes(code)) return NETWORK_PATTERNS["ETH"];
+  // Default to Ethereum-style for unknown tokens
+  return { pattern: /^0x[a-fA-F0-9]{40}$/, label: "ERC-20", placeholder: "0x..." };
+}
+
+function validateAddress(code: string, address: string): { valid: boolean; error?: string } {
+  if (!address) return { valid: false };
+  const network = getNetworkInfo(code);
+  if (!network.pattern.test(address)) {
+    return { valid: false, error: `Invalid ${network.label} address format` };
+  }
+  return { valid: true };
+}
+
 interface CryptoTradeModalProps {
   type: TradeType;
   code: string;
@@ -41,9 +72,12 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
   const cryptoAmount = type === "buy" ? numAmount / price : numAmount;
   const usdValue = type === "sell" ? numAmount * price : numAmount;
 
+  const network = getNetworkInfo(code);
+  const addressValidation = type === "send" ? validateAddress(code, walletAddress) : { valid: true };
+
   const canProceed = numAmount > 0 && (
     type === "buy" ? usdBalance >= numAmount :
-    type === "send" ? currentHolding >= numAmount && walletAddress.length >= 10 :
+    type === "send" ? currentHolding >= numAmount && addressValidation.valid :
     currentHolding >= numAmount
   );
 
@@ -146,13 +180,27 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         {/* Wallet Address for Send */}
         {type === "send" && (
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground font-medium">Recipient Wallet Address</label>
+            <label className="text-sm text-muted-foreground font-medium">
+              Recipient {network.label} Address
+            </label>
             <Input
-              placeholder="0x... or wallet address"
+              placeholder={network.placeholder}
               value={walletAddress}
-              onChange={(e) => setWalletAddress(e.target.value)}
-              className="h-12 bg-secondary border-border font-mono text-sm"
+              onChange={(e) => setWalletAddress(e.target.value.trim())}
+              className={`h-12 bg-secondary border-border font-mono text-sm ${
+                walletAddress && !addressValidation.valid ? "border-destructive" : 
+                walletAddress && addressValidation.valid ? "border-success" : ""
+              }`}
             />
+            {walletAddress && addressValidation.error && (
+              <p className="text-xs text-destructive">{addressValidation.error}</p>
+            )}
+            {walletAddress && addressValidation.valid && (
+              <p className="text-xs text-success">✓ Valid {network.label} address</p>
+            )}
+            <p className="text-[10px] text-muted-foreground">
+              Only send {code} to a compatible {network.label} wallet
+            </p>
           </div>
         )}
 
