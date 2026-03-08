@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { path: "/referrals", icon: Users, label: "Refer & Earn" },
   { path: "/advisor", icon: Bot, label: "AI Advisor" },
   { path: "/premium", icon: Crown, label: "Pro" },
+  { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export function AppLayout() {
