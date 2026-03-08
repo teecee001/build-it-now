@@ -64,7 +64,9 @@ const App = () => (
             <Route
               element={
                 <ProtectedRoute>
-                  <AppLayout />
+                  <ActiveCurrencyProvider>
+                    <AppLayout />
+                  </ActiveCurrencyProvider>
                 </ProtectedRoute>
               }
             >
