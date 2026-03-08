@@ -8,11 +8,11 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Loader2, CheckCircle2, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send, Loader2, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
 
-type TradeType = "buy" | "sell" | "swap";
+type TradeType = "buy" | "sell" | "swap" | "send";
 
 interface CryptoTradeModalProps {
   type: TradeType;
@@ -28,6 +28,7 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
   const { holdingsMap, upsertHolding } = useCryptoHoldings();
   const [amount, setAmount] = useState("");
   const [swapTo, setSwapTo] = useState(code === "BTC" ? "ETH" : "BTC");
+  const [walletAddress, setWalletAddress] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
 
@@ -42,7 +43,7 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
 
   const canProceed = numAmount > 0 && (
     type === "buy" ? usdBalance >= numAmount :
-    type === "sell" ? currentHolding >= numAmount :
+    type === "send" ? currentHolding >= numAmount && walletAddress.length >= 10 :
     currentHolding >= numAmount
   );
 
@@ -73,12 +74,22 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
           metadata: { crypto: code, crypto_amount: numAmount, price_per_unit: price, action: "sell" },
         });
         toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
+      } else if (type === "send") {
+        if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
+        await upsertHolding.mutateAsync({ code, amountDelta: -numAmount, pricePerUnit: price });
+        await addTransaction.mutateAsync({
+          type: "send",
+          amount: -(numAmount * price),
+          description: `Sent ${numAmount.toFixed(6)} ${code} to ${walletAddress.slice(0, 8)}...${walletAddress.slice(-4)}`,
+          recipient: walletAddress,
+          metadata: { crypto: code, crypto_amount: numAmount, price_per_unit: price, action: "crypto_send", wallet_address: walletAddress },
+        });
+        toast.success(`Sent ${numAmount.toFixed(6)} ${code} 🚀`);
       } else {
         // Swap
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
         await upsertHolding.mutateAsync({ code, amountDelta: -numAmount, pricePerUnit: price });
-        // Convert: numAmount of code → equivalent in swapTo
-        const swapToPrice = 1; // We'd need the swapTo price; approximate via ratio
+        const swapToPrice = 1;
         await upsertHolding.mutateAsync({ code: swapTo, amountDelta: numAmount, pricePerUnit: swapToPrice });
         await addTransaction.mutateAsync({
           type: "conversion",
@@ -96,8 +107,8 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
     }
   };
 
-  const icons = { buy: ArrowDownLeft, sell: ArrowUpRight, swap: ArrowLeftRight };
-  const colors = { buy: "text-success", sell: "text-destructive", swap: "text-accent" };
+  const icons = { buy: ArrowDownLeft, sell: ArrowUpRight, swap: ArrowLeftRight, send: Send };
+  const colors = { buy: "text-success", sell: "text-destructive", swap: "text-accent", send: "text-warning" };
   const Icon = icons[type];
 
   if (isDone) {
@@ -105,7 +116,7 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
         <Card className="p-6 bg-card border-border text-center space-y-4">
           <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
-          <h3 className="text-lg font-semibold">Trade Complete!</h3>
+          <h3 className="text-lg font-semibold">{type === "send" ? "Crypto Sent!" : "Trade Complete!"}</h3>
           <p className="text-sm text-muted-foreground">Your holdings have been updated.</p>
           <Button onClick={onClose} className="w-full">Done</Button>
         </Card>
@@ -132,6 +143,19 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
           </p>
         </div>
 
+        {/* Wallet Address for Send */}
+        {type === "send" && (
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground font-medium">Recipient Wallet Address</label>
+            <Input
+              placeholder="0x... or wallet address"
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+              className="h-12 bg-secondary border-border font-mono text-sm"
+            />
+          </div>
+        )}
+
         {/* Amount Input */}
         <div className="space-y-2">
           <label className="text-sm text-muted-foreground font-medium">
@@ -156,9 +180,10 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
               <span>Holdings: {currentHolding.toFixed(6)} {code}</span>
             </div>
           )}
-          {type === "swap" && (
+          {(type === "swap" || type === "send") && (
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Available: {currentHolding.toFixed(6)} {code}</span>
+              {type === "send" && numAmount > 0 && <span>≈ ${(numAmount * price).toFixed(2)} USD</span>}
             </div>
           )}
         </div>
@@ -190,12 +215,21 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
           </div>
         )}
 
+        {/* Network fee for send */}
+        {type === "send" && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Network fee</span>
+            <span className="text-success font-medium">Free</span>
+          </div>
+        )}
+
         <Button
           onClick={handleTrade}
           disabled={!canProceed || isProcessing}
           className={`w-full gap-2 ${
             type === "buy" ? "bg-success text-success-foreground hover:bg-success/90" :
             type === "sell" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" :
+            type === "send" ? "bg-warning text-warning-foreground hover:bg-warning/90" :
             "bg-accent text-accent-foreground hover:bg-accent/90"
           }`}
         >
