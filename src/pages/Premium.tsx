@@ -32,7 +32,7 @@ function PremiumContent() {
 
   useEffect(() => {
     if (searchParams.get("success") === "true") {
-      toast.success("Welcome to ExoSky Pro! 🎉");
+      toast.success("Welcome to Ξ╳oSky Pro! 🎉");
       checkSubscription();
     }
     if (searchParams.get("canceled") === "true") {
