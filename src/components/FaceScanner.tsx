@@ -198,11 +198,11 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
       let directionMatched = false;
 
       // Since camera is mirrored: user turning left moves centroid RIGHT in raw frame
-      if (currentChallenge.direction === "left" && dx > 0.06) {
+      if (currentChallenge.direction === "left" && dx > 0.025) {
         directionMatched = true;
-      } else if (currentChallenge.direction === "right" && dx < -0.06) {
+      } else if (currentChallenge.direction === "right" && dx < -0.025) {
         directionMatched = true;
-      } else if (currentChallenge.direction === "up" && dy < -0.04) {
+      } else if (currentChallenge.direction === "up" && dy < -0.015) {
         directionMatched = true;
       }
 
