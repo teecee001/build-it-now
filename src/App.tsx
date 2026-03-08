@@ -26,6 +26,8 @@ import Premium from "./pages/Premium";
 import Settings from "./pages/Settings";
 import SpendingAnalytics from "./pages/SpendingAnalytics";
 import QRPayments from "./pages/QRPayments";
+import RecurringPayments from "./pages/RecurringPayments";
+import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -82,6 +84,8 @@ const App = () => (
               <Route path="/verify" element={<KYCVerification />} />
               <Route path="/analytics" element={<SpendingAnalytics />} />
               <Route path="/qr" element={<QRPayments />} />
+              <Route path="/recurring" element={<RecurringPayments />} />
+              <Route path="/currencies" element={<MultiCurrencyWallet />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

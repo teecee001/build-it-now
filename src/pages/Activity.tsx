@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTransactions } from "@/hooks/useTransactions";
+import { StatementExport } from "@/components/StatementExport";
 import { 
   ArrowUpRight, ArrowDownLeft, Repeat, Gift, Landmark, Send, 
-  CreditCard, Search, ShoppingBag, Percent, Loader2
+  CreditCard, Search, ShoppingBag, Percent, Loader2, Download
 } from "lucide-react";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
@@ -27,6 +29,7 @@ export default function Activity() {
   const { transactions, isLoading, totalIn, totalOut } = useTransactions();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
+  const [showExport, setShowExport] = useState(false);
 
   const filtered = transactions.filter((t) => {
     if (filter !== "all" && t.type !== filter) return false;
@@ -40,8 +43,15 @@ export default function Activity() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Activity</h1>
-        <p className="text-muted-foreground text-sm mt-1">All your transactions in one place</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Activity</h1>
+            <p className="text-muted-foreground text-sm mt-1">All your transactions in one place</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setShowExport(true)} className="gap-1">
+            <Download className="w-4 h-4" /> Export
+          </Button>
+        </div>
       </motion.div>
 
       {/* Summary */}
@@ -60,12 +70,7 @@ export default function Activity() {
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search transactions..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-10 bg-secondary border-border"
-          />
+          <Input placeholder="Search transactions..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 bg-secondary border-border" />
         </div>
       </div>
 
@@ -95,12 +100,7 @@ export default function Activity() {
             const config = TYPE_CONFIG[tx.type] || TYPE_CONFIG.send;
             const amount = Number(tx.amount);
             return (
-              <motion.div
-                key={tx.id}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
-              >
+              <motion.div key={tx.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                 <Card className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center ${config.bg}`}>
@@ -117,9 +117,7 @@ export default function Activity() {
                       <p className={`text-sm font-semibold font-mono ${amount >= 0 ? "text-success" : "text-foreground"}`}>
                         {amount >= 0 ? "+" : "-"}${Math.abs(amount).toFixed(2)}
                       </p>
-                      <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                        {tx.status}
-                      </Badge>
+                      <Badge variant="secondary" className="text-[10px] px-1 py-0">{tx.status}</Badge>
                     </div>
                   </div>
                 </Card>
@@ -133,6 +131,8 @@ export default function Activity() {
           )}
         </div>
       )}
+
+      <StatementExport open={showExport} onClose={() => setShowExport(false)} />
     </div>
   );
 }

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, 
   Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
-  DollarSign, Percent, Eye, EyeOff, Loader2, BarChart3, QrCode
+  DollarSign, Percent, Eye, EyeOff, Loader2, BarChart3, QrCode,
+  RefreshCw, Globe
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +84,6 @@ export default function Dashboard() {
               </h2>
             </div>
 
-            {/* Balance Breakdown */}
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className="p-3 rounded-lg bg-secondary/50">
                 <p className="text-xs text-muted-foreground">Wallet</p>
@@ -94,9 +94,7 @@ export default function Dashboard() {
               <div className="p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-1">
                   <p className="text-xs text-muted-foreground">Savings</p>
-                  <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-success/10 text-success border-0">
-                    {apyRate}% APY
-                  </Badge>
+                  <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-success/10 text-success border-0">{apyRate}% APY</Badge>
                 </div>
                 <p className="text-sm font-semibold font-mono">
                   {showBalance ? `$${savingsBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••"}
@@ -104,53 +102,30 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* APY Earnings callout */}
             {savingsBalance > 0 && (
               <div className="mt-3 p-3 rounded-lg bg-success/5 border border-success/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <PiggyBank className="w-4 h-4 text-success" />
                   <span className="text-xs text-success">Monthly earnings</span>
                 </div>
-                <span className="text-xs font-mono font-semibold text-success">
-                  +${monthlyEarnings.toFixed(2)}/mo
-                </span>
+                <span className="text-xs font-mono font-semibold text-success">+${monthlyEarnings.toFixed(2)}/mo</span>
               </div>
             )}
 
-            {/* Quick Actions */}
             <div className="grid grid-cols-4 gap-2 mt-5">
-              <Button
-                size="sm"
-                className="flex-col h-auto py-3 bg-foreground text-background hover:bg-foreground/90 gap-1"
-                onClick={() => navigate("/deposit")}
-              >
+              <Button size="sm" className="flex-col h-auto py-3 bg-foreground text-background hover:bg-foreground/90 gap-1" onClick={() => navigate("/deposit")}>
                 <ArrowDownLeft className="w-4 h-4" />
                 <span className="text-[10px]">Deposit</span>
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-col h-auto py-3 gap-1"
-                onClick={() => navigate("/send")}
-              >
+              <Button size="sm" variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => navigate("/send")}>
                 <ArrowUpRight className="w-4 h-4" />
                 <span className="text-[10px]">Send</span>
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-col h-auto py-3 gap-1"
-                onClick={() => navigate("/send")}
-              >
+              <Button size="sm" variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => navigate("/send")}>
                 <DollarSign className="w-4 h-4" />
                 <span className="text-[10px]">Request</span>
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-col h-auto py-3 gap-1"
-                onClick={() => navigate("/markets")}
-              >
+              <Button size="sm" variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => navigate("/markets")}>
                 <Repeat className="w-4 h-4" />
                 <span className="text-[10px]">Convert</span>
               </Button>
@@ -179,14 +154,10 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Activity</h3>
-          <button onClick={() => navigate("/activity")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-            View All →
-          </button>
+          <button onClick={() => navigate("/activity")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View All →</button>
         </div>
         {txLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
+          <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
         ) : transactions.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No transactions yet. Make a deposit to get started!</p>
         ) : (
@@ -197,16 +168,12 @@ export default function Dashboard() {
               return (
                 <Card key={tx.id} className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                      isPositiveAmount ? "bg-success/10" : "bg-secondary"
-                    }`}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isPositiveAmount ? "bg-success/10" : "bg-secondary"}`}>
                       <Icon className={`w-4 h-4 ${isPositiveAmount ? "text-success" : "text-muted-foreground"}`} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">{tx.description || tx.type}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}</p>
                     </div>
                     <p className={`text-sm font-semibold font-mono ${isPositiveAmount ? "text-success" : "text-foreground"}`}>
                       {isPositiveAmount ? "+" : ""}${Math.abs(Number(tx.amount)).toFixed(2)}
@@ -221,50 +188,42 @@ export default function Dashboard() {
 
       {/* Feature Cards */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Card 
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/card")}
-        >
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/card")}>
           <CreditCard className="w-5 h-5 text-accent mb-2" />
           <p className="text-sm font-semibold">Debit Card</p>
           <p className="text-xs text-muted-foreground">Metal card by Visa</p>
         </Card>
-        <Card 
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/qr")}
-        >
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/qr")}>
           <QrCode className="w-5 h-5 text-accent mb-2" />
           <p className="text-sm font-semibold">QR Pay</p>
           <p className="text-xs text-muted-foreground">Scan & pay</p>
         </Card>
-        <Card 
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/analytics")}
-        >
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/currencies")}>
+          <Globe className="w-5 h-5 text-accent mb-2" />
+          <p className="text-sm font-semibold">Multi-Currency</p>
+          <p className="text-xs text-muted-foreground">Hold & convert</p>
+        </Card>
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/recurring")}>
+          <RefreshCw className="w-5 h-5 text-warning mb-2" />
+          <p className="text-sm font-semibold">Recurring</p>
+          <p className="text-xs text-muted-foreground">Auto payments</p>
+        </Card>
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/analytics")}>
           <BarChart3 className="w-5 h-5 text-warning mb-2" />
           <p className="text-sm font-semibold">Analytics</p>
           <p className="text-xs text-muted-foreground">Spending insights</p>
         </Card>
-        <Card 
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/rewards")}
-        >
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/rewards")}>
           <Gift className="w-5 h-5 text-warning mb-2" />
           <p className="text-sm font-semibold">Rewards</p>
           <p className="text-xs text-muted-foreground">Cashback & APY</p>
         </Card>
-        <Card 
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/bills")}
-        >
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/bills")}>
           <Landmark className="w-5 h-5 text-primary mb-2" />
           <p className="text-sm font-semibold">Pay Bills</p>
           <p className="text-xs text-muted-foreground">Utilities & more</p>
         </Card>
-        <Card 
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/advisor")}
-        >
+        <Card className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/advisor")}>
           <Bot className="w-5 h-5 text-accent mb-2" />
           <p className="text-sm font-semibold">AI Advisor</p>
           <p className="text-xs text-muted-foreground">Smart insights</p>
