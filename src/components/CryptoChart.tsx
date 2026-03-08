@@ -60,7 +60,7 @@ export const CryptoChart = () => {
         </div>
       </div>
 
-      <div className="w-full h-[400px] bg-white/5 rounded-lg p-4">
+      <div className="w-full h-[400px] bg-secondary/30 rounded-lg p-4">
         {isLoading ? (
           <div className="w-full h-full flex items-center justify-center">
             <Skeleton className="w-full h-full" />
