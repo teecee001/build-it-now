@@ -208,7 +208,7 @@ export default function CardPage() {
         {view === "detail" && selectedCard && (
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => { setView("list"); setShowNumber(false); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+              <button onClick={() => { setView("list"); setShowNumber(false); biometric.reset(); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -219,49 +219,113 @@ export default function CardPage() {
 
             <CardVisual c={selectedCard} />
 
-            <div className="grid grid-cols-3 gap-2">
-              <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => {
-                navigator.clipboard.writeText(selectedCard.card_number_last4);
-                toast.success("Last 4 copied");
-              }}>
-                <Copy className="w-4 h-4" />
-                <span className="text-[10px]">Copy</span>
-              </Button>
-              <Button
-                variant={selectedCard.is_frozen ? "default" : "outline"}
-                className={`flex-col h-auto py-3 gap-1 ${selectedCard.is_frozen ? "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30" : ""}`}
-                onClick={() => {
-                  toggleFreeze.mutate(selectedCard.id);
-                  toast.success(selectedCard.is_frozen ? "Card unfrozen" : "Card frozen");
-                }}
-              >
-                <Snowflake className="w-4 h-4" />
-                <span className="text-[10px]">{selectedCard.is_frozen ? "Unfreeze" : "Freeze"}</span>
-              </Button>
-              <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => openSettings(selectedCard)}>
-                <Settings className="w-4 h-4" />
-                <span className="text-[10px]">Settings</span>
-              </Button>
-            </div>
-
-            {/* Benefits */}
-            <div className="space-y-2">
-              {[
-                { icon: Percent, title: "Up to 3% Cashback", desc: "On dining, shopping & travel", color: "text-warning" },
-                { icon: Globe, title: "Zero Foreign Fees", desc: "Use worldwide", color: "text-accent" },
-                { icon: Lock, title: "Advanced Security", desc: "Real-time fraud protection", color: "text-primary" },
-              ].map((b, i) => (
-                <Card key={i} className="p-3 bg-card border-border flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                    <b.icon className={`w-3.5 h-3.5 ${b.color}`} />
+            {/* Biometric Verification Gate */}
+            {!biometric.isVerified ? (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+                <Card className="p-6 bg-card border-border text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
+                    {biometric.method === "face" ? (
+                      <ScanFace className="w-8 h-8 text-accent" />
+                    ) : biometric.method === "fingerprint" ? (
+                      <Fingerprint className="w-8 h-8 text-accent" />
+                    ) : (
+                      <KeyRound className="w-8 h-8 text-accent" />
+                    )}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">{b.title}</p>
-                    <p className="text-xs text-muted-foreground">{b.desc}</p>
+                    <h3 className="text-base font-bold">Verify to View Card Details</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Use {biometric.methodLabel} to access full card information, CVV, and card actions.
+                    </p>
                   </div>
+                  <Button
+                    onClick={async () => {
+                      const success = await biometric.verify();
+                      if (success) {
+                        toast.success("Identity verified");
+                      } else {
+                        toast.error("Verification failed. Try again.");
+                      }
+                    }}
+                    disabled={biometric.isVerifying}
+                    className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
+                  >
+                    {biometric.isVerifying ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : biometric.method === "face" ? (
+                      <ScanFace className="w-4 h-4" />
+                    ) : biometric.method === "fingerprint" ? (
+                      <Fingerprint className="w-4 h-4" />
+                    ) : (
+                      <KeyRound className="w-4 h-4" />
+                    )}
+                    {biometric.isVerifying ? "Verifying…" : `Verify with ${biometric.methodLabel}`}
+                  </Button>
                 </Card>
-              ))}
-            </div>
+
+                <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> Secured by your device's built-in authentication
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                {/* Verified badge */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/10">
+                  {biometric.method === "face" ? (
+                    <ScanFace className="w-4 h-4 text-accent" />
+                  ) : biometric.method === "fingerprint" ? (
+                    <Fingerprint className="w-4 h-4 text-accent" />
+                  ) : (
+                    <KeyRound className="w-4 h-4 text-accent" />
+                  )}
+                  <span className="text-xs font-medium text-accent">Verified with {biometric.methodLabel}</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => {
+                    navigator.clipboard.writeText(selectedCard.card_number_last4);
+                    toast.success("Last 4 copied");
+                  }}>
+                    <Copy className="w-4 h-4" />
+                    <span className="text-[10px]">Copy</span>
+                  </Button>
+                  <Button
+                    variant={selectedCard.is_frozen ? "default" : "outline"}
+                    className={`flex-col h-auto py-3 gap-1 ${selectedCard.is_frozen ? "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30" : ""}`}
+                    onClick={() => {
+                      toggleFreeze.mutate(selectedCard.id);
+                      toast.success(selectedCard.is_frozen ? "Card unfrozen" : "Card frozen");
+                    }}
+                  >
+                    <Snowflake className="w-4 h-4" />
+                    <span className="text-[10px]">{selectedCard.is_frozen ? "Unfreeze" : "Freeze"}</span>
+                  </Button>
+                  <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => openSettings(selectedCard)}>
+                    <Settings className="w-4 h-4" />
+                    <span className="text-[10px]">Settings</span>
+                  </Button>
+                </div>
+
+                {/* Benefits */}
+                <div className="space-y-2">
+                  {[
+                    { icon: Percent, title: "Up to 3% Cashback", desc: "On dining, shopping & travel", color: "text-warning" },
+                    { icon: Globe, title: "Zero Foreign Fees", desc: "Use worldwide", color: "text-accent" },
+                    { icon: Lock, title: "Advanced Security", desc: "Real-time fraud protection", color: "text-primary" },
+                  ].map((b, i) => (
+                    <Card key={i} className="p-3 bg-card border-border flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <b.icon className={`w-3.5 h-3.5 ${b.color}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">{b.title}</p>
+                        <p className="text-xs text-muted-foreground">{b.desc}</p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         )}
 
