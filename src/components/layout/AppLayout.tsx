@@ -1,7 +1,8 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
-  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase
+  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase,
+  FileText, Lock, Scale
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -71,10 +72,18 @@ export function AppLayout() {
         </nav>
 
         {/* Legal Links */}
-        <div className="px-3 py-2 space-y-0.5">
-          <button onClick={() => navigate("/verify")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all">
-            <Shield className="w-4 h-4" />
-            Verify Identity
+        <div className="px-3 py-2 border-t border-border space-y-0.5">
+          <button onClick={() => navigate("/terms")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all">
+            <FileText className="w-3.5 h-3.5" />
+            Terms of Service
+          </button>
+          <button onClick={() => navigate("/privacy")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all">
+            <Lock className="w-3.5 h-3.5" />
+            Privacy Policy
+          </button>
+          <button onClick={() => navigate("/compliance")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all">
+            <Scale className="w-3.5 h-3.5" />
+            Compliance
           </button>
         </div>
 
@@ -135,9 +144,23 @@ export function AppLayout() {
                 </button>
               );
             })}
+            <div className="border-t border-border pt-2 mt-2 space-y-0.5">
+              <button onClick={() => { navigate("/terms"); setMobileOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground">
+                <FileText className="w-3.5 h-3.5" />
+                Terms of Service
+              </button>
+              <button onClick={() => { navigate("/privacy"); setMobileOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground">
+                <Lock className="w-3.5 h-3.5" />
+                Privacy Policy
+              </button>
+              <button onClick={() => { navigate("/compliance"); setMobileOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground">
+                <Scale className="w-3.5 h-3.5" />
+                Compliance
+              </button>
+            </div>
             <button
               onClick={() => { signOut(); setMobileOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive mt-2"
             >
               <LogOut className="w-4 h-4" />
               Sign Out

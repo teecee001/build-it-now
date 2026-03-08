@@ -12,7 +12,7 @@ import { useTrustedDevices } from "@/hooks/useTrustedDevices";
 import {
   User, Camera, Save, Loader2, LogOut, Shield, Bell,
   Eye, Moon, Crown, Mail, AtSign, CheckCircle2,
-  KeyRound, Smartphone, Trash2, Monitor, Plus
+  KeyRound, Smartphone, Trash2, Monitor, Plus, FileText, Lock, Scale
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -362,8 +362,35 @@ export default function Settings() {
         </Card>
       </motion.div>
 
-      {/* Sign Out */}
+      {/* Legal & Compliance */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3">Legal & Compliance</h3>
+          <div className="space-y-2">
+            <button onClick={() => navigate("/terms")} className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Terms of Service</span>
+              </div>
+            </button>
+            <button onClick={() => navigate("/privacy")} className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
+              <div className="flex items-center gap-3">
+                <Lock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Privacy Policy</span>
+              </div>
+            </button>
+            <button onClick={() => navigate("/compliance")} className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
+              <div className="flex items-center gap-3">
+                <Scale className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Compliance & Disclosures</span>
+              </div>
+            </button>
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Sign Out */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
         <Button variant="outline" onClick={signOut} className="w-full border-destructive/20 text-destructive hover:bg-destructive/10 gap-2">
           <LogOut className="w-4 h-4" /> Sign Out
         </Button>
