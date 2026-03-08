@@ -224,129 +224,193 @@ export default function CardPage() {
 
             <CardVisual c={selectedCard} />
 
-            {/* Biometric Verification Gate */}
-            {!biometric.isVerified ? (
+            {/* AI-Powered Verification Gate */}
+            {!verification.isVerified ? (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
                 <Card className="p-6 bg-card border-border text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
-                    {biometric.needsPinFallback ? (
-                      <KeyRound className="w-8 h-8 text-accent" />
-                    ) : biometric.method === "face" ? (
-                      <ScanFace className="w-8 h-8 text-accent" />
-                    ) : biometric.method === "fingerprint" ? (
-                      <Fingerprint className="w-8 h-8 text-accent" />
-                    ) : (
-                      <KeyRound className="w-8 h-8 text-accent" />
-                    )}
-                  </div>
-
-                  {biometric.needsPinFallback ? (
+                  {/* Step: Idle — Choose verification method */}
+                  {verification.step === "idle" && (
                     <>
+                      <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
+                        <Brain className="w-8 h-8 text-accent" />
+                      </div>
                       <div>
-                        <h3 className="text-base font-bold">Enter Security PIN</h3>
+                        <h3 className="text-base font-bold">Secure Card Access</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Enter your 4-digit PIN to view card details.
+                          Verify your identity to view card details, CVV, and manage settings.
                         </p>
                       </div>
-                      <div className="flex justify-center gap-2">
-                        {[0, 1, 2, 3].map((i) => (
-                          <div
-                            key={i}
-                            className={`w-10 h-12 rounded-lg border-2 flex items-center justify-center text-lg font-bold transition-all ${
-                              pinInput.length > i
-                                ? "border-accent bg-accent/10 text-foreground"
-                                : "border-border bg-secondary text-muted-foreground"
-                            }`}
-                          >
-                            {pinInput[i] ? "•" : ""}
-                          </div>
-                        ))}
+
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => { setVerifyMode("smart"); verification.startVerification(); }}
+                          className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
+                        >
+                          <Brain className="w-4 h-4" />
+                          Smart Verification
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setVerifyMode("password")}
+                          className="w-full gap-2"
+                        >
+                          <LockKeyhole className="w-4 h-4" />
+                          Verify with Password
+                        </Button>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 max-w-[200px] mx-auto">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, "del"].map((key, idx) => (
+                    </>
+                  )}
+
+                  {/* Step: Loading */}
+                  {verification.step === "loading" && (
+                    <>
+                      <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }}>
+                          <Brain className="w-8 h-8 text-accent" />
+                        </motion.div>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold">Generating Challenge…</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          AI is creating a personalized security question based on your account activity.
+                        </p>
+                      </div>
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+                    </>
+                  )}
+
+                  {/* Step: AI Challenge */}
+                  {verification.step === "challenge" && verification.challenge && (
+                    <>
+                      <div className="flex items-center gap-2 justify-center">
+                        <ShieldCheck className="w-5 h-5 text-accent" />
+                        <h3 className="text-base font-bold">Security Challenge</h3>
+                      </div>
+                      <p className="text-sm text-foreground font-medium">
+                        {verification.challenge.question}
+                      </p>
+                      <div className="space-y-2 text-left">
+                        {verification.challenge.options.map((option, idx) => (
                           <button
                             key={idx}
-                            disabled={key === null}
-                            onClick={() => {
-                              if (key === "del") {
-                                setPinInput((p) => p.slice(0, -1));
-                              } else if (key !== null && pinInput.length < 4) {
-                                const newPin = pinInput + String(key);
-                                setPinInput(newPin);
-                                if (newPin.length === 4) {
-                                  const ok = biometric.verifyPin(newPin);
-                                  if (ok) {
-                                    toast.success("Identity verified");
-                                    setPinInput("");
-                                  } else {
-                                    toast.error("Incorrect PIN");
-                                    setPinInput("");
-                                  }
-                                }
+                            onClick={async () => {
+                              const success = await verification.submitAnswer(idx);
+                              if (success) {
+                                toast.success("Identity verified successfully");
+                              } else {
+                                toast.error("Incorrect — please try again");
                               }
                             }}
-                            className={`h-10 rounded-lg text-sm font-semibold transition-colors ${
-                              key === null
-                                ? "invisible"
-                                : "bg-secondary hover:bg-secondary/80 text-foreground"
-                            }`}
+                            className="w-full p-3 rounded-lg border border-border bg-secondary/50 hover:bg-accent/10 hover:border-accent/30 transition-all text-sm text-left"
                           >
-                            {key === "del" ? "⌫" : key}
+                            {option}
                           </button>
                         ))}
                       </div>
-                      <p className="text-[10px] text-muted-foreground">Default PIN: 1234</p>
+                      <Badge className="bg-accent/10 text-accent border-0 text-[10px] gap-1">
+                        <Brain className="w-3 h-3" /> AI-Powered · {verification.challenge.challengeType}
+                      </Badge>
                     </>
-                  ) : (
+                  )}
+
+                  {/* Step: Verifying */}
+                  {verification.step === "verifying" && (
                     <>
+                      <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+                      </div>
+                      <h3 className="text-base font-bold">Verifying…</h3>
+                    </>
+                  )}
+
+                  {/* Step: Failed */}
+                  {verification.step === "failed" && (
+                    <>
+                      <div className="w-16 h-16 rounded-full bg-destructive/10 mx-auto flex items-center justify-center">
+                        <ShieldAlert className="w-8 h-8 text-destructive" />
+                      </div>
                       <div>
-                        <h3 className="text-base font-bold">Verify to View Card Details</h3>
+                        <h3 className="text-base font-bold">Verification Failed</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{verification.error}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => { verification.reset(); verification.startVerification(); }}
+                          className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" /> Try Again
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => { verification.reset(); setVerifyMode("password"); }}
+                          className="w-full gap-2"
+                        >
+                          <LockKeyhole className="w-4 h-4" /> Use Password Instead
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Password mode (when idle and password selected) */}
+                  {verification.step === "idle" && verifyMode === "password" && (
+                    <>
+                      <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
+                        <LockKeyhole className="w-8 h-8 text-accent" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold">Enter Your Password</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Use {biometric.methodLabel} to access full card information, CVV, and card actions.
+                          Re-enter your account password to access card details.
                         </p>
                       </div>
+                      <Input
+                        type="password"
+                        placeholder="Your account password"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        onKeyDown={async (e) => {
+                          if (e.key === "Enter" && passwordInput) {
+                            const ok = await verification.verifyPassword(passwordInput);
+                            if (ok) toast.success("Identity verified");
+                            else toast.error("Incorrect password");
+                            setPasswordInput("");
+                          }
+                        }}
+                        className="bg-secondary border-border"
+                      />
                       <Button
                         onClick={async () => {
-                          const success = await biometric.verify();
-                          if (success) {
-                            toast.success("Identity verified");
-                          }
-                          // If not success, needsPinFallback will be set and UI will switch
+                          if (!passwordInput) return;
+                          const ok = await verification.verifyPassword(passwordInput);
+                          if (ok) toast.success("Identity verified");
+                          else toast.error("Incorrect password");
+                          setPasswordInput("");
                         }}
-                        disabled={biometric.isVerifying}
+                        disabled={!passwordInput || verification.step === "verifying"}
                         className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
                       >
-                        {biometric.isVerifying ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : biometric.method === "face" ? (
-                          <ScanFace className="w-4 h-4" />
-                        ) : biometric.method === "fingerprint" ? (
-                          <Fingerprint className="w-4 h-4" />
-                        ) : (
-                          <KeyRound className="w-4 h-4" />
-                        )}
-                        {biometric.isVerifying ? "Verifying…" : `Verify with ${biometric.methodLabel}`}
+                        <LockKeyhole className="w-4 h-4" /> Verify
                       </Button>
+                      <button
+                        onClick={() => setVerifyMode("smart")}
+                        className="text-xs text-accent hover:underline"
+                      >
+                        ← Use Smart Verification instead
+                      </button>
                     </>
                   )}
                 </Card>
 
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Secured by your device's built-in authentication
+                  <ShieldCheck className="w-3 h-3" /> Secured by AI-powered identity verification
                 </p>
               </motion.div>
             ) : (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 {/* Verified badge */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/10">
-                  {biometric.method === "face" ? (
-                    <ScanFace className="w-4 h-4 text-accent" />
-                  ) : biometric.method === "fingerprint" ? (
-                    <Fingerprint className="w-4 h-4 text-accent" />
-                  ) : (
-                    <KeyRound className="w-4 h-4 text-accent" />
-                  )}
-                  <span className="text-xs font-medium text-accent">Verified with {biometric.methodLabel}</span>
+                  <CheckCircle2 className="w-4 h-4 text-accent" />
+                  <span className="text-xs font-medium text-accent">Identity Verified · {verification.methodLabel}</span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
