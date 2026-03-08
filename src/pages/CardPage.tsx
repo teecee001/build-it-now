@@ -30,6 +30,7 @@ export default function CardPage() {
   const [newCardFormat, setNewCardFormat] = useState<"virtual" | "physical">("virtual");
   const [newCardName, setNewCardName] = useState("");
   const handle = "@" + (user?.email?.split("@")[0] || "user");
+  const biometric = useBiometricAuth();
 
   // Settings state
   const [onlinePurchases, setOnlinePurchases] = useState(true);
