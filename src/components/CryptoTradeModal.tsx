@@ -95,7 +95,6 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
   const stopScanner = useCallback(() => {
     if (scannerRef.current) {
       scannerRef.current.stop().catch(() => {});
-      scannerRef.current.clear().catch(() => {});
       scannerRef.current = null;
     }
     setShowScanner(false);
