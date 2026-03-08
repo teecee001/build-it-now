@@ -58,7 +58,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ success: false, error: "Country not found" }, 400);
       }
 
-      if (!phone_number?.startsWith(countryData.phone_code)) {
+      const cleanPhone = phone_number?.replace(/[\s\-\(\)]/g, "") || "";
+      if (!cleanPhone.startsWith(countryData.phone_code)) {
         return jsonResponse({
           success: false,
           error: `Phone number must start with ${countryData.phone_code} for ${country_code}`,
