@@ -8,7 +8,6 @@ import { ActiveCurrencyProvider } from "@/hooks/useActiveCurrency";
 import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { CountryOnboarding } from "@/components/CountryOnboarding";
-import { GeoBlockScreen } from "@/components/GeoBlockScreen";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import WalletPage from "./pages/WalletPage";
