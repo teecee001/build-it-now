@@ -56,7 +56,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">6. Prohibited Activities</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              You may not use X Money for illegal activities, money laundering, terrorist financing, fraud, or any activity that violates applicable laws and regulations. We reserve the right to freeze or close accounts suspected of prohibited activities.
+              You may not use ExoSky for illegal activities, money laundering, terrorist financing, fraud, or any activity that violates applicable laws and regulations. We reserve the right to freeze or close accounts suspected of prohibited activities.
             </p>
           </section>
 
