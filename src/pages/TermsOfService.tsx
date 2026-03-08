@@ -70,7 +70,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">8. Limitation of Liability</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              To the maximum extent permitted by law, X Corp and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.
+              To the maximum extent permitted by law, ExoSky Inc. and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.
             </p>
           </section>
 
