@@ -375,7 +375,7 @@ function CardPageContent() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: design.accent }} />
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className={`${compact ? "text-3xl" : "text-5xl"} font-bold opacity-[0.06] select-none tracking-tighter`}>Ξ╳</span>
+          <span className={`${compact ? "text-3xl" : "text-5xl"} font-bold opacity-[0.06] select-none tracking-tighter text-white`}>Ξ╳</span>
         </div>
 
         <div className="relative flex items-start justify-between">
