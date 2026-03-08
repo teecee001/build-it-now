@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { FeatureGate } from "@/components/FeatureGate";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,14 @@ const CATEGORY_META: Record<MarketCategory, { icon: typeof Coins; label: string;
 };
 
 export default function Markets() {
+  return (
+    <FeatureGate feature="features_forex" featureLabel="Markets">
+      <MarketsContent />
+    </FeatureGate>
+  );
+}
+
+function MarketsContent() {
   const [history, setHistory] = useState<ConversionResult[]>([]);
   const [activeCategory, setActiveCategory] = useState<MarketCategory>("crypto");
   const [search, setSearch] = useState("");

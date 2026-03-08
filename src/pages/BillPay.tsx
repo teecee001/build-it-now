@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { FeatureGate } from "@/components/FeatureGate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,14 @@ const BILL_PROVIDERS: Record<string, { name: string; avgAmount: number }[]> = {
 };
 
 export default function BillPay() {
+  return (
+    <FeatureGate feature="features_bill_pay" featureLabel="Bill Pay">
+      <BillPayContent />
+    </FeatureGate>
+  );
+}
+
+function BillPayContent() {
   const { bills, isLoading, payBill, addBill } = useBills();
   const { balance, updateBalance } = useWallet();
   const { addTransaction } = useTransactions();

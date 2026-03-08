@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { FeatureGate } from "@/components/FeatureGate";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,14 @@ import { toast } from "sonner";
 const FEATURE_ICONS = [Percent, Zap, Headphones, Rocket, CreditCard, Star];
 
 export default function Premium() {
+  return (
+    <FeatureGate feature="features_premium" featureLabel="Premium">
+      <PremiumContent />
+    </FeatureGate>
+  );
+}
+
+function PremiumContent() {
   const {
     isSubscribed, currentTier, subscriptionEnd, isLoading,
     isCheckoutLoading, startCheckout, openPortal, checkSubscription, tiers,

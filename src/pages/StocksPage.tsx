@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FeatureGate } from "@/components/FeatureGate";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,14 @@ function MiniChart({ ticker }: { ticker: string }) {
 }
 
 export default function StocksPage() {
+  return (
+    <FeatureGate feature="features_stocks" featureLabel="Stocks">
+      <StocksContent />
+    </FeatureGate>
+  );
+}
+
+function StocksContent() {
   const { getWallet } = useMultiCurrencyWallet();
   const { holdingsMap, isLoading: holdingsLoading } = useStockHoldings();
   const { getPrice, getChange } = useStockPrices();

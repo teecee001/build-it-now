@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FeatureGate } from "@/components/FeatureGate";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -17,6 +18,14 @@ import { ArrowRight, QrCode, Users, Loader2, CheckCircle2, ShieldCheck } from "l
 import { toast } from "sonner";
 
 export default function SendMoney() {
+  return (
+    <FeatureGate feature="features_send_money" featureLabel="Send Money">
+      <SendMoneyContent />
+    </FeatureGate>
+  );
+}
+
+function SendMoneyContent() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { activeCurrency, activeBalance, activeSymbol, formatBalance, toUSD } = useActiveCurrency();

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { FeatureGate } from "@/components/FeatureGate";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,14 @@ function clearFailures() {
 }
 
 export default function CardPage() {
+  return (
+    <FeatureGate feature="features_cards" featureLabel="Cards">
+      <CardPageContent />
+    </FeatureGate>
+  );
+}
+
+function CardPageContent() {
   const { user } = useAuth();
   const { cards, isLoading, toggleFreeze, addCard, updateCardName } = useCard();
   const { tier, config, limits } = useAccountTier();
