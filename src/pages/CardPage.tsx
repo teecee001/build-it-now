@@ -169,6 +169,14 @@ function CardPageContent() {
   const [pinVerified, setPinVerified] = useState(false);
   const [pinVerifyError, setPinVerifyError] = useState("");
 
+  // Reset PIN state
+  const [showResetPin, setShowResetPin] = useState(false);
+  const [resetPinStep, setResetPinStep] = useState<"verify" | "new" | "confirm">("verify");
+  const [resetOldPin, setResetOldPin] = useState("");
+  const [resetNewPin, setResetNewPin] = useState("");
+  const [resetConfirmPin, setResetConfirmPin] = useState("");
+  const [resetPinError, setResetPinError] = useState("");
+
   // Attempt limiting
   const [isLocked, setIsLocked] = useState(false);
   const [lockTimeLeft, setLockTimeLeft] = useState(0);
