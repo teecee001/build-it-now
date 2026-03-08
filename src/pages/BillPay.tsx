@@ -91,7 +91,7 @@ export default function BillPay() {
   const [search, setSearch] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [newBiller, setNewBiller] = useState("");
+  
   const [newCategory, setNewCategory] = useState("Electric");
   const [newBiller, setNewBiller] = useState(BILL_PROVIDERS["Electric"]?.[0]?.name ?? "");
   const [newAmount, setNewAmount] = useState("");
