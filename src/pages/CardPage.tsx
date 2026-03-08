@@ -32,7 +32,8 @@ export default function CardPage() {
   const [newCardFormat, setNewCardFormat] = useState<"virtual" | "physical">("virtual");
   const [newCardName, setNewCardName] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
-  const [verifyMode, setVerifyMode] = useState<"smart" | "password">("smart");
+  const [verifyMode, setVerifyMode] = useState<"face" | "password">("face");
+  const [faceVerified, setFaceVerified] = useState(false);
   const handle = "@" + (user?.email?.split("@")[0] || "user");
   const verification = useSecureVerification();
 
