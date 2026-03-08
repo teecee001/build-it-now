@@ -32,6 +32,21 @@ export interface GeoVerification {
   country: Country | null;
 }
 
+// Get browser GPS coordinates (returns null if unavailable/denied)
+export function getBrowserLocation(): Promise<{ lat: number; lon: number } | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  });
+}
+
 export function useCountries() {
   return useQuery({
     queryKey: ["countries"],
@@ -45,7 +60,7 @@ export function useCountries() {
       if (error) throw error;
       return data as Country[];
     },
-    staleTime: 1000 * 60 * 60, // 1hr cache
+    staleTime: 1000 * 60 * 60,
   });
 }
 
@@ -58,8 +73,14 @@ export function useGeoVerification() {
     queryFn: async (): Promise<GeoVerification | null> => {
       if (!user) return null;
       try {
+        // Collect GPS for session checks too
+        const gps = await getBrowserLocation();
         const { data, error } = await supabase.functions.invoke("geo-verify", {
-          body: { action: "session_check", user_id: user.id },
+          body: {
+            action: "session_check",
+            user_id: user.id,
+            ...(gps ? { browser_lat: gps.lat, browser_lon: gps.lon } : {}),
+          },
         });
         if (error) return null;
         if (!data?.success) return null;
@@ -69,7 +90,7 @@ export function useGeoVerification() {
       }
     },
     enabled: !!user,
-    refetchInterval: 5 * 60 * 1000, // re-check every 5 min
+    refetchInterval: 5 * 60 * 1000,
     staleTime: 60 * 1000,
   });
 
@@ -91,9 +112,13 @@ export function useGeoVerification() {
   const hasCompletedGeoSetup = !!userGeoRecord && !!userGeoRecord.country_code;
 
   const checkIp = useMutation({
-    mutationFn: async (countryCode: string) => {
+    mutationFn: async ({ countryCode, browserLat, browserLon }: { countryCode: string; browserLat?: number; browserLon?: number }) => {
       const { data, error } = await supabase.functions.invoke("geo-verify", {
-        body: { action: "check_ip", country_code: countryCode },
+        body: {
+          action: "check_ip",
+          country_code: countryCode,
+          ...(browserLat != null && browserLon != null ? { browser_lat: browserLat, browser_lon: browserLon } : {}),
+        },
       });
       if (error) throw error;
       return data;
@@ -111,10 +136,16 @@ export function useGeoVerification() {
   });
 
   const registerGeo = useMutation({
-    mutationFn: async ({ countryCode, phoneNumber }: { countryCode: string; phoneNumber: string }) => {
+    mutationFn: async ({ countryCode, phoneNumber, browserLat, browserLon }: { countryCode: string; phoneNumber: string; browserLat?: number; browserLon?: number }) => {
       if (!user) throw new Error("Not authenticated");
       const { data, error } = await supabase.functions.invoke("geo-verify", {
-        body: { action: "register_geo", user_id: user.id, country_code: countryCode, phone_number: phoneNumber },
+        body: {
+          action: "register_geo",
+          user_id: user.id,
+          country_code: countryCode,
+          phone_number: phoneNumber,
+          ...(browserLat != null && browserLon != null ? { browser_lat: browserLat, browser_lon: browserLon } : {}),
+        },
       });
       if (error) throw error;
       if (!data.success) throw new Error(data.error || "Verification failed");
@@ -127,7 +158,7 @@ export function useGeoVerification() {
   });
 
   const isFeatureAvailable = (feature: keyof Country): boolean => {
-    if (!geoStatus?.country) return true; // fallback: allow if no geo
+    if (!geoStatus?.country) return true;
     const val = geoStatus.country[feature];
     return typeof val === "boolean" ? val : true;
   };

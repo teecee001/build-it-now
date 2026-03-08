@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ExoLogo } from "@/components/ExoLogo";
-import { useCountries, useGeoVerification } from "@/hooks/useGeoVerification";
+import { useCountries, useGeoVerification, getBrowserLocation } from "@/hooks/useGeoVerification";
 import {
   Globe, Phone, Shield, Search, ChevronRight, Loader2,
   MapPin, AlertTriangle, CheckCircle2, FileText, Upload
@@ -24,11 +24,19 @@ export function CountryOnboarding({ onComplete }: Props) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [search, setSearch] = useState("");
   const [idType, setIdType] = useState<string>("passport");
+  const [browserCoords, setBrowserCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   const { data: countries = [], isLoading: countriesLoading } = useCountries();
   const { checkIp, verifyPhone, registerGeo } = useGeoVerification();
 
   const selectedCountryData = countries.find(c => c.code === selectedCountry);
+
+  // Request GPS on mount
+  useEffect(() => {
+    getBrowserLocation().then(coords => {
+      if (coords) setBrowserCoords(coords);
+    });
+  }, []);
 
   const groupedCountries = useMemo(() => {
     const q = search.toLowerCase();
@@ -51,24 +59,31 @@ export function CountryOnboarding({ onComplete }: Props) {
     }
 
     try {
-      const result = await checkIp.mutateAsync(code);
-      
+      const result = await checkIp.mutateAsync({
+        countryCode: code,
+        browserLat: browserCoords?.lat,
+        browserLon: browserCoords?.lon,
+      });
+
       // Block if VPN detected
       if (result.vpn_detected) {
-        toast.error("VPN or proxy detected. Please disable it to continue.", {
-          duration: 5000,
-        });
+        toast.error("VPN or proxy detected. Please disable it to continue.", { duration: 5000 });
         setSelectedCountry("");
         return;
       }
-      
-      // Show warning for IP mismatch but allow to continue
-      if (result.ip_mismatch) {
-        toast.warning(`Your IP appears to be from ${result.ip_country}. If traveling, this is normal.`, {
-          duration: 5000,
-        });
+
+      // Block if spoofing detected (IP + GPS both mismatch)
+      if (result.is_blocked) {
+        toast.error(result.block_reason || "Location spoofing detected. Access denied.", { duration: 6000 });
+        setSelectedCountry("");
+        return;
       }
-      
+
+      // Warn if IP mismatches but GPS confirms or no GPS
+      if (result.ip_mismatch && !result.is_blocked) {
+        toast.warning(`Your IP appears to be from ${result.ip_country}. If traveling, this is normal.`, { duration: 5000 });
+      }
+
       setStep("phone");
     } catch (err: any) {
       if (err?.message?.includes("SANCTIONED") || err?.message?.includes("regulatory")) {
@@ -100,13 +115,13 @@ export function CountryOnboarding({ onComplete }: Props) {
   };
 
   const handleIdSubmit = async () => {
-    // In a real app, this would upload the document and verify it
-    // For now, we proceed with geo registration
     setStep("verifying");
     try {
       await registerGeo.mutateAsync({
         countryCode: selectedCountry,
         phoneNumber,
+        browserLat: browserCoords?.lat,
+        browserLon: browserCoords?.lon,
       });
       toast.success("Verification complete! Welcome to ExoSky.");
       onComplete();
@@ -222,7 +237,7 @@ export function CountryOnboarding({ onComplete }: Props) {
 
                 <div className="pt-2 border-t border-border">
                   <p className="text-[10px] text-muted-foreground text-center flex items-center justify-center gap-1">
-                    <Shield className="w-3 h-3" /> Your location is verified for regulatory compliance
+                    <Shield className="w-3 h-3" /> Your location is verified via IP, GPS &amp; device signals
                   </p>
                 </div>
               </Card>
@@ -359,7 +374,6 @@ export function CountryOnboarding({ onComplete }: Props) {
   );
 }
 
-// Convert country code to flag emoji
 function getFlagEmoji(code: string): string {
   return code
     .toUpperCase()
