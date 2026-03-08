@@ -46,15 +46,15 @@ export function useTransactions(limit?: number) {
       metadata?: Record<string, unknown>;
     }) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("transactions").insert({
+      const { error } = await supabase.from("transactions").insert([{
         user_id: user.id,
-        type: tx.type,
+        type: tx.type as any,
         amount: tx.amount,
         description: tx.description || null,
         recipient: tx.recipient || null,
-        status: tx.status || "completed",
-        metadata: tx.metadata || {},
-      });
+        status: (tx.status || "completed") as any,
+        metadata: (tx.metadata || {}) as any,
+      }]);
       if (error) throw error;
     },
     onSuccess: () => {
