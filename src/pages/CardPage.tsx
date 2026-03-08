@@ -225,7 +225,9 @@ export default function CardPage() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
                 <Card className="p-6 bg-card border-border text-center space-y-4">
                   <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
-                    {biometric.method === "face" ? (
+                    {biometric.needsPinFallback ? (
+                      <KeyRound className="w-8 h-8 text-accent" />
+                    ) : biometric.method === "face" ? (
                       <ScanFace className="w-8 h-8 text-accent" />
                     ) : biometric.method === "fingerprint" ? (
                       <Fingerprint className="w-8 h-8 text-accent" />
@@ -233,35 +235,96 @@ export default function CardPage() {
                       <KeyRound className="w-8 h-8 text-accent" />
                     )}
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold">Verify to View Card Details</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Use {biometric.methodLabel} to access full card information, CVV, and card actions.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={async () => {
-                      const success = await biometric.verify();
-                      if (success) {
-                        toast.success("Identity verified");
-                      } else {
-                        toast.error("Verification failed. Try again.");
-                      }
-                    }}
-                    disabled={biometric.isVerifying}
-                    className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
-                  >
-                    {biometric.isVerifying ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : biometric.method === "face" ? (
-                      <ScanFace className="w-4 h-4" />
-                    ) : biometric.method === "fingerprint" ? (
-                      <Fingerprint className="w-4 h-4" />
-                    ) : (
-                      <KeyRound className="w-4 h-4" />
-                    )}
-                    {biometric.isVerifying ? "Verifying…" : `Verify with ${biometric.methodLabel}`}
-                  </Button>
+
+                  {biometric.needsPinFallback ? (
+                    <>
+                      <div>
+                        <h3 className="text-base font-bold">Enter Security PIN</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Enter your 4-digit PIN to view card details.
+                        </p>
+                      </div>
+                      <div className="flex justify-center gap-2">
+                        {[0, 1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className={`w-10 h-12 rounded-lg border-2 flex items-center justify-center text-lg font-bold transition-all ${
+                              pinInput.length > i
+                                ? "border-accent bg-accent/10 text-foreground"
+                                : "border-border bg-secondary text-muted-foreground"
+                            }`}
+                          >
+                            {pinInput[i] ? "•" : ""}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 max-w-[200px] mx-auto">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, "del"].map((key, idx) => (
+                          <button
+                            key={idx}
+                            disabled={key === null}
+                            onClick={() => {
+                              if (key === "del") {
+                                setPinInput((p) => p.slice(0, -1));
+                              } else if (key !== null && pinInput.length < 4) {
+                                const newPin = pinInput + String(key);
+                                setPinInput(newPin);
+                                if (newPin.length === 4) {
+                                  const ok = biometric.verifyPin(newPin);
+                                  if (ok) {
+                                    toast.success("Identity verified");
+                                    setPinInput("");
+                                  } else {
+                                    toast.error("Incorrect PIN");
+                                    setPinInput("");
+                                  }
+                                }
+                              }
+                            }}
+                            className={`h-10 rounded-lg text-sm font-semibold transition-colors ${
+                              key === null
+                                ? "invisible"
+                                : "bg-secondary hover:bg-secondary/80 text-foreground"
+                            }`}
+                          >
+                            {key === "del" ? "⌫" : key}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Default PIN: 1234</p>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <h3 className="text-base font-bold">Verify to View Card Details</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Use {biometric.methodLabel} to access full card information, CVV, and card actions.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          const success = await biometric.verify();
+                          if (success) {
+                            toast.success("Identity verified");
+                          }
+                          // If not success, needsPinFallback will be set and UI will switch
+                        }}
+                        disabled={biometric.isVerifying}
+                        className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
+                      >
+                        {biometric.isVerifying ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : biometric.method === "face" ? (
+                          <ScanFace className="w-4 h-4" />
+                        ) : biometric.method === "fingerprint" ? (
+                          <Fingerprint className="w-4 h-4" />
+                        ) : (
+                          <KeyRound className="w-4 h-4" />
+                        )}
+                        {biometric.isVerifying ? "Verifying…" : `Verify with ${biometric.methodLabel}`}
+                      </Button>
+                    </>
+                  )}
                 </Card>
 
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
