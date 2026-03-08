@@ -7,7 +7,7 @@ import {
   ArrowRight, Shield, Zap, TrendingUp, CreditCard,
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
   ChevronRight, Star, Lock, Users, Wallet,
-  Check, Sparkles
+  Check, Sparkles, X
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { AppShowcase } from "@/components/AppShowcase";
