@@ -102,7 +102,7 @@ export default function WalletPage() {
                 { icon: ArrowDownLeft, label: "Buy", color: "bg-success/10 text-success", action: () => openTrade("buy", selectedCoin || "BTC") },
                 { icon: ArrowUpRight, label: "Sell", color: "bg-destructive/10 text-destructive", action: () => openTrade("sell", selectedCoin || "BTC") },
                 { icon: ArrowLeftRight, label: "Swap", color: "bg-accent/10 text-accent", action: () => openTrade("swap", selectedCoin || "BTC") },
-                { icon: ArrowUpRight, label: "Send", color: "bg-warning/10 text-warning", action: () => navigate("/send") },
+                { icon: ArrowUpRight, label: "Send", color: "bg-warning/10 text-warning", action: () => openTrade("send", selectedCoin || "BTC") },
               ] as const).map((a) => (
                 <button key={a.label} onClick={a.action} className={`flex flex-col items-center gap-1 py-3 rounded-xl ${a.color} transition-colors hover:opacity-80`}>
                   <a.icon className="w-5 h-5" />
