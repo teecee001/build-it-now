@@ -307,21 +307,86 @@ export default function CardPage() {
                   </span>
                 </div>
 
+                {/* Full Card Details */}
+                <Card className="p-5 bg-card border-border space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold">Card Details</h3>
+                    <Button variant="ghost" size="sm" className="h-7 px-2 gap-1" onClick={() => setShowNumber(!showNumber)}>
+                      {showNumber ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      <span className="text-[10px]">{showNumber ? "Hide" : "Show"}</span>
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Card Number</p>
+                        <p className="text-sm font-mono font-medium mt-0.5">
+                          {showNumber ? `4532 8721 0${selectedCard.card_number_last4.slice(0, 2)}9 ${selectedCard.card_number_last4}` : `•••• •••• •••• ${selectedCard.card_number_last4}`}
+                        </p>
+                      </div>
+                      <button onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Card number copied"); }} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                        <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Expiry</p>
+                        <p className="text-sm font-mono font-medium mt-0.5">{String(selectedCard.expiry_month).padStart(2, "0")}/{String(selectedCard.expiry_year).slice(-2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">CVV</p>
+                        <p className="text-sm font-mono font-medium mt-0.5">{showNumber ? selectedCard.card_number_last4.slice(-3) : "•••"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Network</p>
+                        <p className="text-sm font-medium mt-0.5">VISA</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cardholder</p>
+                        <p className="text-sm font-medium mt-0.5 truncate">{selectedCard.card_name || handle}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Format</p>
+                        <p className="text-sm font-medium mt-0.5 capitalize">{selectedCard.card_format}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Status</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className={`w-2 h-2 rounded-full ${selectedCard.is_frozen ? "bg-blue-400" : selectedCard.is_active ? "bg-accent" : "bg-destructive"}`} />
+                          <p className="text-sm font-medium">{selectedCard.is_frozen ? "Frozen" : selectedCard.is_active ? "Active" : "Inactive"}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Card Type</p>
+                        <p className="text-sm font-medium mt-0.5 capitalize">{selectedCard.card_type}</p>
+                      </div>
+                    </div>
+                    {selectedCard.card_format === "physical" && selectedCard.shipping_status && (
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Shipping</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <Truck className="w-3.5 h-3.5 text-warning" />
+                          <p className="text-sm font-medium capitalize">{selectedCard.shipping_status}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+
+                {/* Quick Actions */}
                 <div className="grid grid-cols-3 gap-2">
-                  <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => {
-                    navigator.clipboard.writeText(selectedCard.card_number_last4);
-                    toast.success("Last 4 copied");
-                  }}>
+                  <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Full number copied"); }}>
                     <Copy className="w-4 h-4" />
                     <span className="text-[10px]">Copy</span>
                   </Button>
                   <Button
                     variant={selectedCard.is_frozen ? "default" : "outline"}
                     className={`flex-col h-auto py-3 gap-1 ${selectedCard.is_frozen ? "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30" : ""}`}
-                    onClick={() => {
-                      toggleFreeze.mutate(selectedCard.id);
-                      toast.success(selectedCard.is_frozen ? "Card unfrozen" : "Card frozen");
-                    }}
+                    onClick={() => { toggleFreeze.mutate(selectedCard.id); toast.success(selectedCard.is_frozen ? "Card unfrozen" : "Card frozen"); }}
                   >
                     <Snowflake className="w-4 h-4" />
                     <span className="text-[10px]">{selectedCard.is_frozen ? "Unfreeze" : "Freeze"}</span>
