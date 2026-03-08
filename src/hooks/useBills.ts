@@ -11,6 +11,7 @@ export interface Bill {
   due_date: string;
   is_paid: boolean;
   paid_at: string | null;
+  account_number: string | null;
   created_at: string;
 }
 
