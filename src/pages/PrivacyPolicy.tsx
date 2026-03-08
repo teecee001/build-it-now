@@ -75,7 +75,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">8. Children's Privacy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children.
+              ExoSky is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children.
             </p>
           </section>
 
