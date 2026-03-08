@@ -53,6 +53,33 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          page_url: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          page_url?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          page_url?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bills: {
         Row: {
           account_number: string | null
