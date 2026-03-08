@@ -23,10 +23,8 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
         {wallets.map(w => (
           <SelectItem key={w.currency} value={w.currency}>
             <span className="flex items-center gap-2">
-              <span className="font-medium">{w.currency}</span>
-              <span className="text-muted-foreground text-xs font-mono">
-                {getCurrencySymbol(w.currency)}{w.balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+              <span className="font-medium">{getCurrencySymbol(w.currency)}</span>
+              <span className="text-muted-foreground text-xs">{w.currency}</span>
             </span>
           </SelectItem>
         ))}
