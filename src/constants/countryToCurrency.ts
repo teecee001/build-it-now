@@ -46,4 +46,16 @@ export const COUNTRY_NAMES: Record<string, string> = {
   DO: "Dominican Republic", GT: "Guatemala", HN: "Honduras", JM: "Jamaica",
   IS: "Iceland", LK: "Sri Lanka", MM: "Myanmar", KH: "Cambodia", NP: "Nepal",
   MN: "Mongolia",
+  // Pacific Islands
+  FJ: "Fiji", PG: "Papua New Guinea", WS: "Samoa", TO: "Tonga", VU: "Vanuatu",
+  SB: "Solomon Islands", PW: "Palau", FM: "Micronesia", MH: "Marshall Islands",
+  KI: "Kiribati", TV: "Tuvalu",
+  // Caribbean
+  BS: "Bahamas", BB: "Barbados", TT: "Trinidad and Tobago", GY: "Guyana",
+  SR: "Suriname", BZ: "Belize", AG: "Antigua and Barbuda", LC: "Saint Lucia",
+  GD: "Grenada", VC: "Saint Vincent", DM: "Dominica", KN: "Saint Kitts and Nevis",
+  HT: "Haiti", CU: "Cuba",
+  // Central Asia
+  KZ: "Kazakhstan", UZ: "Uzbekistan", TM: "Turkmenistan", KG: "Kyrgyzstan",
+  TJ: "Tajikistan", AF: "Afghanistan", AZ: "Azerbaijan", GE: "Georgia", AM: "Armenia",
 };
