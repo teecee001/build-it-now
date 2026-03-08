@@ -147,9 +147,8 @@ Deno.serve(async (req) => {
 
       const locationMismatch = ipCountry !== "unknown" && ipCountry !== country_code;
 
-      // Store VPN/mismatch flags but DON'T block during initial registration
-      // Blocking only happens if both VPN detected AND location mismatch
-      const isBlocked = isVpn && locationMismatch;
+      // Block if VPN/proxy detected, but NOT for location mismatch alone
+      const isBlocked = isVpn;
       const blockReason = isBlocked
         ? `VPN detected with location mismatch. Your IP appears to be from ${ipCountry} but you selected ${country_code}.`
         : null;
