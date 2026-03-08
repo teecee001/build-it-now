@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: "/send", icon: Send, label: "Send" },
   { path: "/deposit", icon: Landmark, label: "Deposit" },
   { path: "/activity", icon: Activity, label: "Activity" },
+  { path: "/savings", icon: PiggyBank, label: "Savings" },
   { path: "/rewards", icon: Gift, label: "Rewards" },
   { path: "/card", icon: CreditCard, label: "Card" },
   { path: "/bills", icon: Receipt, label: "Bills" },
