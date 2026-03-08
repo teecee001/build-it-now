@@ -87,6 +87,7 @@ const App = () => (
               <Route path="/verify" element={<KYCVerification />} />
               <Route path="/analytics" element={<SpendingAnalytics />} />
               <Route path="/qr" element={<QRPayments />} />
+              <Route path="/qr/pay" element={<QRPayments />} />
               <Route path="/recurring" element={<RecurringPayments />} />
               <Route path="/currencies" element={<MultiCurrencyWallet />} />
             </Route>
