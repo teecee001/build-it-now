@@ -233,6 +233,22 @@ function CardPageContent() {
 
   const handlePinVerify = () => {
     if (!selectedCard) return;
+    // If no PIN is set for this card, treat the input as setting a new PIN
+    const hasPin = !!getCardPinHash(selectedCard.id);
+    if (!hasPin) {
+      if (pinInput.length < 4 || pinInput.length > 6) {
+        setPinVerifyError("PIN must be 4-6 digits");
+        return;
+      }
+      setCardPinHash(selectedCard.id, pinInput);
+      clearFailures();
+      setPinVerified(true);
+      setPinInput("");
+      setPinVerifyError("");
+      startSessionTimer();
+      toast.success("Card PIN set & verified successfully");
+      return;
+    }
     if (verifyCardPin(selectedCard.id, pinInput)) {
       clearFailures();
       setPinVerified(true);
