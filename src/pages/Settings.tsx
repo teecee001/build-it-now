@@ -12,7 +12,7 @@ import { useTrustedDevices } from "@/hooks/useTrustedDevices";
 import {
   User, Camera, Save, Loader2, LogOut, Shield, Bell,
   Eye, Moon, Crown, Mail, AtSign, CheckCircle2,
-  KeyRound, Smartphone, Trash2, Monitor, Plus
+  KeyRound, Smartphone, Trash2, Monitor, Plus, FileText, Lock, Scale
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
