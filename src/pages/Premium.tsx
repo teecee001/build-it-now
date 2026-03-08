@@ -23,7 +23,7 @@ export default function Premium() {
 
   useEffect(() => {
     if (searchParams.get("success") === "true") {
-      toast.success("Welcome to X Money Pro! 🎉");
+      toast.success("Welcome to ExoSky Pro! 🎉");
       checkSubscription();
     }
     if (searchParams.get("canceled") === "true") {
