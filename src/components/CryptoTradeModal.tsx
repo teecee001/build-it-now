@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,10 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send, Loader2, CheckCircle2, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send, Loader2, CheckCircle2, X, QrCode, Camera, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
+import { Html5Qrcode } from "html5-qrcode";
 
 type TradeType = "buy" | "sell" | "swap" | "send";
 
