@@ -24,6 +24,8 @@ import Savings from "./pages/Savings";
 import Referrals from "./pages/Referrals";
 import Premium from "./pages/Premium";
 import Settings from "./pages/Settings";
+import SpendingAnalytics from "./pages/SpendingAnalytics";
+import QRPayments from "./pages/QRPayments";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
