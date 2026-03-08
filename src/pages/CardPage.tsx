@@ -26,13 +26,14 @@ export default function CardPage() {
   const { cards, isLoading, toggleFreeze, addCard, updateCardName } = useCard();
   const { tier, config, limits } = useAccountTier();
   const [view, setView] = useState<View>("list");
-  const [pinInput, setPinInput] = useState("");
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [showNumber, setShowNumber] = useState(false);
   const [newCardFormat, setNewCardFormat] = useState<"virtual" | "physical">("virtual");
   const [newCardName, setNewCardName] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [verifyMode, setVerifyMode] = useState<"smart" | "password">("smart");
   const handle = "@" + (user?.email?.split("@")[0] || "user");
-  const biometric = useBiometricAuth();
+  const verification = useSecureVerification();
 
   // Settings state
   const [onlinePurchases, setOnlinePurchases] = useState(true);
