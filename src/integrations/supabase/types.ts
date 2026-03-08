@@ -591,6 +591,24 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       waitlist: {
         Row: {
           created_at: string
@@ -651,10 +669,27 @@ export type Database = {
         Args: { check_email: string }
         Returns: boolean
       }
+      get_waitlist_admin: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          is_approved: boolean
+        }[]
+      }
       get_waitlist_count: { Args: never; Returns: number }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       account_tier: "personal" | "pro" | "business" | "bank"
+      app_role: "admin" | "moderator" | "user"
       transaction_status: "pending" | "completed" | "failed"
       transaction_type:
         | "deposit"
@@ -795,6 +830,7 @@ export const Constants = {
   public: {
     Enums: {
       account_tier: ["personal", "pro", "business", "bank"],
+      app_role: ["admin", "moderator", "user"],
       transaction_status: ["pending", "completed", "failed"],
       transaction_type: [
         "deposit",
