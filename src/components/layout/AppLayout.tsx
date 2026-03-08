@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,12 +42,7 @@ export function AppLayout() {
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4">
         {/* Logo */}
         <div className="flex items-center justify-between px-3 py-4 mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-accent flex items-center justify-center font-bold text-sm text-primary-foreground">
-              E
-            </div>
-            <span className="text-lg font-bold tracking-tight">ExoSky</span>
-          </div>
+          <ExoLogo size="md" />
           <NotificationBell />
         </div>
 
@@ -103,12 +99,7 @@ export function AppLayout() {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-card/80 backdrop-blur-xl border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-accent flex items-center justify-center font-bold text-xs text-primary-foreground">
-            E
-          </div>
-          <span className="text-base font-bold">ExoSky</span>
-        </div>
+        <ExoLogo size="sm" />
         <div className="flex items-center gap-1">
           <NotificationBell />
           <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2">

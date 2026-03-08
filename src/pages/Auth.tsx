@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { ExoLogo } from "@/components/ExoLogo";
 
 export default function Auth() {
   const { user, isLoading: authLoading, signIn, signUp, signInWithGoogle } = useAuth();
@@ -50,8 +51,8 @@ export default function Auth() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <img src="/favicon.png" alt="ExoSky" className="w-12 h-12 rounded-xl" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <ExoLogo size="lg" variant="mark" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">ExoSky</h1>
           <p className="text-muted-foreground mt-2">The everything finance app</p>

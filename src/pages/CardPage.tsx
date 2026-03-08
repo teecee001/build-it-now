@@ -311,12 +311,14 @@ export default function CardPage() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: design.accent }} />
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <img src="/favicon.png" alt="" className={`${compact ? "w-12 h-12" : "w-20 h-20"} opacity-[0.08] select-none`} draggable={false} />
+          <span className={`${compact ? "text-3xl" : "text-5xl"} font-bold opacity-[0.06] select-none tracking-tighter`}>Ξ╳</span>
         </div>
 
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="ExoSky" className="w-5 h-5 rounded" />
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-foreground/20 to-foreground/10 flex items-center justify-center">
+              <span className="text-[8px] font-bold text-foreground/80 tracking-tighter">Ξ╳</span>
+            </div>
             <span className="text-xs font-bold tracking-wider text-foreground/80">EXOSKY</span>
           </div>
           <div className="flex items-center gap-1">
@@ -369,7 +371,7 @@ export default function CardPage() {
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: design.accent }} />
       </div>
       <div className="absolute inset-0 flex items-center justify-center">
-        <img src="/favicon.png" alt="" className="w-8 h-8 opacity-[0.12]" />
+        <span className="text-xl font-bold opacity-[0.1] tracking-tighter">Ξ╳</span>
       </div>
       {selected && (
         <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
