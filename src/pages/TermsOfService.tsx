@@ -37,7 +37,7 @@ export default function TermsOfService() {
     },
     {
       title: "8. Prohibited Activities",
-      content: `You may not use ExoSky for: illegal activities; money laundering or terrorist financing; fraud or misrepresentation; circumventing geographic restrictions or sanctions; using VPNs or location-spoofing tools; creating accounts under false identities; exploiting the platform for unauthorized purposes; or any activity that violates applicable laws in your jurisdiction. We reserve the right to freeze, restrict, or close accounts suspected of prohibited activities and report to relevant authorities.`,
+      content: `You may not use Ξ╳oSky for: illegal activities; money laundering or terrorist financing; fraud or misrepresentation; circumventing geographic restrictions or sanctions; using VPNs or location-spoofing tools; creating accounts under false identities; exploiting the platform for unauthorized purposes; or any activity that violates applicable laws in your jurisdiction. We reserve the right to freeze, restrict, or close accounts suspected of prohibited activities and report to relevant authorities.`,
     },
     {
       title: "9. Intellectual Property",
