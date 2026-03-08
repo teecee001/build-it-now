@@ -4,6 +4,7 @@ import {
   Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,11 +40,14 @@ export function AppLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4">
         {/* Logo */}
-        <div className="flex items-center gap-2 px-3 py-4 mb-6">
-          <div className="w-8 h-8 rounded-lg bg-gradient-accent flex items-center justify-center font-bold text-sm text-primary-foreground">
-            X
+        <div className="flex items-center justify-between px-3 py-4 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-accent flex items-center justify-center font-bold text-sm text-primary-foreground">
+              X
+            </div>
+            <span className="text-lg font-bold tracking-tight">Money</span>
           </div>
-          <span className="text-lg font-bold tracking-tight">Money</span>
+          <NotificationBell />
         </div>
 
         {/* Nav */}
@@ -105,9 +109,12 @@ export function AppLayout() {
           </div>
           <span className="text-base font-bold">Money</span>
         </div>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2">
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2">
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
