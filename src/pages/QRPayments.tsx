@@ -313,7 +313,7 @@ export default function QRPayments() {
               </div>
 
               <p className="text-[10px] text-muted-foreground">
-                Scannable by any QR reader — opens ExoSky payment
+                Scannable by any QR reader — opens Ξ╳oSky payment
               </p>
 
               {/* Optional amount */}
