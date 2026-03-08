@@ -70,6 +70,10 @@ export function useCard() {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       toast.success("Card added successfully");
     },
+    onError: (error: any) => {
+      console.error("Card creation error:", error);
+      toast.error(error?.message || "Failed to create card");
+    },
   });
 
   const updateCardName = useMutation({
