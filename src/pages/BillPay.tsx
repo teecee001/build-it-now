@@ -237,6 +237,10 @@ export default function BillPay() {
                 <Input type="number" placeholder="Amount" value={newAmount} onChange={e => setNewAmount(e.target.value)} className="bg-secondary border-border" />
               </div>
             </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Account / Reference Number</label>
+              <Input placeholder="e.g. 1234-5678-9012" value={newAccountNumber} onChange={e => setNewAccountNumber(e.target.value)} className="bg-secondary border-border font-mono" />
+            </div>
             <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} className="bg-secondary border-border" />
             <Button onClick={handleAddBill} disabled={addBill.isPending} className="w-full bg-foreground text-background hover:bg-foreground/90">
               {addBill.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Bill"}
