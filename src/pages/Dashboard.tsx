@@ -169,6 +169,11 @@ export default function Dashboard() {
         </motion.div>
       )}
 
+      {/* Travel Mode */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+        <TravelMode />
+      </motion.div>
+
       {/* Recent Activity */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <div className="flex items-center justify-between mb-3">
