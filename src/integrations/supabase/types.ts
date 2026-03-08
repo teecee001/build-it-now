@@ -55,6 +55,7 @@ export type Database = {
       }
       bills: {
         Row: {
+          account_number: string | null
           amount: number
           biller_name: string
           category: string
@@ -66,6 +67,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_number?: string | null
           amount: number
           biller_name: string
           category: string
@@ -77,6 +79,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_number?: string | null
           amount?: number
           biller_name?: string
           category?: string

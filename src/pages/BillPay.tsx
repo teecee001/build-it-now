@@ -8,11 +8,14 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { 
   Zap, Wifi, Home, Phone, Tv, Droplets, Search,
-  CheckCircle2, Loader2, ArrowRight, Plus
+  CheckCircle2, Loader2, ArrowRight, Plus, Shield, FileText
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+} from "@/components/ui/dialog";
 
 const BILL_CATEGORIES = [
   { icon: Zap, label: "Electric", color: "text-warning" },
@@ -96,6 +99,8 @@ export default function BillPay() {
   const [newBiller, setNewBiller] = useState(BILL_PROVIDERS["Electric"]?.[0]?.name ?? "");
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
+  const [newAccountNumber, setNewAccountNumber] = useState("");
+  const [confirmBill, setConfirmBill] = useState<any | null>(null);
 
   const handleCategoryChange = (cat: string) => {
     setNewCategory(cat);
@@ -115,7 +120,18 @@ export default function BillPay() {
     if (provider) setNewAmount(provider.avgAmount.toFixed(2));
   };
 
-  const handlePay = async (bill: { id: string; amount: number; biller_name: string }) => {
+  const handlePayClick = (bill: any) => {
+    if (!bill.account_number) {
+      toast.error("No account number on file. Edit this bill to add one before paying.");
+      return;
+    }
+    setConfirmBill(bill);
+  };
+
+  const handleConfirmPay = async () => {
+    const bill = confirmBill;
+    if (!bill) return;
+    setConfirmBill(null);
     if (bill.amount > balance) {
       toast.error("Insufficient balance");
       return;
@@ -126,9 +142,8 @@ export default function BillPay() {
       await addTransaction.mutateAsync({
         type: "bill_payment",
         amount: -bill.amount,
-        description: `Bill payment — ${bill.biller_name}`,
+        description: `Bill payment — ${bill.biller_name} (Acct: ...${(bill.account_number || "").slice(-4)})`,
       });
-      // Record 1% cashback
       const cashback = bill.amount * 0.01;
       await updateBalance.mutateAsync({ balance: balance - bill.amount + cashback });
       await addTransaction.mutateAsync({
@@ -146,8 +161,8 @@ export default function BillPay() {
   };
 
   const handleAddBill = async () => {
-    if (!newBiller || !newAmount || !newDueDate) {
-      toast.error("Fill in all fields");
+    if (!newBiller || !newAmount || !newDueDate || !newAccountNumber.trim()) {
+      toast.error("Fill in all fields including account number");
       return;
     }
     try {
@@ -156,12 +171,14 @@ export default function BillPay() {
         category: newCategory,
         amount: parseFloat(newAmount),
         due_date: newDueDate,
+        account_number: newAccountNumber.trim(),
       });
       toast.success("Bill added");
       setShowAdd(false);
       setNewBiller("");
       setNewAmount("");
       setNewDueDate("");
+      setNewAccountNumber("");
     } catch (err: any) {
       toast.error(err.message || "Failed to add bill");
     }
@@ -220,6 +237,10 @@ export default function BillPay() {
                 <Input type="number" placeholder="Amount" value={newAmount} onChange={e => setNewAmount(e.target.value)} className="bg-secondary border-border" />
               </div>
             </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Account / Reference Number</label>
+              <Input placeholder="e.g. 1234-5678-9012" value={newAccountNumber} onChange={e => setNewAccountNumber(e.target.value)} className="bg-secondary border-border font-mono" />
+            </div>
             <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} className="bg-secondary border-border" />
             <Button onClick={handleAddBill} disabled={addBill.isPending} className="w-full bg-foreground text-background hover:bg-foreground/90">
               {addBill.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Bill"}
@@ -271,12 +292,17 @@ export default function BillPay() {
                           <Badge variant="secondary" className="text-[10px] px-1 py-0">{bill.category}</Badge>
                           <p className="text-xs text-muted-foreground">Due {format(new Date(bill.due_date), "MMM d")}</p>
                         </div>
+                        {bill.account_number && (
+                          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                            Acct: •••• {bill.account_number.slice(-4)}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         <p className="text-sm font-bold font-mono">${Number(bill.amount).toFixed(2)}</p>
                         <Button
                           size="sm"
-                          onClick={() => handlePay(bill)}
+                          onClick={() => handlePayClick(bill)}
                           disabled={payingId === bill.id}
                           className="bg-foreground text-background hover:bg-foreground/90 h-8 gap-1"
                         >
@@ -322,9 +348,52 @@ export default function BillPay() {
       )}
 
       {/* Cashback Notice */}
-      <Card className="p-3 bg-warning/5 border-warning/10">
-        <p className="text-xs text-warning text-center">💰 Earn 1% cashback on all bill payments with your ExoSky card</p>
-      </Card>
+      {/* Payment Confirmation Dialog */}
+      <Dialog open={!!confirmBill} onOpenChange={(open) => !open && setConfirmBill(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" /> Confirm Payment
+            </DialogTitle>
+            <DialogDescription>Please review your payment details before proceeding.</DialogDescription>
+          </DialogHeader>
+          {confirmBill && (
+            <div className="space-y-3 py-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Provider</span>
+                <span className="font-semibold">{confirmBill.biller_name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Account</span>
+                <span className="font-mono">•••• {(confirmBill.account_number || "").slice(-4)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Category</span>
+                <Badge variant="secondary" className="text-[10px]">{confirmBill.category}</Badge>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-bold font-mono">${Number(confirmBill.amount).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Cashback (1%)</span>
+                <span className="text-success font-mono">+${(confirmBill.amount * 0.01).toFixed(2)}</span>
+              </div>
+              <div className="border-t border-border pt-2 mt-2">
+                <p className="text-[10px] text-muted-foreground text-center">
+                  By confirming, you authorize this payment from your ExoSky wallet.
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmBill(null)}>Cancel</Button>
+            <Button onClick={handleConfirmPay} className="bg-foreground text-background hover:bg-foreground/90 gap-1">
+              <ArrowRight className="w-4 h-4" /> Pay Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

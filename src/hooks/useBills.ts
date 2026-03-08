@@ -11,6 +11,7 @@ export interface Bill {
   due_date: string;
   is_paid: boolean;
   paid_at: string | null;
+  account_number: string | null;
   created_at: string;
 }
 
@@ -34,7 +35,7 @@ export function useBills() {
   });
 
   const addBill = useMutation({
-    mutationFn: async (bill: { biller_name: string; category: string; amount: number; due_date: string }) => {
+    mutationFn: async (bill: { biller_name: string; category: string; amount: number; due_date: string; account_number?: string }) => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("bills").insert({ ...bill, user_id: user.id });
       if (error) throw error;
