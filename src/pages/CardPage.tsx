@@ -276,6 +276,37 @@ function CardPageContent() {
     }
   };
 
+  const handleResetPinStep = () => {
+    if (!selectedCard) return;
+    if (resetPinStep === "verify") {
+      if (!verifyCardPin(selectedCard.id, resetOldPin)) {
+        setResetPinError("Incorrect current PIN");
+        setResetOldPin("");
+        return;
+      }
+      setResetPinStep("new");
+      return;
+    }
+    if (resetPinStep === "new") {
+      if (resetNewPin.length < 4 || resetNewPin.length > 6) {
+        setResetPinError("PIN must be 4-6 digits");
+        return;
+      }
+      setResetPinStep("confirm");
+      return;
+    }
+    if (resetPinStep === "confirm") {
+      if (resetConfirmPin !== resetNewPin) {
+        setResetPinError("PINs do not match");
+        setResetConfirmPin("");
+        return;
+      }
+      setCardPinHash(selectedCard.id, resetNewPin);
+      setShowResetPin(false);
+      toast.success("Card PIN updated successfully");
+    }
+  };
+
   const handleFreezeToggle = async (card: CardData) => {
     const wasFrozen = card.is_frozen;
     toggleFreeze.mutate(card.id);
