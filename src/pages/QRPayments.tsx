@@ -65,6 +65,7 @@ function parseScannedData(raw: string): { handle: string; amount?: number; note?
 }
 
 export default function QRPayments() {
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { balance, updateBalance } = useWallet();
   const { addTransaction } = useTransactions();
