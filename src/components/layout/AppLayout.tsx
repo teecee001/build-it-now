@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
-  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users
+  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { path: "/markets", icon: TrendingUp, label: "Markets" },
   { path: "/referrals", icon: Users, label: "Refer & Earn" },
   { path: "/advisor", icon: Bot, label: "AI Advisor" },
+  { path: "/premium", icon: Crown, label: "Pro" },
 ];
 
 export function AppLayout() {

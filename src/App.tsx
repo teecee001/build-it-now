@@ -22,6 +22,7 @@ import ComplianceDisclosures from "./pages/ComplianceDisclosures";
 import KYCVerification from "./pages/KYCVerification";
 import Savings from "./pages/Savings";
 import Referrals from "./pages/Referrals";
+import Premium from "./pages/Premium";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -73,6 +74,7 @@ const App = () => (
               <Route path="/advisor" element={<AIAdvisor />} />
               <Route path="/savings" element={<Savings />} />
               <Route path="/referrals" element={<Referrals />} />
+              <Route path="/premium" element={<Premium />} />
               <Route path="/verify" element={<KYCVerification />} />
             </Route>
             <Route path="*" element={<NotFound />} />
