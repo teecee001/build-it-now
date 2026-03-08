@@ -63,7 +63,7 @@ export default function PrivacyPolicy() {
     },
     {
       title: "10. Children's Privacy",
-      content: `ExoSky is not intended for individuals under 18 years of age (or the age of majority in your jurisdiction). We do not knowingly collect personal information from minors. If we discover we have collected data from a minor, we will promptly delete it and close the associated account.`,
+      content: `Ξ╳oSky is not intended for individuals under 18 years of age (or the age of majority in your jurisdiction). We do not knowingly collect personal information from minors. If we discover we have collected data from a minor, we will promptly delete it and close the associated account.`,
     },
     {
       title: "11. Changes to This Policy",
