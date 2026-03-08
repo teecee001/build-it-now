@@ -1002,7 +1002,10 @@ export function AppShowcase() {
         />
 
         {/* Phone body */}
-        <div className="relative w-[270px] sm:w-[300px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden">
+        <div
+          className="relative w-[270px] sm:w-[300px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
+          onClick={() => navigate("/auth")}
+        >
           {/* Status bar */}
           <div className="relative h-8 flex items-center justify-between px-6 pt-1 bg-[hsl(240,10%,6%)]">
             <span className="text-[8px] text-white/40 font-medium">9:41</span>
