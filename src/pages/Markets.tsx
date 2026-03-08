@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,16 +65,33 @@ export default function Markets() {
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [chartDays, setChartDays] = useState(30);
 
+  const [tick, setTick] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [secondsAgo, setSecondsAgo] = useState(0);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      setTick(t => t + 1);
+      setLastUpdated(new Date());
+      setSecondsAgo(0);
+    }, 30000);
+    const countdownInterval = setInterval(() => {
+      setSecondsAgo(s => Math.min(s + 1, 30));
+    }, 1000);
+    return () => { clearInterval(refreshInterval); clearInterval(countdownInterval); };
+  }, []);
+
   const { rates, isLive } = useExchangeRates();
   const { getPrice: getStockPrice, getChange: getStockChange } = useStockPrices();
 
   const getCryptoPrice = (code: string) => rates[code] ? 1 / rates[code] : 0;
   const getCryptoChange = (i: number) => parseFloat(((Math.sin(i * 1.7 + 0.3) * 8) + 0.5).toFixed(2));
 
-  // Add hourly variance to market assets for "live" feel
+  // Add variance using tick for real-time feel
   const addVariance = (base: number, symbol: string) => {
-    const h = new Date().getHours();
-    return parseFloat((base * (1 + Math.sin(seedHash(symbol) + h * 0.5) * 0.008)).toFixed(base < 10 ? 4 : 2));
+    const now = Date.now() / 1000;
+    return parseFloat((base * (1 + Math.sin(seedHash(symbol) + now * 0.01 + tick) * 0.008)).toFixed(base < 10 ? 4 : 2));
   };
 
   // ── Build list for active category ──
@@ -105,7 +122,7 @@ export default function Markets() {
         return INDICES.filter(i => i.name.toLowerCase().includes(q) || i.symbol.toLowerCase().includes(q))
           .map(i => ({ symbol: i.symbol, name: i.name, price: addVariance(i.price, i.symbol), change: i.change, tag: "" }));
     }
-  }, [activeCategory, search, rates]);
+  }, [activeCategory, search, rates, tick]);
 
   const selectedInfo = selectedAsset
     ? items.find(i => i.symbol === selectedAsset.symbol)
@@ -117,10 +134,23 @@ export default function Markets() {
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Markets</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Crypto, stocks, forex, commodities & indices — all in one place
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Markets</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Crypto, stocks, forex, commodities & indices — all in one place
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+            </span>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {secondsAgo < 5 ? "Live" : `${secondsAgo}s ago`}
+            </span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Market Overview Cards */}
@@ -329,7 +359,7 @@ export default function Markets() {
 }
 
 // ── Fallback TradingView-style chart for non-crypto assets ──
-import { useEffect, useRef } from "react";
+// useEffect and useRef already imported at top
 import { createChart, ColorType, AreaSeries } from "lightweight-charts";
 import type { Time } from "lightweight-charts";
 
