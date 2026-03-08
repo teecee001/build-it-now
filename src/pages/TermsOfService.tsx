@@ -42,7 +42,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">4. Financial Services</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money provides digital wallet, payment, and money transfer services through licensed banking partners. Deposits are held at FDIC-insured partner banks. X Money is not a bank. Banking services are provided by our partner financial institutions.
+              ExoSky provides digital wallet, payment, and money transfer services through licensed banking partners. Deposits are held at FDIC-insured partner banks. ExoSky is not a bank. Banking services are provided by our partner financial institutions.
             </p>
           </section>
 
