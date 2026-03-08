@@ -604,33 +604,61 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Early Access CTA ─── */}
-      <section className="px-6 py-20">
+      {/* ─── Private Beta Access ─── */}
+      <section className="px-6 py-28">
         <div className="max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative rounded-3xl overflow-hidden border border-accent/20 p-8 sm:p-12 text-center"
+            transition={{ duration: 0.8 }}
+            className="relative rounded-3xl overflow-hidden border border-accent/15 p-10 sm:p-16 text-center"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/10" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-accent/8 rounded-full blur-[100px]" />
+            {/* Layered glow effects */}
+            <div className="absolute inset-0 bg-gradient-to-b from-accent/[0.03] via-transparent to-accent/[0.06]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/[0.06] rounded-full blur-[120px]" />
+            <div className="absolute bottom-0 right-0 w-72 h-72 bg-accent/[0.04] rounded-full blur-[80px]" />
 
             <div className="relative">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-6">
-                <Sparkles className="w-3.5 h-3.5 text-accent" />
-                <span className="text-xs font-semibold text-accent">Now in Beta</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-                Join the{" "}
-                <span className="text-accent">early access</span> waitlist
-              </h2>
-              <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
-                Be the first to experience ExoSky. Drop your email and we'll notify you 
-                when we're ready to onboard the next wave of beta users.
-              </p>
-              <form
+              {/* Exclusive badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-8"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                <span className="text-[11px] font-semibold text-accent tracking-wider uppercase">Private Beta</span>
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="text-3xl sm:text-5xl font-black tracking-tight leading-tight"
+              >
+                ExoSky is currently in
+                <br />
+                <span className="text-accent">private beta.</span>
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+                className="text-muted-foreground mt-5 text-lg sm:text-xl max-w-lg mx-auto leading-relaxed"
+              >
+                Request access to the next generation financial&nbsp;network.
+              </motion.p>
+
+              <motion.form
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
                 onSubmit={async (e) => {
                   e.preventDefault();
                   const form = e.target as HTMLFormElement;
@@ -651,32 +679,45 @@ export default function LandingPage() {
                     setWaitlistCount((prev) => prev + 1);
                   }
                 }}
-                className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"
+                className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"
               >
                 <Input
                   name="waitlist-email"
                   type="email"
                   placeholder="Enter your email"
                   required
-                  className="h-12 bg-secondary/50 border-border rounded-xl text-center sm:text-left"
+                  className="h-12 bg-background/50 border-border/50 rounded-xl text-center sm:text-left backdrop-blur-sm"
                 />
                 <Button
                   type="submit"
                   size="lg"
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.25)] shrink-0"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_50px_hsl(142_71%_45%/0.2)] shrink-0 px-6"
                 >
-                  Join Waitlist <ArrowRight className="w-4 h-4" />
+                  Request Access <ArrowRight className="w-4 h-4" />
                 </Button>
-              </form>
+              </motion.form>
+
               {waitlistCount > 0 && (
-                <p className="text-sm text-accent font-medium mt-4 flex items-center justify-center gap-1.5">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.6 }}
+                  className="text-sm text-accent/80 font-medium mt-5 flex items-center justify-center gap-1.5"
+                >
                   <Users className="w-3.5 h-3.5" />
-                  Join {waitlistCount.toLocaleString()}+ others on the waitlist
-                </p>
+                  {waitlistCount.toLocaleString()}+ people ahead of you
+                </motion.p>
               )}
-              <p className="text-xs text-muted-foreground mt-2">
-                No spam · Unsubscribe anytime · Beta users get $25 welcome bonus
-              </p>
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.7 }}
+                className="text-[11px] text-muted-foreground/60 mt-3 tracking-wide"
+              >
+                Invite-only · Limited spots · $25 welcome bonus for beta testers
+              </motion.p>
             </div>
           </motion.div>
         </div>
