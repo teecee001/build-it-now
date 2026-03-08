@@ -4,6 +4,7 @@ import { useActiveCurrency } from "@/hooks/useActiveCurrency";
 import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { TravelMode } from "@/components/TravelMode";
 import { Card } from "@/components/ui/card";
