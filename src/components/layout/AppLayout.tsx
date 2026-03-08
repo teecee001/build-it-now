@@ -47,6 +47,7 @@ export function AppLayout() {
         {/* Logo */}
         <div className="flex items-center justify-between px-3 py-4 mb-6">
           <ExoLogo size="md" />
+          <ThemeToggle />
           <NotificationBell />
         </div>
 
