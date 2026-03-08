@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveCurrency } from "@/hooks/useActiveCurrency";
 import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -31,7 +33,8 @@ const TX_ICON_MAP: Record<string, typeof Send> = {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { balance, savingsBalance, totalBalance, isLoading: walletLoading } = useWallet();
+  const { savingsBalance, isLoading: walletLoading } = useWallet();
+  const { activeCurrency, activeBalance, activeSymbol, formatBalance, fromUSD, wallets } = useActiveCurrency();
   const { transactions, isLoading: txLoading } = useTransactions(5);
   const { rates, isLive } = useExchangeRates();
   const navigate = useNavigate();
@@ -42,6 +45,16 @@ export default function Dashboard() {
 
   const apyRate = 6.0;
   const monthlyEarnings = (savingsBalance * apyRate / 100 / 12);
+
+  // Total balance across all currency wallets in active currency
+  const totalInActiveCurrency = wallets.reduce((sum, w) => {
+    const wRate = rates[w.currency] || 1;
+    const usdValue = w.balance / wRate;
+    return sum + (usdValue * (rates[activeCurrency] || 1));
+  }, 0);
+
+  // Savings in active currency
+  const savingsInActive = fromUSD(savingsBalance);
 
   if (walletLoading) {
     return (
@@ -61,9 +74,12 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
             <p className="text-xs text-muted-foreground font-mono">{handle}</p>
           </div>
-          <button onClick={() => setShowBalance(!showBalance)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
-            {showBalance ? <Eye className="w-5 h-5 text-muted-foreground" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <CurrencySwitcher compact />
+            <button onClick={() => setShowBalance(!showBalance)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+              {showBalance ? <Eye className="w-5 h-5 text-muted-foreground" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
+            </button>
+          </div>
         </div>
       </motion.div>
 
@@ -80,15 +96,17 @@ export default function Dashboard() {
             </div>
             <div className="flex items-baseline gap-3">
               <h2 className="text-4xl font-bold tracking-tight font-mono">
-                {showBalance ? `$${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••••"}
+                {showBalance ? formatBalance(totalInActiveCurrency) : "••••••"}
               </h2>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className="p-3 rounded-lg bg-secondary/50">
-                <p className="text-xs text-muted-foreground">Wallet</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">{activeCurrency} Wallet</p>
+                </div>
                 <p className="text-sm font-semibold font-mono">
-                  {showBalance ? `$${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••"}
+                  {showBalance ? formatBalance(activeBalance) : "••••"}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-secondary/50">
@@ -97,7 +115,7 @@ export default function Dashboard() {
                   <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-success/10 text-success border-0">{apyRate}% APY</Badge>
                 </div>
                 <p className="text-sm font-semibold font-mono">
-                  {showBalance ? `$${savingsBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••"}
+                  {showBalance ? formatBalance(savingsInActive) : "••••"}
                 </p>
               </div>
             </div>
@@ -108,7 +126,7 @@ export default function Dashboard() {
                   <PiggyBank className="w-4 h-4 text-success" />
                   <span className="text-xs text-success">Monthly earnings</span>
                 </div>
-                <span className="text-xs font-mono font-semibold text-success">+${monthlyEarnings.toFixed(2)}/mo</span>
+                <span className="text-xs font-mono font-semibold text-success">+{formatBalance(fromUSD(monthlyEarnings))}/mo</span>
               </div>
             )}
 
@@ -165,6 +183,7 @@ export default function Dashboard() {
             {transactions.map((tx) => {
               const Icon = TX_ICON_MAP[tx.type] || Send;
               const isPositiveAmount = Number(tx.amount) > 0;
+              const displayAmount = Math.abs(Number(tx.amount)) * (rates[activeCurrency] || 1);
               return (
                 <Card key={tx.id} className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors">
                   <div className="flex items-center gap-3">
@@ -176,7 +195,7 @@ export default function Dashboard() {
                       <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}</p>
                     </div>
                     <p className={`text-sm font-semibold font-mono ${isPositiveAmount ? "text-success" : "text-foreground"}`}>
-                      {isPositiveAmount ? "+" : ""}${Math.abs(Number(tx.amount)).toFixed(2)}
+                      {isPositiveAmount ? "+" : ""}{activeSymbol}{displayAmount.toFixed(2)}
                     </p>
                   </div>
                 </Card>

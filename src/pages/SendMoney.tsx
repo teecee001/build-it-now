@@ -3,42 +3,59 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useExchangeRates } from "@/hooks/useExchangeRates";
-import { useWallet } from "@/hooks/useWallet";
+import { useActiveCurrency } from "@/hooks/useActiveCurrency";
+import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { TransactionPinModal } from "@/components/TransactionPinModal";
-import { CURRENCIES } from "@/constants/currencies";
+import { CurrencySwitcher } from "@/components/CurrencySwitcher";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowRight, QrCode, Users, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SendMoney() {
+  const { user } = useAuth();
+  const { activeCurrency, activeBalance, activeSymbol, formatBalance, toUSD } = useActiveCurrency();
+  const { wallets } = useMultiCurrencyWallet();
   const { rates } = useExchangeRates();
-  const { balance, updateBalance } = useWallet();
   const { addTransaction } = useTransactions();
   const { requiresPin, verifyPin, isPinSet, PIN_THRESHOLD } = useTransactionPin();
+
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState("USD");
   const [isSending, setIsSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
 
-  const usdAmount = currency === "USD" ? parseFloat(amount || "0") : parseFloat(amount || "0") / (rates[currency] || 1);
+  const parsedAmount = parseFloat(amount || "0");
+  const usdAmount = toUSD(parsedAmount);
 
   const executeSend = async () => {
+    if (!user) return;
     setIsSending(true);
     try {
-      await updateBalance.mutateAsync({ balance: balance - usdAmount });
+      const activeWallet = wallets.find(w => w.currency === activeCurrency);
+      if (!activeWallet) throw new Error(`No ${activeCurrency} wallet found`);
+      if (parsedAmount > activeWallet.balance) throw new Error("Insufficient balance");
+
+      // Deduct from active currency wallet
+      const { error: updateErr } = await supabase
+        .from("wallets")
+        .update({ balance: activeWallet.balance - parsedAmount })
+        .eq("id", activeWallet.id);
+      if (updateErr) throw updateErr;
+
       await addTransaction.mutateAsync({
         type: "send",
         amount: -usdAmount,
-        description: `Sent to ${recipient}`,
+        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient}`,
         recipient,
+        metadata: { currency: activeCurrency, original_amount: parsedAmount },
       });
       setSent(true);
-      toast.success(`$${usdAmount.toFixed(2)} sent to ${recipient}`);
+      toast.success(`${formatBalance(parsedAmount)} sent to ${recipient}`);
     } catch (err: any) {
       toast.error(err.message || "Transfer failed");
     } finally {
@@ -51,11 +68,10 @@ export default function SendMoney() {
       toast.error("Please fill in all fields");
       return;
     }
-    if (usdAmount > balance) {
-      toast.error("Insufficient balance");
+    if (parsedAmount > activeBalance) {
+      toast.error(`Insufficient ${activeCurrency} balance`);
       return;
     }
-    // Check if PIN is required for high-value transactions
     if (requiresPin(usdAmount)) {
       setShowPinModal(true);
       return;
@@ -70,7 +86,7 @@ export default function SendMoney() {
           <CheckCircle2 className="w-20 h-20 text-success" />
         </motion.div>
         <h2 className="text-2xl font-bold">Payment Sent!</h2>
-        <p className="text-muted-foreground text-center">{amount} {currency} was sent to {recipient}</p>
+        <p className="text-muted-foreground text-center">{formatBalance(parsedAmount)} was sent to {recipient}</p>
         <Button variant="outline" onClick={() => { setSent(false); setRecipient(""); setAmount(""); }}>Send Another</Button>
       </div>
     );
@@ -85,8 +101,11 @@ export default function SendMoney() {
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
         <Card className="p-4 bg-card border-border flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Available balance</p>
-          <p className="text-lg font-bold font-mono">${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">Spending from</p>
+            <CurrencySwitcher compact />
+          </div>
+          <p className="text-lg font-bold font-mono">{formatBalance(activeBalance)}</p>
         </Card>
       </motion.div>
 
@@ -125,21 +144,17 @@ export default function SendMoney() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground font-medium">Amount</label>
-            <div className="flex gap-2">
-              <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-12 bg-secondary border-border flex-1 text-xl font-mono" />
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-28 h-12 bg-secondary border-border"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.slice(0, 20).map((c) => (
-                    <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <label className="text-sm text-muted-foreground font-medium">Amount ({activeCurrency})</label>
+            <Input
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="h-12 bg-secondary border-border text-xl font-mono"
+            />
           </div>
 
-          {amount && parseFloat(amount) > 0 && currency !== "USD" && (
+          {parsedAmount > 0 && activeCurrency !== "USD" && (
             <div className="p-3 rounded-lg bg-secondary/50 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">≈ USD equivalent</span>
               <span className="font-mono font-medium">${usdAmount.toFixed(2)}</span>
