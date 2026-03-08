@@ -598,7 +598,7 @@ export default function LandingPage() {
               onClick={() => navigate("/auth")}
               className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl"
             >
-              Switch to ExoSky <ArrowRight className="w-4 h-4" />
+              Switch to Ξ╳oSky <ArrowRight className="w-4 h-4" />
             </Button>
           </motion.div>
         </div>
