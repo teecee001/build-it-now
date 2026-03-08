@@ -94,7 +94,8 @@ export default function LandingPage() {
             </div>
             <span className="text-lg font-bold tracking-tight">ExoSky</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"
