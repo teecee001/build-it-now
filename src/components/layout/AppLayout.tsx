@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
-  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown
+  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { path: "/referrals", icon: Users, label: "Refer & Earn" },
   { path: "/advisor", icon: Bot, label: "AI Advisor" },
   { path: "/premium", icon: Crown, label: "Pro" },
+  { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export function AppLayout() {
