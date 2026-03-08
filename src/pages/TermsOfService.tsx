@@ -41,7 +41,7 @@ export default function TermsOfService() {
     },
     {
       title: "9. Intellectual Property",
-      content: `All content, trademarks, logos, and intellectual property displayed on ExoSky are owned by ExoSky Inc. or its licensors. You may not copy, modify, distribute, or create derivative works from any ExoSky content without prior written consent. Your use of the Service does not grant you any ownership rights in our intellectual property.`,
+      content: `All content, trademarks, logos, and intellectual property displayed on Ξ╳oSky are owned by Ξ╳oSky Inc. or its licensors. You may not copy, modify, distribute, or create derivative works from any Ξ╳oSky content without prior written consent. Your use of the Service does not grant you any ownership rights in our intellectual property.`,
     },
     {
       title: "10. Termination",
