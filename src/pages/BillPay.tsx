@@ -292,6 +292,11 @@ export default function BillPay() {
                           <Badge variant="secondary" className="text-[10px] px-1 py-0">{bill.category}</Badge>
                           <p className="text-xs text-muted-foreground">Due {format(new Date(bill.due_date), "MMM d")}</p>
                         </div>
+                        {bill.account_number && (
+                          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                            Acct: •••• {bill.account_number.slice(-4)}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         <p className="text-sm font-bold font-mono">${Number(bill.amount).toFixed(2)}</p>
