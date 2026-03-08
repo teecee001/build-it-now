@@ -34,6 +34,7 @@ import QRPayments from "./pages/QRPayments";
 import RecurringPayments from "./pages/RecurringPayments";
 import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
 import StocksPage from "./pages/StocksPage";
+import AdminWaitlist from "./pages/AdminWaitlist";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
