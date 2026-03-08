@@ -406,17 +406,17 @@ function CardPageContent() {
         )}
 
         <div className="relative space-y-2">
-          <p className={`${compact ? "text-sm" : "text-lg"} font-mono tracking-[0.15em] text-foreground/90`}>
+          <p className={`${compact ? "text-sm" : "text-lg"} font-mono tracking-[0.15em] text-white/90`}>
             •••• {c.card_number_last4}
           </p>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-[9px] text-foreground/40">{c.card_name || (isVirtual ? "Virtual" : "Physical")}</p>
+              <p className="text-[9px] text-white/40">{c.card_name || (isVirtual ? "Virtual" : "Physical")}</p>
             </div>
             <div>
-              <p className="text-xs font-mono text-foreground/80">{expiry}</p>
+              <p className="text-xs font-mono text-white/80">{expiry}</p>
             </div>
-            <span className="text-sm font-bold italic tracking-tighter text-foreground/60">VISA</span>
+            <span className="text-sm font-bold italic tracking-tighter text-white/60">VISA</span>
           </div>
         </div>
       </div>
