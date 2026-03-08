@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ function MiniChart({ code }: { code: string }) {
 }
 
 export default function WalletPage() {
+  const navigate = useNavigate();
   const { rates, isLive } = useExchangeRates();
   const { wallets, getWallet } = useMultiCurrencyWallet();
   const [search, setSearch] = useState("");
@@ -103,7 +105,7 @@ export default function WalletPage() {
                 { icon: ArrowDownLeft, label: "Buy", color: "bg-success/10 text-success", action: () => openTrade("buy", selectedCoin || "BTC") },
                 { icon: ArrowUpRight, label: "Sell", color: "bg-destructive/10 text-destructive", action: () => openTrade("sell", selectedCoin || "BTC") },
                 { icon: ArrowLeftRight, label: "Swap", color: "bg-accent/10 text-accent", action: () => openTrade("swap", selectedCoin || "BTC") },
-                { icon: ArrowUpRight, label: "Send", color: "bg-warning/10 text-warning", action: () => {} },
+                { icon: ArrowUpRight, label: "Send", color: "bg-warning/10 text-warning", action: () => navigate("/send") },
               ] as const).map((a) => (
                 <button key={a.label} onClick={a.action} className={`flex flex-col items-center gap-1 py-3 rounded-xl ${a.color} transition-colors hover:opacity-80`}>
                   <a.icon className="w-5 h-5" />
