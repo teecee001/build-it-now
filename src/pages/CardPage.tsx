@@ -311,7 +311,7 @@ export default function CardPage() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: design.accent }} />
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <img src="/favicon.png" alt="" className={`${compact ? "w-12 h-12" : "w-20 h-20"} opacity-[0.08] select-none`} draggable={false} />
+          <span className={`${compact ? "text-3xl" : "text-5xl"} font-bold opacity-[0.06] select-none tracking-tighter`}>Ξ╳</span>
         </div>
 
         <div className="relative flex items-start justify-between">
