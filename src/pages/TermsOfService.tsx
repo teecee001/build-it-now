@@ -61,7 +61,7 @@ export default function TermsOfService() {
     },
     {
       title: "14. Contact",
-      content: `For questions about these Terms, contact us at legal@exosky.app or ExoSky Inc., 1355 Market Street, San Francisco, CA 94103, USA.`,
+      content: `For questions about these Terms, contact us at legal@exosky.app or Ξ╳oSky Inc., 1355 Market Street, San Francisco, CA 94103, USA.`,
     },
   ];
 
