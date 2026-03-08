@@ -65,16 +65,33 @@ export default function Markets() {
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [chartDays, setChartDays] = useState(30);
 
+  const [tick, setTick] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [secondsAgo, setSecondsAgo] = useState(0);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      setTick(t => t + 1);
+      setLastUpdated(new Date());
+      setSecondsAgo(0);
+    }, 30000);
+    const countdownInterval = setInterval(() => {
+      setSecondsAgo(s => Math.min(s + 1, 30));
+    }, 1000);
+    return () => { clearInterval(refreshInterval); clearInterval(countdownInterval); };
+  }, []);
+
   const { rates, isLive } = useExchangeRates();
   const { getPrice: getStockPrice, getChange: getStockChange } = useStockPrices();
 
   const getCryptoPrice = (code: string) => rates[code] ? 1 / rates[code] : 0;
   const getCryptoChange = (i: number) => parseFloat(((Math.sin(i * 1.7 + 0.3) * 8) + 0.5).toFixed(2));
 
-  // Add hourly variance to market assets for "live" feel
+  // Add variance using tick for real-time feel
   const addVariance = (base: number, symbol: string) => {
-    const h = new Date().getHours();
-    return parseFloat((base * (1 + Math.sin(seedHash(symbol) + h * 0.5) * 0.008)).toFixed(base < 10 ? 4 : 2));
+    const now = Date.now() / 1000;
+    return parseFloat((base * (1 + Math.sin(seedHash(symbol) + now * 0.01 + tick) * 0.008)).toFixed(base < 10 ? 4 : 2));
   };
 
   // ── Build list for active category ──
