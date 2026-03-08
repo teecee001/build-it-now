@@ -35,7 +35,7 @@ export default function PrivacyPolicy() {
     },
     {
       title: "3. Geographic Verification & Location Data",
-      content: `ExoSky collects and processes location data to comply with international financial regulations. This includes your IP address geolocation, device GPS coordinates (with your permission), and phone number country code verification. We use this data to verify your country of residence, enforce geographic feature restrictions, detect VPN and proxy usage, and prevent sanctions evasion. Location checks are performed at registration and periodically during active sessions. You cannot opt out of location verification as it is required for regulatory compliance.`,
+      content: `Ξ╳oSky collects and processes location data to comply with international financial regulations. This includes your IP address geolocation, device GPS coordinates (with your permission), and phone number country code verification. We use this data to verify your country of residence, enforce geographic feature restrictions, detect VPN and proxy usage, and prevent sanctions evasion. Location checks are performed at registration and periodically during active sessions. You cannot opt out of location verification as it is required for regulatory compliance.`,
     },
     {
       title: "4. Information Sharing",
