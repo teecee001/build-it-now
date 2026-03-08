@@ -54,8 +54,11 @@ export default function Auth() {
           <div className="inline-flex items-center justify-center mb-4">
             <ExoLogo size="lg" variant="mark" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">ExoSky</h1>
-          <p className="text-muted-foreground mt-2">The everything finance app</p>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">ExoSky</h1>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
+          </div>
+          <p className="text-muted-foreground mt-2">The everything finance app — now in beta</p>
         </div>
 
         <Card className="p-6 bg-card border-border shadow-card">

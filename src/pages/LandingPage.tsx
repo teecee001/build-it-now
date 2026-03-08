@@ -226,7 +226,7 @@ export default function LandingPage() {
               className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed"
             >
               Banking, savings, crypto, stocks, cards, and global payments —
-              all in one beautifully simple app. Built for the borderless generation.
+              all in one beautifully simple app. Now in beta — built for the borderless generation.
             </motion.p>
 
             <motion.div
