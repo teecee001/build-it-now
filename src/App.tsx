@@ -5,7 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ActiveCurrencyProvider } from "@/hooks/useActiveCurrency";
+import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { CountryOnboarding } from "@/components/CountryOnboarding";
+import { GeoBlockScreen } from "@/components/GeoBlockScreen";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import WalletPage from "./pages/WalletPage";
@@ -32,19 +35,36 @@ import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
 import StocksPage from "./pages/StocksPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  if (isLoading) {
+  const { geoStatus, isCheckingGeo, hasCompletedGeoSetup, isBlocked, vpnDetected } = useGeoVerification();
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  if (isLoading || isCheckingGeo) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
-  return user ? <>{children}</> : <Navigate to="/auth" replace />;
+
+  if (!user) return <Navigate to="/auth" replace />;
+
+  // Show block screen if VPN detected or location mismatch
+  if (isBlocked) {
+    return <GeoBlockScreen vpnDetected={vpnDetected} locationMismatch={geoStatus?.location_mismatch ?? false} />;
+  }
+
+  // Show country onboarding if user hasn't set up their country yet
+  if (!hasCompletedGeoSetup && !onboardingComplete) {
+    return <CountryOnboarding onComplete={() => setOnboardingComplete(true)} />;
+  }
+
+  return <>{children}</>;
 }
 
 const App = () => (
