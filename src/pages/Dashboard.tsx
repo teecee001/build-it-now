@@ -5,6 +5,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
+import { TravelMode } from "@/components/TravelMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -167,6 +168,11 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       )}
+
+      {/* Travel Mode */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+        <TravelMode />
+      </motion.div>
 
       {/* Recent Activity */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
