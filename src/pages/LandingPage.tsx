@@ -538,7 +538,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-3 bg-secondary/50">
               <div className="p-4 sm:p-5 text-sm font-semibold text-muted-foreground">Feature</div>
               <div className="p-4 sm:p-5 text-center">
-                <span className="text-sm font-bold text-accent">ExoSky</span>
+                <span className="text-sm font-bold text-accent">Ξ╳oSky</span>
               </div>
               <div className="p-4 sm:p-5 text-center">
                 <span className="text-sm font-bold text-muted-foreground">Banks</span>
