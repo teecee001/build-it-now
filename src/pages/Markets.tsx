@@ -134,10 +134,23 @@ export default function Markets() {
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Markets</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Crypto, stocks, forex, commodities & indices — all in one place
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Markets</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Crypto, stocks, forex, commodities & indices — all in one place
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+            </span>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {secondsAgo < 5 ? "Live" : `${secondsAgo}s ago`}
+            </span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Market Overview Cards */}
