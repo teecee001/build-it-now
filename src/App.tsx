@@ -23,6 +23,7 @@ import KYCVerification from "./pages/KYCVerification";
 import Savings from "./pages/Savings";
 import Referrals from "./pages/Referrals";
 import Premium from "./pages/Premium";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
