@@ -25,8 +25,13 @@ export function useReferrals() {
         .from("profiles")
         .select("referral_code")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
+      if (data && !data.referral_code) {
+        const code = "EXO" + Math.random().toString(36).substring(2, 8).toUpperCase();
+        await supabase.from("profiles").update({ referral_code: code }).eq("id", user.id);
+        return { referral_code: code };
+      }
       return data;
     },
     enabled: !!user,
