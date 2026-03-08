@@ -106,28 +106,28 @@ const HOW_IT_WORKS = [
 
 const FAQS = [
   {
-    q: "Is ExoSky a real bank?",
-    a: "ExoSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
+    q: "Is Ξ╳oSky a real bank?",
+    a: "Ξ╳oSky is a licensed fintech platform, not a traditional bank. Your funds are held by our regulated banking partners and protected by industry-standard deposit insurance where applicable.",
   },
   {
-    q: "How does ExoSky offer 6% APY?",
+    q: "How does Ξ╳oSky offer 6% APY?",
     a: "We invest your savings in low-risk, high-yield instruments and pass the returns directly to you. With no physical branches and minimal overhead, we can offer significantly higher rates than traditional banks.",
   },
   {
     q: "Are there any hidden fees?",
-    a: "No. ExoSky has zero monthly fees, zero FX markup, and free domestic transfers. International transfers and crypto trades have transparent, industry-low fees shown before you confirm.",
+    a: "No. Ξ╳oSky has zero monthly fees, zero FX markup, and free domestic transfers. International transfers and crypto trades have transparent, industry-low fees shown before you confirm.",
   },
   {
     q: "How long do transfers take?",
-    a: "Internal ExoSky transfers are instant. Bank transfers typically settle in 1–2 business days depending on the destination country. Crypto transactions confirm on-chain in minutes.",
+    a: "Internal Ξ╳oSky transfers are instant. Bank transfers typically settle in 1–2 business days depending on the destination country. Crypto transactions confirm on-chain in minutes.",
   },
   {
     q: "Is my money safe?",
     a: "Absolutely. We use bank-grade AES-256 encryption, biometric authentication, and all accounts are KYC/AML verified. Your funds are held in segregated accounts with regulated partners.",
   },
   {
-    q: "Which countries does ExoSky support?",
-    a: "ExoSky is available in 150+ countries. Some features like cards or stock trading may vary by region due to local regulations. Check the app for availability in your country.",
+    q: "Which countries does Ξ╳oSky support?",
+    a: "Ξ╳oSky is available in 150+ countries. Some features like cards or stock trading may vary by region due to local regulations. Check the app for availability in your country.",
   },
 ];
 
