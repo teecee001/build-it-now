@@ -399,7 +399,6 @@ export default function CardPage() {
     const result = await addCard.mutateAsync({
       format: newCardFormat,
       name: newCardName || undefined,
-      design: newCardDesign,
     });
 
     // Store the PIN for the newly created card
