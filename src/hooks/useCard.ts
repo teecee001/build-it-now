@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
-export interface Card {
+export interface CardData {
   id: string;
   user_id: string;
   card_number_last4: string;
@@ -11,6 +12,9 @@ export interface Card {
   is_frozen: boolean;
   is_active: boolean;
   card_type: string;
+  card_format: string;
+  card_name: string;
+  shipping_status: string | null;
   created_at: string;
 }
 
@@ -18,32 +22,66 @@ export function useCard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: card, isLoading } = useQuery({
-    queryKey: ["card", user?.id],
+  const { data: cards = [], isLoading } = useQuery({
+    queryKey: ["cards", user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user) return [];
       const { data, error } = await supabase
         .from("cards")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as Card;
+      return (data ?? []) as CardData[];
     },
     enabled: !!user,
   });
 
+  // Keep backward compat — primary card is the first one
+  const card = cards[0] ?? null;
+
   const toggleFreeze = useMutation({
-    mutationFn: async () => {
-      if (!card) throw new Error("No card");
+    mutationFn: async (cardId?: string) => {
+      const target = cardId ? cards.find((c) => c.id === cardId) : card;
+      if (!target) throw new Error("No card");
       const { error } = await supabase
         .from("cards")
-        .update({ is_frozen: !card.is_frozen })
-        .eq("id", card.id);
+        .update({ is_frozen: !target.is_frozen })
+        .eq("id", target.id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["card"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards"] }),
   });
 
-  return { card, isLoading, toggleFreeze };
+  const addCard = useMutation({
+    mutationFn: async ({ format, name }: { format: "virtual" | "physical"; name?: string }) => {
+      if (!user) throw new Error("Not authenticated");
+      const last4 = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+      const { error } = await supabase.from("cards").insert({
+        user_id: user.id,
+        card_number_last4: last4,
+        card_format: format,
+        card_name: name || (format === "virtual" ? "Virtual Card" : "Physical Card"),
+        shipping_status: format === "physical" ? "processing" : null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      toast.success("Card added successfully");
+    },
+  });
+
+  const updateCardName = useMutation({
+    mutationFn: async ({ cardId, name }: { cardId: string; name: string }) => {
+      const { error } = await supabase
+        .from("cards")
+        .update({ card_name: name })
+        .eq("id", cardId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards"] }),
+  });
+
+  return { card, cards, isLoading, toggleFreeze, addCard, updateCardName };
 }

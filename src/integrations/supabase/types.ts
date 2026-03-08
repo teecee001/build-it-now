@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_tiers: {
+        Row: {
+          atm_daily_limit: number
+          created_at: string
+          daily_transaction_limit: number
+          id: string
+          max_cards: number
+          monthly_transaction_limit: number
+          single_transaction_limit: number
+          tier: Database["public"]["Enums"]["account_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          atm_daily_limit?: number
+          created_at?: string
+          daily_transaction_limit?: number
+          id?: string
+          max_cards?: number
+          monthly_transaction_limit?: number
+          single_transaction_limit?: number
+          tier?: Database["public"]["Enums"]["account_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          atm_daily_limit?: number
+          created_at?: string
+          daily_transaction_limit?: number
+          id?: string
+          max_cards?: number
+          monthly_transaction_limit?: number
+          single_transaction_limit?: number
+          tier?: Database["public"]["Enums"]["account_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bills: {
         Row: {
           amount: number
@@ -52,6 +91,8 @@ export type Database = {
       }
       cards: {
         Row: {
+          card_format: string
+          card_name: string | null
           card_number_last4: string
           card_type: string
           created_at: string
@@ -60,9 +101,12 @@ export type Database = {
           id: string
           is_active: boolean
           is_frozen: boolean
+          shipping_status: string | null
           user_id: string
         }
         Insert: {
+          card_format?: string
+          card_name?: string | null
           card_number_last4?: string
           card_type?: string
           created_at?: string
@@ -71,9 +115,12 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_frozen?: boolean
+          shipping_status?: string | null
           user_id: string
         }
         Update: {
+          card_format?: string
+          card_name?: string | null
           card_number_last4?: string
           card_type?: string
           created_at?: string
@@ -82,6 +129,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_frozen?: boolean
+          shipping_status?: string | null
           user_id?: string
         }
         Relationships: []
@@ -259,6 +307,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      account_tier: "personal" | "pro" | "business" | "bank"
       transaction_status: "pending" | "completed" | "failed"
       transaction_type:
         | "deposit"
@@ -398,6 +447,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_tier: ["personal", "pro", "business", "bank"],
       transaction_status: ["pending", "completed", "failed"],
       transaction_type: [
         "deposit",
