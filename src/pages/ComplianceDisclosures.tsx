@@ -52,7 +52,7 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "Interest Rate & Investment Disclosures",
-      content: `Savings APY is variable and may differ by country. Displayed rates apply to qualifying balances and may change without notice. Cryptocurrency and stock trading involve significant risk of loss. Past performance is not indicative of future results. ExoSky does not provide investment advice. Trading features are only available in jurisdictions where such services are legally permitted and properly licensed.`,
+      content: `Savings APY is variable and may differ by country. Displayed rates apply to qualifying balances and may change without notice. Cryptocurrency and stock trading involve significant risk of loss. Past performance is not indicative of future results. Ξ╳oSky does not provide investment advice. Trading features are only available in jurisdictions where such services are legally permitted and properly licensed.`,
     },
     {
       title: "Complaints & Dispute Resolution",
