@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,68 +8,59 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import {
   QrCode, Camera, Copy, CheckCircle2, Loader2, ArrowRight,
-  Download, Share2, DollarSign, User
+  Share2, DollarSign, ArrowLeft, AlertTriangle, X
 } from "lucide-react";
 import { toast } from "sonner";
+import QRCode from "qrcode";
 
 type View = "home" | "receive" | "scan" | "confirm" | "done";
 
-interface PaymentData {
+interface ExoPayload {
+  app: "exosky";
   handle: string;
   amount?: number;
   note?: string;
 }
 
-// Simple QR code SVG generator (no external lib needed)
-function generateQRSvg(data: string, size: number = 200): string {
-  // Create a deterministic pattern from data string
-  const modules = 21;
-  const cellSize = size / modules;
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">`;
-  svg += `<rect width="${size}" height="${size}" fill="white"/>`;
+function buildPayloadUrl(payload: ExoPayload): string {
+  // Use a deep-link style URL so external QR scanners open meaningfully
+  const base = window.location.origin + "/qr/pay";
+  const params = new URLSearchParams();
+  params.set("to", payload.handle);
+  if (payload.amount) params.set("amount", String(payload.amount));
+  if (payload.note) params.set("note", payload.note);
+  return `${base}?${params.toString()}`;
+}
 
-  // Create hash-like pattern from data
-  const hash = (str: string, seed: number) => {
-    let h = seed;
-    for (let i = 0; i < str.length; i++) {
-      h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+function parseScannedData(raw: string): { handle: string; amount?: number; note?: string } | null {
+  try {
+    // Try ExoSky URL format first
+    if (raw.includes("/qr/pay")) {
+      const url = new URL(raw);
+      const to = url.searchParams.get("to");
+      if (!to) return null;
+      return {
+        handle: to,
+        amount: url.searchParams.get("amount") ? parseFloat(url.searchParams.get("amount")!) : undefined,
+        note: url.searchParams.get("note") || undefined,
+      };
     }
-    return Math.abs(h);
-  };
-
-  // Finder patterns (corners)
-  const drawFinder = (x: number, y: number) => {
-    for (let r = 0; r < 7; r++) {
-      for (let c = 0; c < 7; c++) {
-        const isOuter = r === 0 || r === 6 || c === 0 || c === 6;
-        const isInner = r >= 2 && r <= 4 && c >= 2 && c <= 4;
-        if (isOuter || isInner) {
-          svg += `<rect x="${(x + c) * cellSize}" y="${(y + r) * cellSize}" width="${cellSize}" height="${cellSize}" fill="black"/>`;
-        }
-      }
+    // Try JSON format (legacy)
+    const json = JSON.parse(raw);
+    if (json.handle) return { handle: json.handle, amount: json.amount, note: json.note };
+    // Try generic payment QR (e.g. UPI-style)
+    return null;
+  } catch {
+    // Try plain text as handle/address
+    if (raw.startsWith("@") || raw.includes("@")) {
+      return { handle: raw };
     }
-  };
-
-  drawFinder(0, 0);
-  drawFinder(modules - 7, 0);
-  drawFinder(0, modules - 7);
-
-  // Data modules
-  for (let r = 0; r < modules; r++) {
-    for (let c = 0; c < modules; c++) {
-      // Skip finder pattern areas
-      if ((r < 8 && c < 8) || (r < 8 && c >= modules - 8) || (r >= modules - 8 && c < 8)) continue;
-      if (r === 6 || c === 6) continue; // timing
-
-      const val = hash(data, r * modules + c);
-      if (val % 3 === 0) {
-        svg += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="black" rx="1"/>`;
-      }
+    // Generic: treat as recipient address
+    if (raw.length > 3 && raw.length < 200) {
+      return { handle: raw };
     }
+    return null;
   }
-
-  svg += `</svg>`;
-  return svg;
 }
 
 export default function QRPayments() {
@@ -84,16 +75,110 @@ export default function QRPayments() {
   const [scanNote, setScanNote] = useState("");
   const [isSending, setIsSending] = useState(false);
 
+  // QR code image
+  const [qrImageUrl, setQrImageUrl] = useState<string>("");
+
+  // Scanner
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [scannerActive, setScannerActive] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const html5QrScannerRef = useRef<any>(null);
+  const scannerContainerRef = useRef<HTMLDivElement>(null);
+
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
-  const qrData = useMemo(() => {
-    const payload: PaymentData = { handle };
-    if (receiveAmount) payload.amount = parseFloat(receiveAmount);
-    if (receiveNote) payload.note = receiveNote;
-    return JSON.stringify(payload);
+  // Generate real QR code
+  const payload = useMemo<ExoPayload>(() => {
+    const p: ExoPayload = { app: "exosky", handle };
+    if (receiveAmount) p.amount = parseFloat(receiveAmount);
+    if (receiveNote) p.note = receiveNote;
+    return p;
   }, [handle, receiveAmount, receiveNote]);
 
-  const qrSvg = useMemo(() => generateQRSvg(qrData, 200), [qrData]);
+  const payUrl = useMemo(() => buildPayloadUrl(payload), [payload]);
+
+  useEffect(() => {
+    QRCode.toDataURL(payUrl, {
+      width: 280,
+      margin: 2,
+      color: { dark: "#000000", light: "#ffffff" },
+      errorCorrectionLevel: "H",
+    }).then(setQrImageUrl).catch(() => {});
+  }, [payUrl]);
+
+  // Start camera scanner
+  const startScanner = useCallback(async () => {
+    setScanError(null);
+    try {
+      // Dynamic import to avoid SSR issues
+      const { Html5Qrcode } = await import("html5-qrcode");
+      
+      // Small delay to ensure the container is mounted
+      await new Promise(r => setTimeout(r, 100));
+      
+      if (!scannerContainerRef.current) return;
+      
+      const scannerId = "qr-scanner-region";
+      // Ensure element exists
+      let el = document.getElementById(scannerId);
+      if (!el) {
+        el = document.createElement("div");
+        el.id = scannerId;
+        scannerContainerRef.current.appendChild(el);
+      }
+
+      const scanner = new Html5Qrcode(scannerId);
+      html5QrScannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1,
+        },
+        (decodedText: string) => {
+          // Successfully scanned
+          const parsed = parseScannedData(decodedText);
+          if (parsed) {
+            setScanRecipient(parsed.handle);
+            if (parsed.amount) setScanAmount(String(parsed.amount));
+            if (parsed.note) setScanNote(parsed.note);
+            stopScanner();
+            setView("confirm");
+            toast.success("QR code scanned successfully!");
+          } else {
+            toast.error("Unrecognized QR code format");
+          }
+        },
+        () => {} // ignore scan failures (normal while aiming)
+      );
+      setScannerActive(true);
+    } catch (err: any) {
+      console.error("Scanner error:", err);
+      setScanError(err?.message || "Could not access camera. Please allow camera permissions.");
+      setScannerActive(false);
+    }
+  }, []);
+
+  const stopScanner = useCallback(async () => {
+    if (html5QrScannerRef.current) {
+      try {
+        await html5QrScannerRef.current.stop();
+        html5QrScannerRef.current.clear();
+      } catch {}
+      html5QrScannerRef.current = null;
+    }
+    setScannerActive(false);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { stopScanner(); };
+  }, [stopScanner]);
 
   const handlePay = async () => {
     if (!scanRecipient || !scanAmount) {
@@ -101,6 +186,10 @@ export default function QRPayments() {
       return;
     }
     const amt = parseFloat(scanAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
     if (amt > balance) {
       toast.error("Insufficient balance");
       return;
@@ -121,6 +210,15 @@ export default function QRPayments() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const resetScan = () => {
+    stopScanner();
+    setScanRecipient("");
+    setScanAmount("");
+    setScanNote("");
+    setScanError(null);
+    setView("home");
   };
 
   return (
@@ -153,7 +251,7 @@ export default function QRPayments() {
                 </div>
               </Button>
               <Button
-                onClick={() => setView("scan")}
+                onClick={() => { setView("scan"); setTimeout(startScanner, 200); }}
                 variant="outline"
                 className="flex-col h-auto py-8 gap-3"
               >
@@ -161,20 +259,19 @@ export default function QRPayments() {
                   <Camera className="w-7 h-7 text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold">Pay via QR</p>
+                  <p className="text-sm font-bold">Scan & Pay</p>
                   <p className="text-[10px] text-muted-foreground">Send money</p>
                 </div>
               </Button>
             </div>
 
-            {/* Quick info */}
             <Card className="p-4 bg-accent/5 border-accent/10">
               <div className="flex items-start gap-3">
                 <QrCode className="w-5 h-5 text-accent shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">Instant P2P Transfers</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Share your QR code to receive payments instantly. No fees, no delays.
+                    Share your QR code to receive payments. Scan any ExoSky QR or external payment QR to send money instantly.
                   </p>
                 </div>
               </div>
@@ -191,10 +288,18 @@ export default function QRPayments() {
                 <p className="text-base font-bold font-mono mt-1">{handle}</p>
               </div>
 
-              {/* QR Code */}
-              <div className="mx-auto w-52 h-52 rounded-2xl bg-white p-3 flex items-center justify-center">
-                <div dangerouslySetInnerHTML={{ __html: qrSvg }} />
+              {/* Real QR Code */}
+              <div className="mx-auto w-64 h-64 rounded-2xl bg-white p-3 flex items-center justify-center shadow-lg">
+                {qrImageUrl ? (
+                  <img src={qrImageUrl} alt="Payment QR Code" className="w-full h-full" />
+                ) : (
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                )}
               </div>
+
+              <p className="text-[10px] text-muted-foreground">
+                Scannable by any QR reader — opens ExoSky payment
+              </p>
 
               {/* Optional amount */}
               <div className="space-y-3">
@@ -213,22 +318,23 @@ export default function QRPayments() {
                   value={receiveNote}
                   onChange={(e) => setReceiveNote(e.target.value)}
                   className="bg-secondary border-border text-center text-sm"
+                  maxLength={100}
                 />
               </div>
 
               {/* Actions */}
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" className="gap-2" onClick={() => {
-                  navigator.clipboard.writeText(qrData);
+                  navigator.clipboard.writeText(payUrl);
                   toast.success("Payment link copied");
                 }}>
                   <Copy className="w-4 h-4" /> Copy Link
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={() => {
                   if (navigator.share) {
-                    navigator.share({ title: "Pay me on ExoSky", text: `Pay ${handle} on ExoSky`, url: qrData });
+                    navigator.share({ title: "Pay me on ExoSky", text: `Pay ${handle} on ExoSky`, url: payUrl });
                   } else {
-                    navigator.clipboard.writeText(qrData);
+                    navigator.clipboard.writeText(payUrl);
                     toast.success("Copied to share");
                   }
                 }}>
@@ -237,37 +343,51 @@ export default function QRPayments() {
               </div>
             </Card>
 
-            <Button variant="outline" onClick={() => { setView("home"); setReceiveAmount(""); setReceiveNote(""); }} className="w-full">
-              Back
+            <Button variant="outline" onClick={() => { setView("home"); setReceiveAmount(""); setReceiveNote(""); }} className="w-full gap-2">
+              <ArrowLeft className="w-4 h-4" /> Back
             </Button>
           </motion.div>
         )}
 
-        {/* Scan / Manual Pay */}
+        {/* Scan */}
         {view === "scan" && (
           <motion.div key="scan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="space-y-5">
-            {/* Camera placeholder */}
-            <Card className="aspect-square bg-secondary border-border rounded-2xl flex flex-col items-center justify-center gap-4 relative overflow-hidden">
-              <div className="absolute inset-4 border-2 border-dashed border-accent/30 rounded-xl" />
-              <Camera className="w-12 h-12 text-muted-foreground" />
-              <div className="text-center">
-                <p className="text-sm font-medium">Camera QR scanning</p>
-                <p className="text-xs text-muted-foreground mt-1">Position QR code within the frame</p>
-              </div>
-              <p className="text-xs text-muted-foreground">Or enter details manually below</p>
+            {/* Live Camera Scanner */}
+            <Card className="bg-secondary border-border rounded-2xl overflow-hidden relative">
+              <div
+                ref={scannerContainerRef}
+                className="w-full aspect-square"
+                style={{ minHeight: 300 }}
+              />
+              {!scannerActive && !scanError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Starting camera…</p>
+                </div>
+              )}
+              {scanError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
+                  <AlertTriangle className="w-10 h-10 text-warning" />
+                  <p className="text-sm text-center text-muted-foreground">{scanError}</p>
+                  <Button size="sm" variant="outline" onClick={() => startScanner()}>
+                    Try Again
+                  </Button>
+                </div>
+              )}
             </Card>
 
-            {/* Manual entry */}
+            {/* Manual entry fallback */}
             <Card className="p-5 bg-card border-border space-y-4">
-              <h3 className="text-sm font-bold">Manual Payment</h3>
+              <h3 className="text-sm font-bold">Or enter manually</h3>
               <div className="space-y-3">
                 <div>
                   <label className="text-xs text-muted-foreground">Recipient</label>
                   <Input
-                    placeholder="@username or email"
+                    placeholder="@username or address"
                     value={scanRecipient}
                     onChange={(e) => setScanRecipient(e.target.value)}
                     className="h-11 bg-secondary border-border mt-1"
+                    maxLength={100}
                   />
                 </div>
                 <div>
@@ -285,23 +405,79 @@ export default function QRPayments() {
                   value={scanNote}
                   onChange={(e) => setScanNote(e.target.value)}
                   className="bg-secondary border-border text-sm"
+                  maxLength={100}
                 />
               </div>
 
               <Button
-                onClick={handlePay}
-                disabled={isSending || !scanRecipient || !scanAmount}
-                className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-semibold gap-2"
+                onClick={() => {
+                  if (!scanRecipient || !scanAmount) {
+                    toast.error("Enter recipient and amount");
+                    return;
+                  }
+                  stopScanner();
+                  setView("confirm");
+                }}
+                disabled={!scanRecipient || !scanAmount}
+                className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 font-semibold gap-2"
               >
-                {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                  <>Pay <ArrowRight className="w-4 h-4" /></>
-                )}
+                Review Payment <ArrowRight className="w-4 h-4" />
               </Button>
             </Card>
 
-            <Button variant="outline" onClick={() => { setView("home"); setScanRecipient(""); setScanAmount(""); setScanNote(""); }} className="w-full">
-              Cancel
+            <Button variant="outline" onClick={resetScan} className="w-full gap-2">
+              <ArrowLeft className="w-4 h-4" /> Cancel
             </Button>
+          </motion.div>
+        )}
+
+        {/* Confirm Payment */}
+        {view === "confirm" && (
+          <motion.div key="confirm" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-5">
+            <Card className="p-6 bg-card border-border space-y-5">
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
+                  <DollarSign className="w-8 h-8 text-accent" />
+                </div>
+                <h3 className="text-lg font-bold">Confirm Payment</h3>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                  <span className="text-sm text-muted-foreground">To</span>
+                  <span className="text-sm font-semibold font-mono">{scanRecipient}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                  <span className="text-sm text-muted-foreground">Amount</span>
+                  <span className="text-lg font-bold font-mono">${parseFloat(scanAmount || "0").toFixed(2)}</span>
+                </div>
+                {scanNote && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                    <span className="text-sm text-muted-foreground">Note</span>
+                    <span className="text-sm">{scanNote}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                  <span className="text-sm text-muted-foreground">Balance after</span>
+                  <span className="text-sm font-mono">${(balance - parseFloat(scanAmount || "0")).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="outline" onClick={() => setView("scan")} className="gap-2">
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </Button>
+                <Button
+                  onClick={handlePay}
+                  disabled={isSending}
+                  className="bg-foreground text-background hover:bg-foreground/90 font-semibold gap-2"
+                >
+                  {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                    <>Send <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </Button>
+              </div>
+            </Card>
           </motion.div>
         )}
 
@@ -313,13 +489,13 @@ export default function QRPayments() {
               animate={{ scale: 1 }}
               transition={{ type: "spring", duration: 0.5 }}
             >
-              <CheckCircle2 className="w-20 h-20 text-success" />
+              <CheckCircle2 className="w-20 h-20 text-accent" />
             </motion.div>
             <h2 className="text-2xl font-bold">Payment Sent!</h2>
             <p className="text-muted-foreground text-center">
-              ${scanAmount} was sent to {scanRecipient}
+              ${parseFloat(scanAmount || "0").toFixed(2)} was sent to {scanRecipient}
             </p>
-            <Button variant="outline" onClick={() => { setView("home"); setScanRecipient(""); setScanAmount(""); setScanNote(""); }}>
+            <Button variant="outline" onClick={resetScan}>
               Done
             </Button>
           </motion.div>
