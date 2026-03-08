@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSecureVerification } from "@/hooks/useSecureVerification";
+import { FaceScanner } from "@/components/FaceScanner";
 
 type View = "list" | "detail" | "settings" | "add" | "tiers";
 
