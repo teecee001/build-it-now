@@ -44,7 +44,7 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Banking Relationship</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money is a financial technology company, not a bank. Banking services are provided by our partner institutions. Funds held in your X Money wallet are deposited in pooled accounts at FDIC-insured banks. Your deposits are eligible for pass-through FDIC insurance up to $250,000 per depositor per institution.
+              ExoSky is a financial technology company, not a bank. Banking services are provided by our partner institutions. Funds held in your ExoSky wallet are deposited in pooled accounts at FDIC-insured banks. Your deposits are eligible for pass-through FDIC insurance up to $250,000 per depositor per institution.
             </p>
           </section>
 
