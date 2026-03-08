@@ -7,8 +7,8 @@ import {
   ArrowRight, Shield, Zap, TrendingUp, CreditCard,
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
   ChevronRight, Star, Lock, Users, Wallet,
-  Check, Sparkles, X, HelpCircle, MessageSquare,
-  Twitter, Github, Mail, ChevronDown
+  Check, Sparkles, X, HelpCircle,
+  Twitter, Github, Mail
 } from "lucide-react";
 import { useState } from "react";
 import {
