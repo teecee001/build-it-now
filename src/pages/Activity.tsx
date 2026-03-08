@@ -125,9 +125,18 @@ export default function Activity() {
               </motion.div>
             );
           })}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && transactions.length === 0 && (
+            <EmptyState
+              icon={Receipt}
+              title="No transactions yet"
+              description="Your transaction history will appear here once you make your first deposit, send money, or trade."
+              actionLabel="Make a Deposit"
+              actionPath="/deposit"
+            />
+          )}
+          {filtered.length === 0 && transactions.length > 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">
-              {transactions.length === 0 ? "No transactions yet" : "No matching transactions"}
+              No matching transactions
             </p>
           )}
         </div>
