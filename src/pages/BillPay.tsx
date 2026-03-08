@@ -99,6 +99,8 @@ export default function BillPay() {
   const [newBiller, setNewBiller] = useState(BILL_PROVIDERS["Electric"]?.[0]?.name ?? "");
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
+  const [newAccountNumber, setNewAccountNumber] = useState("");
+  const [confirmBill, setConfirmBill] = useState<any | null>(null);
 
   const handleCategoryChange = (cat: string) => {
     setNewCategory(cat);
