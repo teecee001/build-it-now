@@ -23,6 +23,67 @@ const BILL_CATEGORIES = [
   { icon: Home, label: "Rent", color: "text-foreground" },
 ];
 
+const BILL_PROVIDERS: Record<string, { name: string; avgAmount: number }[]> = {
+  Electric: [
+    { name: "Duke Energy", avgAmount: 142.00 },
+    { name: "Pacific Gas & Electric (PG&E)", avgAmount: 175.00 },
+    { name: "Southern California Edison", avgAmount: 158.00 },
+    { name: "Florida Power & Light", avgAmount: 135.00 },
+    { name: "Dominion Energy", avgAmount: 128.00 },
+    { name: "Xcel Energy", avgAmount: 115.00 },
+    { name: "AES Ohio", avgAmount: 110.00 },
+    { name: "Eversource Energy", avgAmount: 165.00 },
+  ],
+  Water: [
+    { name: "American Water Works", avgAmount: 72.00 },
+    { name: "Aqua America", avgAmount: 65.00 },
+    { name: "California Water Service", avgAmount: 85.00 },
+    { name: "SJW Group", avgAmount: 78.00 },
+    { name: "York Water Company", avgAmount: 58.00 },
+    { name: "Middlesex Water", avgAmount: 62.00 },
+  ],
+  Internet: [
+    { name: "Comcast Xfinity", avgAmount: 89.99 },
+    { name: "AT&T Fiber", avgAmount: 79.99 },
+    { name: "Verizon Fios", avgAmount: 74.99 },
+    { name: "Spectrum (Charter)", avgAmount: 69.99 },
+    { name: "T-Mobile Home Internet", avgAmount: 50.00 },
+    { name: "Google Fiber", avgAmount: 70.00 },
+    { name: "Cox Communications", avgAmount: 83.99 },
+    { name: "CenturyLink / Lumen", avgAmount: 65.00 },
+    { name: "Starlink", avgAmount: 120.00 },
+  ],
+  Phone: [
+    { name: "Verizon Wireless", avgAmount: 85.00 },
+    { name: "AT&T Wireless", avgAmount: 80.00 },
+    { name: "T-Mobile", avgAmount: 70.00 },
+    { name: "Mint Mobile", avgAmount: 30.00 },
+    { name: "Cricket Wireless", avgAmount: 55.00 },
+    { name: "Google Fi", avgAmount: 50.00 },
+    { name: "Visible (by Verizon)", avgAmount: 25.00 },
+    { name: "US Mobile", avgAmount: 35.00 },
+  ],
+  Streaming: [
+    { name: "Netflix", avgAmount: 15.49 },
+    { name: "Spotify Premium", avgAmount: 11.99 },
+    { name: "Disney+ Bundle", avgAmount: 19.99 },
+    { name: "HBO Max", avgAmount: 15.99 },
+    { name: "Apple TV+", avgAmount: 9.99 },
+    { name: "YouTube Premium", avgAmount: 13.99 },
+    { name: "Hulu", avgAmount: 17.99 },
+    { name: "Amazon Prime", avgAmount: 14.99 },
+    { name: "Paramount+", avgAmount: 11.99 },
+    { name: "Peacock Premium", avgAmount: 7.99 },
+  ],
+  Rent: [
+    { name: "Apartment Rent", avgAmount: 1850.00 },
+    { name: "Mortgage Payment", avgAmount: 2200.00 },
+    { name: "HOA Fees", avgAmount: 350.00 },
+    { name: "Storage Unit", avgAmount: 125.00 },
+    { name: "Parking Space", avgAmount: 200.00 },
+  ],
+};
+
 export default function BillPay() {
   const { bills, isLoading, payBill, addBill } = useBills();
   const { balance, updateBalance } = useWallet();
