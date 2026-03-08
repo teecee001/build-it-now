@@ -52,18 +52,27 @@ export function CountryOnboarding({ onComplete }: Props) {
 
     try {
       const result = await checkIp.mutateAsync(code);
+      
+      // Show warning if VPN detected but allow to continue
       if (result.vpn_detected) {
-        toast.error("VPN or proxy detected. Please disable it to continue.");
-        return;
+        toast.warning("VPN/proxy detected. Some features may be restricted.", {
+          duration: 5000,
+        });
       }
+      
+      // Show warning for IP mismatch but allow to continue
       if (result.ip_mismatch) {
-        toast.error(`Your IP location doesn't match ${country?.name}. If you're traveling, please select your current country.`);
-        return;
+        toast.warning(`Your IP appears to be from ${result.ip_country}. If traveling, this is normal.`, {
+          duration: 5000,
+        });
       }
+      
       setStep("phone");
     } catch (err: any) {
       if (err?.message?.includes("SANCTIONED") || err?.message?.includes("regulatory")) {
         toast.error("Services are not available in this country due to regulatory restrictions.");
+      } else if (err?.message?.includes("UNSUPPORTED")) {
+        toast.error("Services are not yet available in this country.");
       } else {
         toast.error(err.message || "Verification failed");
       }
