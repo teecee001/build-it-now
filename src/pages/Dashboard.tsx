@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, 
   Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
-  DollarSign, Percent, Eye, EyeOff, Loader2
+  DollarSign, Percent, Eye, EyeOff, Loader2, BarChart3, QrCode
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -220,7 +220,7 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Feature Cards */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Card 
           className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
           onClick={() => navigate("/card")}
@@ -228,6 +228,22 @@ export default function Dashboard() {
           <CreditCard className="w-5 h-5 text-accent mb-2" />
           <p className="text-sm font-semibold">Debit Card</p>
           <p className="text-xs text-muted-foreground">Metal card by Visa</p>
+        </Card>
+        <Card 
+          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
+          onClick={() => navigate("/qr")}
+        >
+          <QrCode className="w-5 h-5 text-accent mb-2" />
+          <p className="text-sm font-semibold">QR Pay</p>
+          <p className="text-xs text-muted-foreground">Scan & pay</p>
+        </Card>
+        <Card 
+          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
+          onClick={() => navigate("/analytics")}
+        >
+          <BarChart3 className="w-5 h-5 text-warning mb-2" />
+          <p className="text-sm font-semibold">Analytics</p>
+          <p className="text-xs text-muted-foreground">Spending insights</p>
         </Card>
         <Card 
           className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"

@@ -13,14 +13,51 @@ import {
   ArrowLeft, ShieldCheck, Smartphone, MapPin, ShoppingBag,
   Fuel, Utensils, Plane, DollarSign, AlertTriangle,
   Plus, Wifi, Package, Truck, Crown, Fingerprint, ScanFace, KeyRound,
-  Brain, ShieldAlert, RefreshCw, LockKeyhole
+  Brain, ShieldAlert, RefreshCw, LockKeyhole, Timer, Ban
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { useSecureVerification } from "@/hooks/useSecureVerification";
 import { FaceScanner } from "@/components/FaceScanner";
+import { supabase } from "@/integrations/supabase/client";
 
 type View = "list" | "detail" | "settings" | "add" | "tiers";
+
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+function getLockedUntil(): number | null {
+  const raw = localStorage.getItem("card_lockout");
+  if (!raw) return null;
+  const until = parseInt(raw, 10);
+  if (Date.now() >= until) {
+    localStorage.removeItem("card_lockout");
+    localStorage.removeItem("card_fail_count");
+    return null;
+  }
+  return until;
+}
+
+function getFailCount(): number {
+  return parseInt(localStorage.getItem("card_fail_count") || "0", 10);
+}
+
+function recordFailure(): { locked: boolean; remaining: number } {
+  const count = getFailCount() + 1;
+  localStorage.setItem("card_fail_count", String(count));
+  if (count >= MAX_ATTEMPTS) {
+    const until = Date.now() + LOCKOUT_DURATION;
+    localStorage.setItem("card_lockout", String(until));
+    return { locked: true, remaining: 0 };
+  }
+  return { locked: false, remaining: MAX_ATTEMPTS - count };
+}
+
+function clearFailures() {
+  localStorage.removeItem("card_fail_count");
+  localStorage.removeItem("card_lockout");
+}
 
 export default function CardPage() {
   const { user } = useAuth();
@@ -37,12 +74,102 @@ export default function CardPage() {
   const handle = "@" + (user?.email?.split("@")[0] || "user");
   const verification = useSecureVerification();
 
+  // Attempt limiting
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockTimeLeft, setLockTimeLeft] = useState(0);
+
+  // Session timeout
+  const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [verifiedAt, setVerifiedAt] = useState<number | null>(null);
+
   // Settings state
   const [onlinePurchases, setOnlinePurchases] = useState(true);
   const [internationalTx, setInternationalTx] = useState(true);
   const [contactless, setContactless] = useState(true);
   const [atmWithdrawals, setAtmWithdrawals] = useState(true);
   const [txAlerts, setTxAlerts] = useState(true);
+
+  // Check lockout on mount and periodically
+  useEffect(() => {
+    const check = () => {
+      const until = getLockedUntil();
+      if (until) {
+        setIsLocked(true);
+        setLockTimeLeft(Math.ceil((until - Date.now()) / 1000));
+      } else {
+        setIsLocked(false);
+        setLockTimeLeft(0);
+      }
+    };
+    check();
+    const interval = setInterval(check, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Session timeout: auto-relock after 5 min
+  const startSessionTimer = useCallback(() => {
+    if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+    setVerifiedAt(Date.now());
+    sessionTimerRef.current = setTimeout(() => {
+      setFaceVerified(false);
+      verification.reset();
+      setShowNumber(false);
+      setVerifiedAt(null);
+      toast.info("Session expired — please verify again", { icon: <Timer className="w-4 h-4" /> });
+    }, SESSION_TIMEOUT);
+  }, [verification]);
+
+  useEffect(() => {
+    return () => {
+      if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
+    };
+  }, []);
+
+  // Session countdown display
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(0);
+  useEffect(() => {
+    if (!verifiedAt) { setSessionTimeLeft(0); return; }
+    const interval = setInterval(() => {
+      const left = Math.max(0, Math.ceil((verifiedAt + SESSION_TIMEOUT - Date.now()) / 1000));
+      setSessionTimeLeft(left);
+      if (left === 0) clearInterval(interval);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [verifiedAt]);
+
+  const handleVerificationSuccess = (method: string) => {
+    clearFailures();
+    startSessionTimer();
+    toast.success(`Identity verified via ${method}`);
+  };
+
+  const handleVerificationFailure = (errorMsg?: string) => {
+    const result = recordFailure();
+    if (result.locked) {
+      setIsLocked(true);
+      toast.error("Too many failed attempts. Card locked for 15 minutes.", { icon: <Ban className="w-4 h-4" /> });
+    } else {
+      toast.error(errorMsg || `Verification failed. ${result.remaining} attempt${result.remaining !== 1 ? "s" : ""} remaining.`);
+    }
+  };
+
+  // Card freeze with notification
+  const handleFreezeToggle = async (card: CardData) => {
+    const wasFrozen = card.is_frozen;
+    toggleFreeze.mutate(card.id);
+    
+    // Insert notification
+    if (user) {
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        type: "security",
+        title: wasFrozen ? "Card Unfrozen" : "Card Frozen",
+        message: `Your card ending in ${card.card_number_last4} has been ${wasFrozen ? "unfrozen" : "frozen"}.`,
+        metadata: { card_id: card.id, action: wasFrozen ? "unfreeze" : "freeze" } as any,
+      });
+    }
+    toast.success(wasFrozen ? "Card unfrozen" : "Card frozen");
+  };
 
   if (isLoading) {
     return (
@@ -68,6 +195,14 @@ export default function CardPage() {
     pro: "text-warning",
     business: "text-accent",
     bank: "text-primary",
+  };
+
+  const isVerified = faceVerified || verification.isVerified;
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
   };
 
   /* ─── Card Visual ─── */
@@ -150,7 +285,6 @@ export default function CardPage() {
               </button>
             </div>
 
-            {/* Tier Limits Summary */}
             <Card className="p-4 bg-card border-border">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
@@ -168,7 +302,6 @@ export default function CardPage() {
               </div>
             </Card>
 
-            {/* Cards */}
             <div className="space-y-3">
               {cards.map((c) => (
                 <motion.div key={c.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
@@ -193,13 +326,8 @@ export default function CardPage() {
               ))}
             </div>
 
-            {/* Add Card */}
             {cards.length < limits.maxCards && (
-              <Button
-                variant="outline"
-                onClick={() => setView("add")}
-                className="w-full border-dashed gap-2"
-              >
+              <Button variant="outline" onClick={() => setView("add")} className="w-full border-dashed gap-2">
                 <Plus className="w-4 h-4" /> Add New Card
               </Button>
             )}
@@ -216,7 +344,7 @@ export default function CardPage() {
         {view === "detail" && selectedCard && (
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => { setView("list"); setShowNumber(false); setFaceVerified(false); verification.reset(); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+              <button onClick={() => { setView("list"); setShowNumber(false); setFaceVerified(false); verification.reset(); if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current); setVerifiedAt(null); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -227,18 +355,46 @@ export default function CardPage() {
 
             <CardVisual c={selectedCard} />
 
-            {/* Face ID / Password Verification Gate */}
-            {!faceVerified && !verification.isVerified ? (
+            {/* Lockout State */}
+            {isLocked ? (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                <Card className="p-6 bg-destructive/5 border-destructive/20 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-destructive/10 mx-auto flex items-center justify-center">
+                    <Ban className="w-8 h-8 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-destructive">Card Access Locked</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Too many failed verification attempts.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-destructive/10">
+                    <p className="text-xs text-muted-foreground">Try again in</p>
+                    <p className="text-2xl font-mono font-bold text-destructive">{formatTime(lockTimeLeft)}</p>
+                  </div>
+                </Card>
+              </motion.div>
+            ) : !isVerified ? (
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
                 <Card className="p-6 bg-card border-border text-center space-y-4">
+                  {/* Attempt counter */}
+                  {getFailCount() > 0 && (
+                    <div className="p-2 rounded-lg bg-warning/10 flex items-center justify-center gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+                      <span className="text-xs text-warning font-medium">
+                        {MAX_ATTEMPTS - getFailCount()} attempt{MAX_ATTEMPTS - getFailCount() !== 1 ? "s" : ""} remaining
+                      </span>
+                    </div>
+                  )}
+
                   {/* Face ID Mode */}
                   {verifyMode === "face" && (
                     <FaceScanner
                       onVerified={() => {
                         setFaceVerified(true);
-                        toast.success("Face verified successfully");
+                        handleVerificationSuccess("Face ID");
                       }}
-                      onFailed={(err) => toast.error(err)}
+                      onFailed={(err) => handleVerificationFailure(err)}
                       onCancel={() => setVerifyMode("password")}
                     />
                   )}
@@ -263,8 +419,8 @@ export default function CardPage() {
                         onKeyDown={async (e) => {
                           if (e.key === "Enter" && passwordInput) {
                             const ok = await verification.verifyPassword(passwordInput);
-                            if (ok) toast.success("Identity verified");
-                            else toast.error("Incorrect password");
+                            if (ok) handleVerificationSuccess("Password");
+                            else handleVerificationFailure("Incorrect password");
                             setPasswordInput("");
                           }
                         }}
@@ -274,8 +430,8 @@ export default function CardPage() {
                         onClick={async () => {
                           if (!passwordInput) return;
                           const ok = await verification.verifyPassword(passwordInput);
-                          if (ok) toast.success("Identity verified");
-                          else toast.error("Incorrect password");
+                          if (ok) handleVerificationSuccess("Password");
+                          else handleVerificationFailure("Incorrect password");
                           setPasswordInput("");
                         }}
                         disabled={!passwordInput}
@@ -299,12 +455,20 @@ export default function CardPage() {
               </motion.div>
             ) : (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                {/* Verified badge */}
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/10">
-                  <CheckCircle2 className="w-4 h-4 text-accent" />
-                  <span className="text-xs font-medium text-accent">
-                    Identity Verified · {faceVerified ? "Face ID" : verification.methodLabel}
-                  </span>
+                {/* Verified badge with session timer */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent/10">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-accent" />
+                    <span className="text-xs font-medium text-accent">
+                      Identity Verified · {faceVerified ? "Face ID" : verification.methodLabel}
+                    </span>
+                  </div>
+                  {sessionTimeLeft > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Timer className="w-3 h-3" />
+                      <span className="font-mono">{formatTime(sessionTimeLeft)}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Full Card Details */}
@@ -386,7 +550,7 @@ export default function CardPage() {
                   <Button
                     variant={selectedCard.is_frozen ? "default" : "outline"}
                     className={`flex-col h-auto py-3 gap-1 ${selectedCard.is_frozen ? "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30" : ""}`}
-                    onClick={() => { toggleFreeze.mutate(selectedCard.id); toast.success(selectedCard.is_frozen ? "Card unfrozen" : "Card frozen"); }}
+                    onClick={() => handleFreezeToggle(selectedCard)}
                   >
                     <Snowflake className="w-4 h-4" />
                     <span className="text-[10px]">{selectedCard.is_frozen ? "Unfreeze" : "Freeze"}</span>
@@ -433,7 +597,6 @@ export default function CardPage() {
               </div>
             </div>
 
-            {/* Controls */}
             <Card className="p-5 bg-card border-border space-y-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-accent" />
@@ -472,7 +635,7 @@ export default function CardPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => { toggleFreeze.mutate(selectedCard.id); toast.success(selectedCard.is_frozen ? "Unfrozen" : "Frozen"); }}
+                onClick={() => handleFreezeToggle(selectedCard)}
                 className={`w-full gap-2 ${selectedCard.is_frozen ? "border-blue-500/30 text-blue-400" : "border-destructive/20 text-destructive"}`}
               >
                 <Snowflake className="w-4 h-4" /> {selectedCard.is_frozen ? "Unfreeze" : "Freeze"} Card
@@ -491,7 +654,6 @@ export default function CardPage() {
               <h1 className="text-2xl font-bold tracking-tight">Add Card</h1>
             </div>
 
-            {/* Card Type Selection */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setNewCardFormat("virtual")}
