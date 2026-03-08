@@ -316,7 +316,9 @@ export default function CardPage() {
 
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="ExoSky" className="w-5 h-5 rounded" />
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-foreground/20 to-foreground/10 flex items-center justify-center">
+              <span className="text-[8px] font-bold text-foreground/80 tracking-tighter">Ξ╳</span>
+            </div>
             <span className="text-xs font-bold tracking-wider text-foreground/80">EXOSKY</span>
           </div>
           <div className="flex items-center gap-1">
