@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">2. How We Use Your Information</h2>
             <ul className="text-sm text-muted-foreground leading-relaxed space-y-2 list-disc pl-5">
-              <li>To provide and maintain the X Money service</li>
+              <li>To provide and maintain the ExoSky service</li>
               <li>To verify your identity and comply with KYC/AML regulations</li>
               <li>To process transactions and send related notifications</li>
               <li>To detect and prevent fraud and unauthorized access</li>
