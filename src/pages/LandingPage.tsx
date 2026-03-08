@@ -616,24 +616,52 @@ export default function LandingPage() {
                 <span className="text-xs font-semibold text-accent">Now in Beta</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-                Be among the first to{" "}
-                <span className="text-accent">experience ExoSky</span>
+                Join the{" "}
+                <span className="text-accent">early access</span> waitlist
               </h2>
               <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
-                We're building the future of finance and you can be part of it from day one. 
-                Sign up now to get early access and your $25 welcome bonus.
+                Be the first to experience ExoSky. Drop your email and we'll notify you 
+                when we're ready to onboard the next wave of beta users.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const emailInput = form.elements.namedItem("waitlist-email") as HTMLInputElement;
+                  const email = emailInput.value.trim();
+                  if (!email) return;
+
+                  const { error } = await supabase.from("waitlist").insert({ email });
+                  if (error) {
+                    if (error.code === "23505") {
+                      toast.info("You're already on the waitlist!");
+                    } else {
+                      toast.error("Something went wrong. Please try again.");
+                    }
+                  } else {
+                    toast.success("You're on the list! We'll be in touch soon.");
+                    emailInput.value = "";
+                  }
+                }}
+                className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"
+              >
+                <Input
+                  name="waitlist-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  required
+                  className="h-12 bg-secondary/50 border-border rounded-xl text-center sm:text-left"
+                />
                 <Button
+                  type="submit"
                   size="lg"
-                  onClick={() => navigate("/auth")}
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.25)]"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.25)] shrink-0"
                 >
-                  Get Early Access <ArrowRight className="w-4 h-4" />
+                  Join Waitlist <ArrowRight className="w-4 h-4" />
                 </Button>
-              </div>
+              </form>
               <p className="text-xs text-muted-foreground mt-4">
-                Free to join · No credit card required · Beta users get exclusive perks
+                No spam · Unsubscribe anytime · Beta users get $25 welcome bonus
               </p>
             </div>
           </motion.div>
