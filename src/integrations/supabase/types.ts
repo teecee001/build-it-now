@@ -93,6 +93,7 @@ export type Database = {
           full_name: string | null
           handle: string | null
           id: string
+          referral_code: string | null
           updated_at: string
         }
         Insert: {
@@ -101,6 +102,7 @@ export type Database = {
           full_name?: string | null
           handle?: string | null
           id: string
+          referral_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -109,7 +111,41 @@ export type Database = {
           full_name?: string | null
           handle?: string | null
           id?: string
+          referral_code?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_id: string | null
+          referrer_id: string
+          reward_amount: number
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_id?: string | null
+          referrer_id: string
+          reward_amount?: number
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_id?: string | null
+          referrer_id?: string
+          reward_amount?: number
+          status?: string
         }
         Relationships: []
       }
