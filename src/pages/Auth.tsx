@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { ExoLogo } from "@/components/ExoLogo";
 
 export default function Auth() {
   const { user, isLoading: authLoading, signIn, signUp, signInWithGoogle } = useAuth();
