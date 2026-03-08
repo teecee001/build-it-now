@@ -65,7 +65,7 @@ export default function ComplianceDisclosures() {
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">OFAC Compliance</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              X Money screens all users and transactions against the Office of Foreign Assets Control (OFAC) Specially Designated Nationals (SDN) list and other sanctions lists. Transactions involving sanctioned entities or jurisdictions are prohibited.
+              ExoSky screens all users and transactions against the Office of Foreign Assets Control (OFAC) Specially Designated Nationals (SDN) list and other sanctions lists. Transactions involving sanctioned entities or jurisdictions are prohibited.
             </p>
           </section>
 
