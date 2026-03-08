@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { path: "/markets", icon: TrendingUp, label: "Markets" },
   { path: "/referrals", icon: Users, label: "Refer & Earn" },
   { path: "/advisor", icon: Bot, label: "AI Advisor" },
+  { path: "/premium", icon: Crown, label: "Pro" },
 ];
 
 export function AppLayout() {
