@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, 
   Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
-  DollarSign, Percent, Eye, EyeOff, Loader2
+  DollarSign, Percent, Eye, EyeOff, Loader2, BarChart3, QrCode
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
