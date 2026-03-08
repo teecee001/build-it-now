@@ -14,7 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bills: {
+        Row: {
+          amount: number
+          biller_name: string
+          category: string
+          created_at: string
+          due_date: string
+          id: string
+          is_paid: boolean
+          paid_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          biller_name: string
+          category: string
+          created_at?: string
+          due_date: string
+          id?: string
+          is_paid?: boolean
+          paid_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          biller_name?: string
+          category?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          is_paid?: boolean
+          paid_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cards: {
+        Row: {
+          card_number_last4: string
+          card_type: string
+          created_at: string
+          expiry_month: number
+          expiry_year: number
+          id: string
+          is_active: boolean
+          is_frozen: boolean
+          user_id: string
+        }
+        Insert: {
+          card_number_last4?: string
+          card_type?: string
+          created_at?: string
+          expiry_month?: number
+          expiry_year?: number
+          id?: string
+          is_active?: boolean
+          is_frozen?: boolean
+          user_id: string
+        }
+        Update: {
+          card_number_last4?: string
+          card_type?: string
+          created_at?: string
+          expiry_month?: number
+          expiry_year?: number
+          id?: string
+          is_active?: boolean
+          is_frozen?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          handle: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          handle?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          handle?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          recipient: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          savings_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          savings_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          savings_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +190,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      transaction_status: "pending" | "completed" | "failed"
+      transaction_type:
+        | "deposit"
+        | "withdrawal"
+        | "send"
+        | "receive"
+        | "purchase"
+        | "cashback"
+        | "interest"
+        | "conversion"
+        | "bill_payment"
+        | "welcome_bonus"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +328,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      transaction_status: ["pending", "completed", "failed"],
+      transaction_type: [
+        "deposit",
+        "withdrawal",
+        "send",
+        "receive",
+        "purchase",
+        "cashback",
+        "interest",
+        "conversion",
+        "bill_payment",
+        "welcome_bonus",
+      ],
+    },
   },
 } as const
