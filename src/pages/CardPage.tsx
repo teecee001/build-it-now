@@ -375,22 +375,22 @@ function CardPageContent() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: design.accent }} />
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className={`${compact ? "text-3xl" : "text-5xl"} font-bold opacity-[0.06] select-none tracking-tighter`}>Ξ╳</span>
+          <span className={`${compact ? "text-3xl" : "text-5xl"} font-bold opacity-[0.06] select-none tracking-tighter text-white`}>Ξ╳</span>
         </div>
 
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-gradient-to-br from-foreground/20 to-foreground/10 flex items-center justify-center">
-              <span className="text-[8px] font-bold text-foreground/80 tracking-tighter">Ξ╳</span>
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center">
+              <span className="text-[8px] font-bold text-white/80 tracking-tighter">Ξ╳</span>
             </div>
-            <span className="text-xs font-bold tracking-wider text-foreground/80">EXOSKY</span>
+            <span className="text-xs font-bold tracking-wider text-white/80">EXOSKY</span>
           </div>
           <div className="flex items-center gap-1">
             {c.is_frozen && <Snowflake className="w-3 h-3 text-blue-400" />}
             {isVirtual ? (
               <Badge className="bg-blue-500/10 text-blue-400 border-0 text-[9px] px-1.5 py-0">VIRTUAL</Badge>
             ) : (
-              <span className="text-[9px] font-medium text-foreground/50">METAL</span>
+              <span className="text-[9px] font-medium text-white/50">METAL</span>
             )}
           </div>
         </div>
@@ -398,7 +398,7 @@ function CardPageContent() {
         {!compact && (
           <div className="relative">
             {isVirtual ? (
-              <Wifi className="w-7 h-7 text-foreground/20 rotate-90" />
+              <Wifi className="w-7 h-7 text-white/20 rotate-90" />
             ) : (
               <div className="w-9 h-6 rounded bg-gradient-to-br from-yellow-600/60 to-yellow-800/40 border border-yellow-700/30" />
             )}
@@ -406,17 +406,17 @@ function CardPageContent() {
         )}
 
         <div className="relative space-y-2">
-          <p className={`${compact ? "text-sm" : "text-lg"} font-mono tracking-[0.15em] text-foreground/90`}>
+          <p className={`${compact ? "text-sm" : "text-lg"} font-mono tracking-[0.15em] text-white/90`}>
             •••• {c.card_number_last4}
           </p>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-[9px] text-foreground/40">{c.card_name || (isVirtual ? "Virtual" : "Physical")}</p>
+              <p className="text-[9px] text-white/40">{c.card_name || (isVirtual ? "Virtual" : "Physical")}</p>
             </div>
             <div>
-              <p className="text-xs font-mono text-foreground/80">{expiry}</p>
+              <p className="text-xs font-mono text-white/80">{expiry}</p>
             </div>
-            <span className="text-sm font-bold italic tracking-tighter text-foreground/60">VISA</span>
+            <span className="text-sm font-bold italic tracking-tighter text-white/60">VISA</span>
           </div>
         </div>
       </div>
