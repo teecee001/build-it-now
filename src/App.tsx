@@ -21,6 +21,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ComplianceDisclosures from "./pages/ComplianceDisclosures";
 import KYCVerification from "./pages/KYCVerification";
 import Savings from "./pages/Savings";
+import Referrals from "./pages/Referrals";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/markets" element={<Markets />} />
               <Route path="/advisor" element={<AIAdvisor />} />
               <Route path="/savings" element={<Savings />} />
+              <Route path="/referrals" element={<Referrals />} />
               <Route path="/verify" element={<KYCVerification />} />
             </Route>
             <Route path="*" element={<NotFound />} />
