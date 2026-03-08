@@ -1004,7 +1004,7 @@ export function AppShowcase() {
 
         {/* Phone body */}
         <div
-          className="relative w-[270px] sm:w-[300px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
+          className="relative w-[260px] sm:w-[300px] lg:w-[340px] xl:w-[380px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
           onClick={() => navigate("/auth")}
         >
           {/* Status bar */}
