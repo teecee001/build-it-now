@@ -1,0 +1,1 @@
+ALTER TABLE public.cards DROP CONSTRAINT cards_user_id_key;
