@@ -135,7 +135,7 @@ export default function SendMoney() {
                 className="h-12 bg-secondary border-border pr-20"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                <button className="p-2 hover:bg-background/50 rounded-md transition-colors">
+              <button onClick={() => navigate("/qr")} className="p-2 hover:bg-background/50 rounded-md transition-colors" title="Scan QR">
                   <QrCode className="w-4 h-4 text-muted-foreground" />
                 </button>
                 <button className="p-2 hover:bg-background/50 rounded-md transition-colors">
