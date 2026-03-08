@@ -29,6 +29,7 @@ import SpendingAnalytics from "./pages/SpendingAnalytics";
 import QRPayments from "./pages/QRPayments";
 import RecurringPayments from "./pages/RecurringPayments";
 import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
+import StocksPage from "./pages/StocksPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
