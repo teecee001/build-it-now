@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ActiveCurrencyProvider } from "@/hooks/useActiveCurrency";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { CountryOnboarding } from "@/components/CountryOnboarding";
@@ -63,9 +64,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -111,9 +113,10 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -46,6 +47,7 @@ export function AppLayout() {
         {/* Logo */}
         <div className="flex items-center justify-between px-3 py-4 mb-6">
           <ExoLogo size="md" />
+          <ThemeToggle />
           <NotificationBell />
         </div>
 
@@ -112,6 +114,7 @@ export function AppLayout() {
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-card/80 backdrop-blur-xl border-b border-border">
         <ExoLogo size="sm" />
         <div className="flex items-center gap-1">
+          <ThemeToggle />
           <NotificationBell />
           <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2">
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
