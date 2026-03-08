@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Wallet, TrendingUp, CreditCard, PiggyBank, Globe,
   ArrowUpRight, ArrowDownLeft, BarChart3, Send, QrCode,
@@ -968,6 +969,7 @@ const SCREEN_COMPONENTS: Record<string, React.FC> = {
 export function AppShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const navigate = useNavigate();
 
   const next = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % SCREENS.length);
@@ -1001,7 +1003,10 @@ export function AppShowcase() {
         />
 
         {/* Phone body */}
-        <div className="relative w-[270px] sm:w-[300px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden">
+        <div
+          className="relative w-[270px] sm:w-[300px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
+          onClick={() => navigate("/auth")}
+        >
           {/* Status bar */}
           <div className="relative h-8 flex items-center justify-between px-6 pt-1 bg-[hsl(240,10%,6%)]">
             <span className="text-[8px] text-white/40 font-medium">9:41</span>
@@ -1063,6 +1068,18 @@ export function AppShowcase() {
           {/* Home indicator */}
           <div className="flex justify-center py-1.5 bg-[hsl(240,10%,5%)]">
             <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
+          </div>
+
+          {/* Hover CTA Overlay */}
+          <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
+            <motion.div
+              initial={false}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_40px_hsl(142_71%_45%/0.4)]"
+            >
+              <ArrowRight className="w-6 h-6 text-white" />
+            </motion.div>
+            <p className="text-white text-base font-bold tracking-tight">Try it live</p>
+            <p className="text-white/50 text-xs">Create a free account in 2 min</p>
           </div>
         </div>
       </motion.div>
