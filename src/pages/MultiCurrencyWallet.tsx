@@ -27,8 +27,8 @@ export default function MultiCurrencyWallet() {
   const [convertAmount, setConvertAmount] = useState("");
   const [isConverting, setIsConverting] = useState(false);
 
-  // Simulated multi-currency balances (in a production app these would be separate wallet rows)
-  const [currencyBalances] = useState<Record<string, number>>(() => {
+  // Multi-currency balances stored locally (non-USD currencies)
+  const [currencyBalances, setCurrencyBalances] = useState<Record<string, number>>(() => {
     const balances: Record<string, number> = {};
     POPULAR_CURRENCIES.forEach(c => {
       if (c === "USD") return;
@@ -36,6 +36,8 @@ export default function MultiCurrencyWallet() {
     });
     return balances;
   });
+
+  const getBalance = (code: string) => code === "USD" ? balance : (currencyBalances[code] ?? 0);
 
   const allBalances = [
     { code: "USD", balance: balance, isPrimary: true },
@@ -57,27 +59,48 @@ export default function MultiCurrencyWallet() {
 
   const handleConvert = async () => {
     const amt = parseFloat(convertAmount);
-    if (!amt || amt <= 0) return;
-
-    const usdEquivalent = amt / (rates[fromCurrency] || 1);
-    if (fromCurrency === "USD" && usdEquivalent > balance) {
-      toast.error("Insufficient USD balance");
+    if (!amt || amt <= 0) {
+      toast.error("Enter a valid amount");
       return;
     }
 
+    const sourceBalance = getBalance(fromCurrency);
+    if (amt > sourceBalance) {
+      toast.error(`Insufficient ${fromCurrency} balance`);
+      return;
+    }
+
+    if (fromCurrency === toCurrency) {
+      toast.error("Select different currencies");
+      return;
+    }
+
+    const usdEquivalent = amt / (rates[fromCurrency] || 1);
+    const convertedAmount = (amt / (rates[fromCurrency] || 1)) * (rates[toCurrency] || 1);
+
     setIsConverting(true);
     try {
-      // For USD source, deduct from wallet
+      // Deduct from source
       if (fromCurrency === "USD") {
-        await updateBalance.mutateAsync({ balance: balance - usdEquivalent });
+        await updateBalance.mutateAsync({ balance: balance - amt });
+      } else {
+        setCurrencyBalances(prev => ({ ...prev, [fromCurrency]: prev[fromCurrency] - amt }));
       }
+
+      // Credit to destination
+      if (toCurrency === "USD") {
+        await updateBalance.mutateAsync({ balance: balance + convertedAmount });
+      } else {
+        setCurrencyBalances(prev => ({ ...prev, [toCurrency]: (prev[toCurrency] ?? 0) + convertedAmount }));
+      }
+
       await addTransaction.mutateAsync({
         type: "conversion",
         amount: -usdEquivalent,
-        description: `Converted ${amt.toFixed(2)} ${fromCurrency} → ${convertedPreview.toFixed(4)} ${toCurrency}`,
-        metadata: { from: fromCurrency, to: toCurrency, from_amount: amt, to_amount: convertedPreview },
+        description: `Converted ${amt.toFixed(2)} ${fromCurrency} → ${convertedAmount.toFixed(4)} ${toCurrency}`,
+        metadata: { from: fromCurrency, to: toCurrency, from_amount: amt, to_amount: convertedAmount },
       });
-      toast.success(`Converted ${amt} ${fromCurrency} to ${convertedPreview.toFixed(4)} ${toCurrency}`);
+      toast.success(`Converted ${amt} ${fromCurrency} to ${convertedAmount.toFixed(4)} ${toCurrency}`);
       setConvertAmount("");
       setShowConvert(false);
     } catch (err: any) {
