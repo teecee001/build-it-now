@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FeatureGate } from "@/components/FeatureGate";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
