@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
       title: "2. How We Use Your Information",
       content: null,
       list: [
-        "Provide, maintain, and improve ExoSky services",
+        "Provide, maintain, and improve Ξ╳oSky services",
         "Verify your identity and country of residence (KYC/AML compliance)",
         "Enforce geographic restrictions and detect VPN/proxy usage",
         "Process transactions and send related notifications",
