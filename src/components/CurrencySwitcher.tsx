@@ -4,7 +4,6 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CURRENCIES } from "@/constants/currencies";
 import { Loader2, ArrowRight } from "lucide-react";
 import { useState } from "react";
@@ -48,7 +47,6 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
   const { rates } = useExchangeRates();
   const [isConverting, setIsConverting] = useState(false);
   const [pendingCurrency, setPendingCurrency] = useState<string | null>(null);
-  const [amountStr, setAmountStr] = useState("");
 
   const fromWallet = wallets.find(w => w.currency === activeCurrency);
   const fromBalance = fromWallet?.balance ?? 0;
@@ -56,11 +54,7 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
   const fromRate = rates[activeCurrency] || 1;
   const toRate = pendingCurrency ? (rates[pendingCurrency] || 1) : 1;
   const conversionRate = toRate / fromRate;
-
-  const amount = parseFloat(amountStr) || 0;
-  const convertedAmount = amount * conversionRate;
-  const remaining = fromBalance - amount;
-  const isValid = amount > 0 && amount <= fromBalance;
+  const convertedAmount = fromBalance * conversionRate;
 
   const handleCurrencySelect = (newCurrency: string) => {
     if (newCurrency === activeCurrency) return;
@@ -69,33 +63,29 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
       return;
     }
     setPendingCurrency(newCurrency);
-    setAmountStr("");
   };
 
   const handleConfirm = async () => {
-    if (!pendingCurrency || !isValid) return;
+    if (!pendingCurrency) return;
     setIsConverting(true);
     try {
       await convertCurrency.mutateAsync({
         fromCurrency: activeCurrency,
         toCurrency: pendingCurrency,
-        amount,
+        amount: fromBalance,
         rate: conversionRate,
       });
       setActiveCurrency(pendingCurrency);
-      toast.success(`Converted to ${pendingCurrency}`, {
-        description: `${fmtAmt(convertedAmount, pendingCurrency)} added to your ${pendingCurrency} wallet`,
+      toast.success(`Switched to ${pendingCurrency}`, {
+        description: `${fmtAmt(convertedAmount, pendingCurrency)} now in your ${pendingCurrency} wallet`,
       });
     } catch (err: any) {
       toast.error("Conversion failed", { description: err.message });
     } finally {
       setIsConverting(false);
       setPendingCurrency(null);
-      setAmountStr("");
     }
   };
-
-  const handleSetMax = () => setAmountStr(fromBalance.toFixed(2));
 
   if (wallets.length <= 1) return null;
 
@@ -130,73 +120,35 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
         </SelectContent>
       </Select>
 
-      <Dialog open={!!pendingCurrency} onOpenChange={(open) => { if (!open && !isConverting) { setPendingCurrency(null); setAmountStr(""); } }}>
+      <Dialog open={!!pendingCurrency} onOpenChange={(open) => { if (!open && !isConverting) setPendingCurrency(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Convert to {pendingCurrency}</DialogTitle>
+            <DialogTitle>Switch to {pendingCurrency}?</DialogTitle>
             <DialogDescription>
-              Enter the amount to convert. The rest stays in {activeCurrency}.
+              Your full {activeCurrency} balance will be converted. For partial conversions, use the Multi-Currency page.
             </DialogDescription>
           </DialogHeader>
 
           {pendingCurrency && (
             <div className="space-y-4 py-2">
-              {/* Amount input */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-muted-foreground">Amount ({activeCurrency})</label>
-                  <button
-                    type="button"
-                    onClick={handleSetMax}
-                    className="text-[11px] font-medium text-accent hover:underline"
-                  >
-                    Max: {fmtAmt(fromBalance, activeCurrency)}
-                  </button>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-mono">
-                    {getSymbol(activeCurrency)}
-                  </span>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={fromBalance}
-                    step="0.01"
-                    value={amountStr}
-                    onChange={(e) => setAmountStr(e.target.value)}
-                    placeholder="0.00"
-                    className="pl-8 font-mono text-lg h-12"
-                  />
-                </div>
-                {amount > fromBalance && (
-                  <p className="text-xs text-destructive">Exceeds available balance</p>
-                )}
-              </div>
-
-              {/* From → To visual */}
               <div className="flex items-center justify-center gap-3">
                 <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-secondary/60 flex-1">
                   <span className="text-2xl">{getFlag(activeCurrency)}</span>
                   <span className="text-xs font-medium text-muted-foreground">{activeCurrency}</span>
-                  <span className="text-sm font-semibold font-mono">{amount > 0 ? fmtAmt(amount, activeCurrency) : "—"}</span>
+                  <span className="text-sm font-semibold font-mono">{fmtAmt(fromBalance, activeCurrency)}</span>
                 </div>
                 <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
                 <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-accent/10 border border-accent/20 flex-1">
                   <span className="text-2xl">{getFlag(pendingCurrency)}</span>
                   <span className="text-xs font-medium text-muted-foreground">{pendingCurrency}</span>
-                  <span className="text-sm font-semibold font-mono text-accent">{amount > 0 ? fmtAmt(convertedAmount, pendingCurrency) : "—"}</span>
+                  <span className="text-sm font-semibold font-mono text-accent">{fmtAmt(convertedAmount, pendingCurrency)}</span>
                 </div>
               </div>
 
-              {/* Rate details */}
               <div className="rounded-lg bg-secondary/40 p-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Exchange Rate</span>
                   <span className="font-mono font-medium">1 {activeCurrency} = {conversionRate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {pendingCurrency}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Remaining in {activeCurrency}</span>
-                  <span className="font-mono font-medium">{isValid ? fmtAmt(remaining, activeCurrency) : "—"}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Fee</span>
@@ -207,17 +159,17 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => { setPendingCurrency(null); setAmountStr(""); }} disabled={isConverting}>
+            <Button variant="outline" onClick={() => setPendingCurrency(null)} disabled={isConverting}>
               Cancel
             </Button>
-            <Button onClick={handleConfirm} disabled={isConverting || !isValid}>
+            <Button onClick={handleConfirm} disabled={isConverting}>
               {isConverting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Converting…
                 </span>
               ) : (
-                "Convert & Switch"
+                "Convert All & Switch"
               )}
             </Button>
           </DialogFooter>
