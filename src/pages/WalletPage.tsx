@@ -50,7 +50,7 @@ export default function WalletPage() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set(["BTC", "ETH", "SOL"]));
   const [chartType, setChartType] = useState<"area" | "candlestick">("area");
   const [chartDays, setChartDays] = useState(30);
-  const [tradeModal, setTradeModal] = useState<{ type: "buy" | "sell" | "swap"; code: string } | null>(null);
+  const [tradeModal, setTradeModal] = useState<{ type: "buy" | "sell" | "swap" | "send"; code: string } | null>(null);
 
   const toggleFav = (code: string) => {
     setFavorites(prev => { const n = new Set(prev); n.has(code) ? n.delete(code) : n.add(code); return n; });
