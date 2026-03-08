@@ -71,7 +71,7 @@ export default function PrivacyPolicy() {
     },
     {
       title: "12. Contact Us",
-      content: `For privacy inquiries: privacy@exosky.app · Data Protection Officer: dpo@exosky.app · ExoSky Inc., 1355 Market Street, San Francisco, CA 94103, USA. EU Representative: ExoSky EU Ltd., Dublin, Ireland.`,
+      content: `For privacy inquiries: privacy@exosky.app · Data Protection Officer: dpo@exosky.app · Ξ╳oSky Inc., 1355 Market Street, San Francisco, CA 94103, USA. EU Representative: Ξ╳oSky EU Ltd., Dublin, Ireland.`,
     },
   ];
 
