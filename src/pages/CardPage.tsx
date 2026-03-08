@@ -14,7 +14,7 @@ import {
   ArrowLeft, ShieldCheck, Smartphone, MapPin, ShoppingBag,
   Fuel, Utensils, Plane, DollarSign, AlertTriangle,
   Plus, Wifi, Package, Truck, Crown, KeyRound,
-  Timer, Ban, Check, Palette
+  Timer, Ban, Check, Palette, X
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
