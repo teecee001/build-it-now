@@ -639,7 +639,7 @@ export default function LandingPage() {
                 transition={{ delay: 0.3 }}
                 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight"
               >
-                ExoSky is currently in
+                Ξ╳oSky is currently in
                 <br />
                 <span className="text-accent">private beta.</span>
               </motion.h2>
