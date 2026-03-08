@@ -7,8 +7,16 @@ import {
   ArrowRight, Shield, Zap, TrendingUp, CreditCard,
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
   ChevronRight, Star, Lock, Users, Wallet,
-  Check, Sparkles, X
+  Check, Sparkles, X, HelpCircle, MessageSquare,
+  Twitter, Github, Mail, ChevronDown
 } from "lucide-react";
+import { useState } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useEffect, useRef } from "react";
 import { AppShowcase } from "@/components/AppShowcase";
 
