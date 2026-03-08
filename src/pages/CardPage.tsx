@@ -56,7 +56,8 @@ export default function CardPage() {
     setSelectedCard(c);
     setShowNumber(false);
     setPasswordInput("");
-    setVerifyMode("smart");
+    setVerifyMode("face");
+    setFaceVerified(false);
     verification.reset();
     setView("detail");
   };
