@@ -378,23 +378,28 @@ function MarketFallbackChart({ symbol, price, change }: { symbol: string; price:
   useEffect(() => {
     if (!chartRef.current) return;
 
+    const isDark = document.documentElement.classList.contains("dark");
+    const gridColor = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)";
+    const borderColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+    const textColor = isDark ? "#9ca3af" : "#6b7280";
+
     const chart = createChart(chartRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#9ca3af",
+        textColor,
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.04)" },
-        horzLines: { color: "rgba(255,255,255,0.04)" },
+        vertLines: { color: gridColor },
+        horzLines: { color: gridColor },
       },
       width: chartRef.current.clientWidth,
       height: 300,
-      rightPriceScale: { borderColor: "rgba(255,255,255,0.1)" },
-      timeScale: { borderColor: "rgba(255,255,255,0.1)", timeVisible: false },
+      rightPriceScale: { borderColor },
+      timeScale: { borderColor, timeVisible: false },
       crosshair: {
-        vertLine: { color: "#9ca3af", width: 1, style: 3 },
-        horzLine: { color: "#9ca3af", width: 1, style: 3 },
+        vertLine: { color: textColor, width: 1, style: 3 },
+        horzLine: { color: textColor, width: 1, style: 3 },
       },
     });
 
