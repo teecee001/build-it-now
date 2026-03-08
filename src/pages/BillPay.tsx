@@ -120,7 +120,18 @@ export default function BillPay() {
     if (provider) setNewAmount(provider.avgAmount.toFixed(2));
   };
 
-  const handlePay = async (bill: { id: string; amount: number; biller_name: string }) => {
+  const handlePayClick = (bill: any) => {
+    if (!bill.account_number) {
+      toast.error("No account number on file. Edit this bill to add one before paying.");
+      return;
+    }
+    setConfirmBill(bill);
+  };
+
+  const handleConfirmPay = async () => {
+    const bill = confirmBill;
+    if (!bill) return;
+    setConfirmBill(null);
     if (bill.amount > balance) {
       toast.error("Insufficient balance");
       return;
@@ -131,9 +142,8 @@ export default function BillPay() {
       await addTransaction.mutateAsync({
         type: "bill_payment",
         amount: -bill.amount,
-        description: `Bill payment — ${bill.biller_name}`,
+        description: `Bill payment — ${bill.biller_name} (Acct: ...${(bill.account_number || "").slice(-4)})`,
       });
-      // Record 1% cashback
       const cashback = bill.amount * 0.01;
       await updateBalance.mutateAsync({ balance: balance - bill.amount + cashback });
       await addTransaction.mutateAsync({
@@ -151,8 +161,8 @@ export default function BillPay() {
   };
 
   const handleAddBill = async () => {
-    if (!newBiller || !newAmount || !newDueDate) {
-      toast.error("Fill in all fields");
+    if (!newBiller || !newAmount || !newDueDate || !newAccountNumber.trim()) {
+      toast.error("Fill in all fields including account number");
       return;
     }
     try {
@@ -161,12 +171,14 @@ export default function BillPay() {
         category: newCategory,
         amount: parseFloat(newAmount),
         due_date: newDueDate,
+        account_number: newAccountNumber.trim(),
       });
       toast.success("Bill added");
       setShowAdd(false);
       setNewBiller("");
       setNewAmount("");
       setNewDueDate("");
+      setNewAccountNumber("");
     } catch (err: any) {
       toast.error(err.message || "Failed to add bill");
     }
