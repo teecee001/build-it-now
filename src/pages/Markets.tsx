@@ -122,7 +122,7 @@ export default function Markets() {
         return INDICES.filter(i => i.name.toLowerCase().includes(q) || i.symbol.toLowerCase().includes(q))
           .map(i => ({ symbol: i.symbol, name: i.name, price: addVariance(i.price, i.symbol), change: i.change, tag: "" }));
     }
-  }, [activeCategory, search, rates]);
+  }, [activeCategory, search, rates, tick]);
 
   const selectedInfo = selectedAsset
     ? items.find(i => i.symbol === selectedAsset.symbol)
