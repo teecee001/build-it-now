@@ -22,6 +22,7 @@ import ComplianceDisclosures from "./pages/ComplianceDisclosures";
 import KYCVerification from "./pages/KYCVerification";
 import Savings from "./pages/Savings";
 import Referrals from "./pages/Referrals";
+import Premium from "./pages/Premium";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
