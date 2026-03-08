@@ -1,34 +1,37 @@
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
+import { useTransactions } from "@/hooks/useTransactions";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, 
-  Wallet, Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
-  DollarSign, Percent, Eye, EyeOff
+  Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
+  DollarSign, Percent, Eye, EyeOff, Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
 
-const PORTFOLIO_ASSETS = [
-  { code: "BTC", name: "Bitcoin", symbol: "₿", allocation: 0.45 },
-  { code: "ETH", name: "Ethereum", symbol: "Ξ", allocation: 0.25 },
-  { code: "SOL", name: "Solana", symbol: "◎", allocation: 0.15 },
-  { code: "USDT", name: "Tether", symbol: "₮", allocation: 0.10 },
-  { code: "XRP", name: "Ripple", symbol: "XRP", allocation: 0.05 },
-];
-
-const RECENT_ACTIVITY = [
-  { type: "received", label: "Welcome Bonus", amount: 25.00, time: "Just now", icon: Gift },
-  { type: "deposit", label: "Direct Deposit", amount: 2450.00, time: "2h ago", icon: Landmark },
-  { type: "sent", label: "Sent to @sarah_k", amount: -50.00, time: "5h ago", icon: Send },
-  { type: "cashback", label: "Cashback Reward", amount: 3.42, time: "1d ago", icon: Percent },
-];
+const TX_ICON_MAP: Record<string, typeof Send> = {
+  send: ArrowUpRight,
+  receive: ArrowDownLeft,
+  deposit: Landmark,
+  withdrawal: ArrowUpRight,
+  purchase: CreditCard,
+  cashback: Gift,
+  interest: Percent,
+  conversion: Repeat,
+  bill_payment: Landmark,
+  welcome_bonus: Gift,
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { balance, savingsBalance, totalBalance, isLoading: walletLoading } = useWallet();
+  const { transactions, isLoading: txLoading } = useTransactions(5);
   const { rates, isLive } = useExchangeRates();
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
@@ -36,16 +39,16 @@ export default function Dashboard() {
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
-  const walletBalance = 12_483.92;
-  const savingsBalance = 8_250.00;
-  const totalBalance = walletBalance + savingsBalance;
   const apyRate = 6.0;
   const monthlyEarnings = (savingsBalance * apyRate / 100 / 12);
-  const change24h = 3.42;
-  const isPositive = change24h >= 0;
 
-  // Crypto portfolio
-  const portfolioUSD = 4_097.55;
+  if (walletLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -78,10 +81,6 @@ export default function Dashboard() {
               <h2 className="text-4xl font-bold tracking-tight font-mono">
                 {showBalance ? `$${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••••"}
               </h2>
-              <span className={`flex items-center gap-1 text-sm font-medium ${isPositive ? "text-success" : "text-destructive"}`}>
-                {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {isPositive ? "+" : ""}{change24h}%
-              </span>
             </div>
 
             {/* Balance Breakdown */}
@@ -89,7 +88,7 @@ export default function Dashboard() {
               <div className="p-3 rounded-lg bg-secondary/50">
                 <p className="text-xs text-muted-foreground">Wallet</p>
                 <p className="text-sm font-semibold font-mono">
-                  {showBalance ? `$${walletBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••"}
+                  {showBalance ? `$${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "••••"}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-secondary/50">
@@ -106,15 +105,17 @@ export default function Dashboard() {
             </div>
 
             {/* APY Earnings callout */}
-            <div className="mt-3 p-3 rounded-lg bg-success/5 border border-success/10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <PiggyBank className="w-4 h-4 text-success" />
-                <span className="text-xs text-success">Monthly earnings</span>
+            {savingsBalance > 0 && (
+              <div className="mt-3 p-3 rounded-lg bg-success/5 border border-success/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <PiggyBank className="w-4 h-4 text-success" />
+                  <span className="text-xs text-success">Monthly earnings</span>
+                </div>
+                <span className="text-xs font-mono font-semibold text-success">
+                  +${monthlyEarnings.toFixed(2)}/mo
+                </span>
               </div>
-              <span className="text-xs font-mono font-semibold text-success">
-                +${monthlyEarnings.toFixed(2)}/mo
-              </span>
-            </div>
+            )}
 
             {/* Quick Actions */}
             <div className="grid grid-cols-4 gap-2 mt-5">
@@ -159,18 +160,20 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Welcome Bonus */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-        <Card className="p-4 bg-gradient-to-r from-warning/10 to-warning/5 border-warning/20 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
-            <Gift className="w-5 h-5 text-warning" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold">$25 Welcome Bonus</p>
-            <p className="text-xs text-muted-foreground">Credited to your X Money wallet</p>
-          </div>
-          <Badge className="bg-warning/20 text-warning border-0 text-xs">Claimed</Badge>
-        </Card>
-      </motion.div>
+      {transactions.some(t => t.type === "welcome_bonus") && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          <Card className="p-4 bg-gradient-to-r from-warning/10 to-warning/5 border-warning/20 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
+              <Gift className="w-5 h-5 text-warning" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">$25 Welcome Bonus</p>
+              <p className="text-xs text-muted-foreground">Credited to your X Money wallet</p>
+            </div>
+            <Badge className="bg-warning/20 text-warning border-0 text-xs">Claimed</Badge>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Recent Activity */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -180,73 +183,40 @@ export default function Dashboard() {
             View All →
           </button>
         </div>
-        <div className="space-y-2">
-          {RECENT_ACTIVITY.map((item, i) => (
-            <Card key={i} className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                  item.amount >= 0 ? "bg-success/10" : "bg-secondary"
-                }`}>
-                  <item.icon className={`w-4 h-4 ${item.amount >= 0 ? "text-success" : "text-muted-foreground"}`} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{item.label}</p>
-                  <p className="text-xs text-muted-foreground">{item.time}</p>
-                </div>
-                <p className={`text-sm font-semibold font-mono ${item.amount >= 0 ? "text-success" : "text-foreground"}`}>
-                  {item.amount >= 0 ? "+" : ""}${Math.abs(item.amount).toFixed(2)}
-                </p>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Assets */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Crypto Assets</h3>
-          <button onClick={() => navigate("/wallet")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-            View All →
-          </button>
-        </div>
-        <div className="space-y-2">
-          {PORTFOLIO_ASSETS.slice(0, 3).map((asset, i) => {
-            const priceUSD = rates[asset.code] ? 1 / rates[asset.code] : 0;
-            const holdingUSD = portfolioUSD * asset.allocation;
-            const holdingAmount = priceUSD > 0 ? holdingUSD / priceUSD : 0;
-            const mockChange = ((Math.sin(i * 2.5) * 5) + 1.5).toFixed(2);
-            const assetPositive = parseFloat(mockChange) >= 0;
-
-            return (
-              <Card
-                key={asset.code}
-                className="p-4 bg-card border-border hover:bg-secondary/50 transition-colors cursor-pointer"
-                onClick={() => navigate("/wallet")}
-              >
-                <div className="flex items-center justify-between">
+        {txLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : transactions.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">No transactions yet. Make a deposit to get started!</p>
+        ) : (
+          <div className="space-y-2">
+            {transactions.map((tx) => {
+              const Icon = TX_ICON_MAP[tx.type] || Send;
+              const isPositiveAmount = Number(tx.amount) > 0;
+              return (
+                <Card key={tx.id} className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-sm font-bold">
-                      {asset.symbol.length <= 2 ? asset.symbol : asset.code[0]}
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                      isPositiveAmount ? "bg-success/10" : "bg-secondary"
+                    }`}>
+                      <Icon className={`w-4 h-4 ${isPositiveAmount ? "text-success" : "text-muted-foreground"}`} />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">{asset.name}</p>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{tx.description || tx.type}</p>
                       <p className="text-xs text-muted-foreground">
-                        {holdingAmount > 0.001 ? holdingAmount.toFixed(4) : holdingAmount.toFixed(8)} {asset.code}
+                        {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}
                       </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold font-mono">${holdingUSD.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    <p className={`text-xs font-medium ${assetPositive ? "text-success" : "text-destructive"}`}>
-                      {assetPositive ? "+" : ""}{mockChange}%
+                    <p className={`text-sm font-semibold font-mono ${isPositiveAmount ? "text-success" : "text-foreground"}`}>
+                      {isPositiveAmount ? "+" : ""}${Math.abs(Number(tx.amount)).toFixed(2)}
                     </p>
                   </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
 
       {/* Feature Cards */}
