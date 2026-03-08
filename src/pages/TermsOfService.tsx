@@ -21,7 +21,7 @@ export default function TermsOfService() {
     },
     {
       title: "4. Country-Specific Feature Availability",
-      content: `Feature availability varies by country due to local regulations. Features including cryptocurrency trading, stock trading, forex, money transfers, bill payments, cards, savings, and premium services may be enabled or disabled based on your verified country. ExoSky reserves the right to modify feature availability at any time to comply with changing regulations. You agree to use only features authorized in your jurisdiction.`,
+      content: `Feature availability varies by country due to local regulations. Features including cryptocurrency trading, stock trading, forex, money transfers, bill payments, cards, savings, and premium services may be enabled or disabled based on your verified country. Ξ╳oSky reserves the right to modify feature availability at any time to comply with changing regulations. You agree to use only features authorized in your jurisdiction.`,
     },
     {
       title: "5. Financial Services",
