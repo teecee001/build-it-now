@@ -197,6 +197,48 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          next_payment_date: string
+          recipient: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          next_payment_date: string
+          recipient: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          next_payment_date?: string
+          recipient?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           completed_at: string | null
