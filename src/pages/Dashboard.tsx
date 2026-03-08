@@ -13,7 +13,7 @@ import {
   ArrowUpRight, ArrowDownLeft, Repeat, TrendingUp, TrendingDown, 
   Send, Bot, CreditCard, Gift, Landmark, PiggyBank,
   DollarSign, Percent, Eye, EyeOff, Loader2, BarChart3, QrCode,
-  RefreshCw, Globe
+  RefreshCw, Globe, CheckCircle2, XCircle, Briefcase, Bitcoin
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
