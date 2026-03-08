@@ -100,35 +100,29 @@ function CoinDetailPanel({ code, price, onClose }: { code: string; price: number
 
         {/* Chart */}
         <div className="h-[200px] bg-secondary/30 rounded-lg p-2">
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis dataKey="date" hide />
-                <YAxis hide domain={["auto", "auto"]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    color: "hsl(var(--foreground))",
-                    fontSize: "12px",
-                  }}
-                  formatter={(v: number) => [`$${v.toFixed(2)}`, "Price"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="price"
-                  stroke={isUp ? "hsl(var(--success))" : "hsl(var(--destructive))"}
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-              Loading chart...
-            </div>
-          )}
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <XAxis dataKey="date" hide />
+              <YAxis hide domain={["auto", "auto"]} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                  color: "hsl(var(--foreground))",
+                  fontSize: "12px",
+                }}
+                formatter={(v: number) => [`$${v.toFixed(2)}`, "Price"]}
+              />
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke={isUp ? "hsl(var(--success))" : "hsl(var(--destructive))"}
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Quick Actions */}
