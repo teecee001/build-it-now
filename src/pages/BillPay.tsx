@@ -192,16 +192,33 @@ export default function BillPay() {
       {showAdd && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <Card className="p-4 bg-card border-border space-y-3">
-            <Input placeholder="Biller name" value={newBiller} onChange={e => setNewBiller(e.target.value)} className="bg-secondary border-border" />
-            <div className="flex gap-2">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Category</label>
               <select
                 value={newCategory}
-                onChange={e => setNewCategory(e.target.value)}
-                className="flex-1 h-10 rounded-md bg-secondary border border-border px-3 text-sm"
+                onChange={e => handleCategoryChange(e.target.value)}
+                className="w-full h-10 rounded-md bg-secondary border border-border px-3 text-sm"
               >
                 {BILL_CATEGORIES.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
               </select>
-              <Input type="number" placeholder="Amount" value={newAmount} onChange={e => setNewAmount(e.target.value)} className="flex-1 bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Provider</label>
+              <select
+                value={newBiller}
+                onChange={e => handleProviderChange(e.target.value)}
+                className="w-full h-10 rounded-md bg-secondary border border-border px-3 text-sm"
+              >
+                {(BILL_PROVIDERS[newCategory] || []).map(p => (
+                  <option key={p.name} value={p.name}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-muted-foreground font-medium">Amount ($)</label>
+                <Input type="number" placeholder="Amount" value={newAmount} onChange={e => setNewAmount(e.target.value)} className="bg-secondary border-border" />
+              </div>
             </div>
             <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} className="bg-secondary border-border" />
             <Button onClick={handleAddBill} disabled={addBill.isPending} className="w-full bg-foreground text-background hover:bg-foreground/90">
