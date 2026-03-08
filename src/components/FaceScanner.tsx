@@ -165,7 +165,7 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
 
   const startChallenges = useCallback(() => {
     let holdFrames = 0;
-    const HOLD_THRESHOLD = 8; // ~2 seconds of holding direction
+    const HOLD_THRESHOLD = 4; // ~1 second of holding direction
     let idx = 0;
 
     intervalRef.current = setInterval(() => {
