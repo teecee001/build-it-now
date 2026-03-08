@@ -371,7 +371,7 @@ export default function CardPage() {
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: design.accent }} />
       </div>
       <div className="absolute inset-0 flex items-center justify-center">
-        <img src="/favicon.png" alt="" className="w-8 h-8 opacity-[0.12]" />
+        <span className="text-xl font-bold opacity-[0.1] tracking-tighter">Ξ╳</span>
       </div>
       {selected && (
         <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
