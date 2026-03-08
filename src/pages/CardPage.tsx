@@ -225,10 +225,15 @@ export default function CardPage() {
             : "radial-gradient(circle at 20% 80%, hsl(142 71% 45% / 0.3), transparent 50%), radial-gradient(circle at 80% 20%, hsl(0 0% 100% / 0.1), transparent 50%)",
         }} />
 
+        {/* Centered Ex watermark stamp */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <img src="/favicon.png" alt="" className={`${compact ? "w-12 h-12" : "w-20 h-20"} opacity-[0.08] select-none`} draggable={false} />
+        </div>
+
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-gradient-accent flex items-center justify-center font-bold text-[8px] text-primary-foreground">X</div>
-            <span className="text-xs font-bold tracking-wider text-foreground/80">MONEY</span>
+            <img src="/favicon.png" alt="ExoSky" className="w-5 h-5 rounded" />
+            <span className="text-xs font-bold tracking-wider text-foreground/80">EXOSKY</span>
           </div>
           <div className="flex items-center gap-1">
             {c.is_frozen && <Snowflake className="w-3 h-3 text-blue-400" />}
