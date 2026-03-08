@@ -8,11 +8,14 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { 
   Zap, Wifi, Home, Phone, Tv, Droplets, Search,
-  CheckCircle2, Loader2, ArrowRight, Plus
+  CheckCircle2, Loader2, ArrowRight, Plus, Shield, FileText
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+} from "@/components/ui/dialog";
 
 const BILL_CATEGORIES = [
   { icon: Zap, label: "Electric", color: "text-warning" },
