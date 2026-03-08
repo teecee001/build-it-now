@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ScanFace, ShieldCheck, AlertTriangle, RefreshCw, Check } from "lucide-react";
+import { ShieldCheck, AlertTriangle, RefreshCw, Check, ArrowUp, ArrowLeft, ArrowRight, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FaceScannerProps {
@@ -9,31 +9,90 @@ interface FaceScannerProps {
   onCancel: () => void;
 }
 
-type ScanPhase = "init" | "positioning" | "scanning" | "analyzing" | "verified" | "failed";
+type ScanPhase = "init" | "positioning" | "challenge" | "analyzing" | "verified" | "failed";
+type ChallengeDirection = "left" | "right" | "up";
 
-interface FacePosition {
-  centered: boolean;
-  sizeOk: boolean;
-  stable: boolean;
+interface ChallengeStep {
+  direction: ChallengeDirection;
+  label: string;
+  icon: typeof ArrowLeft;
+  completed: boolean;
+}
+
+const CHALLENGES: ChallengeStep[] = [
+  { direction: "left", label: "Turn head left", icon: ArrowLeft, completed: false },
+  { direction: "right", label: "Turn head right", icon: ArrowRight, completed: false },
+  { direction: "up", label: "Look up", icon: ArrowUp, completed: false },
+];
+
+function analyzeFace(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+  const w = canvas.width;
+  const h = canvas.height;
+  if (w === 0 || h === 0) return { detected: false, centerX: 0.5, centerY: 0.5, coverage: 0 };
+
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  let minX = w, maxX = 0, minY = h, maxY = 0;
+  let skinCount = 0;
+  let sumX = 0, sumY = 0;
+  const step = 6;
+
+  for (let y = 0; y < h; y += step) {
+    for (let x = 0; x < w; x += step) {
+      const i = (y * w + x) * 4;
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      if (r > 60 && g > 40 && b > 20 && r > g && r > b && Math.abs(r - g) > 15 && r - b > 15) {
+        skinCount++;
+        sumX += x;
+        sumY += y;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  const totalSampled = (w / step) * (h / step);
+  const skinRatio = skinCount / totalSampled;
+  const detected = skinRatio > 0.08;
+
+  if (!detected || skinCount === 0) return { detected: false, centerX: 0.5, centerY: 0.5, coverage: 0 };
+
+  const avgX = sumX / skinCount / w; // normalized 0-1
+  const avgY = sumY / skinCount / h;
+  const faceW = (maxX - minX) / w;
+  const faceH = (maxY - minY) / h;
+  const coverage = Math.max(faceW, faceH);
+  const centered = Math.abs(avgX - 0.5) < 0.15 && Math.abs(avgY - 0.5) < 0.18;
+  const sizeOk = coverage > 0.15 && coverage < 0.95;
+
+  return { detected, centerX: avgX, centerY: avgY, coverage, centered, sizeOk };
 }
 
 export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const [phase, setPhase] = useState<ScanPhase>("init");
   const [faceDetected, setFaceDetected] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [facePos, setFacePos] = useState<FacePosition>({ centered: false, sizeOk: false, stable: false });
   const [positionHoldTime, setPositionHoldTime] = useState(0);
-  const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const positionReadyFrames = useRef(0);
+  const [error, setError] = useState<string | null>(null);
+
+  // Challenge state
+  const [challenges, setChallenges] = useState<ChallengeStep[]>(CHALLENGES.map(c => ({ ...c })));
+  const [currentChallengeIdx, setCurrentChallengeIdx] = useState(0);
+  const [challengeProgress, setChallengeProgress] = useState(0);
+
+  // Baseline center (captured when face is centered during positioning)
+  const baselineRef = useRef<{ x: number; y: number } | null>(null);
 
   const stopCamera = useCallback(() => {
-    if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
   }, []);
@@ -41,11 +100,12 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
   const startCamera = useCallback(async () => {
     setPhase("init");
     setError(null);
-    setScanProgress(0);
-    setFaceDetected(false);
-    setFacePos({ centered: false, sizeOk: false, stable: false });
     setPositionHoldTime(0);
-    positionReadyFrames.current = 0;
+    setFaceDetected(false);
+    setChallenges(CHALLENGES.map(c => ({ ...c, completed: false })));
+    setCurrentChallengeIdx(0);
+    setChallengeProgress(0);
+    baselineRef.current = null;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -57,66 +117,19 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
         await videoRef.current.play();
       }
       setPhase("positioning");
-      startPositionDetection();
-    } catch (err: any) {
-      console.error("Camera error:", err);
+      startPositioning();
+    } catch {
       setError("Camera access denied. Please allow camera permissions.");
       setPhase("failed");
     }
   }, []);
 
-  // Analyze face position: center, size, stability
-  function analyzeFaceRegion(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): { detected: boolean; centered: boolean; sizeOk: boolean; centerX: number; centerY: number; coverage: number } {
-    const w = canvas.width;
-    const h = canvas.height;
-    if (w === 0 || h === 0) return { detected: false, centered: false, sizeOk: false, centerX: 0.5, centerY: 0.5, coverage: 0 };
+  const startPositioning = useCallback(() => {
+    let stableFrames = 0;
+    const THRESHOLD = 12;
 
-    // Scan for skin-tone pixels in the full frame to find face bounding box
-    const imageData = ctx.getImageData(0, 0, w, h);
-    const data = imageData.data;
-    let minX = w, maxX = 0, minY = h, maxY = 0;
-    let skinCount = 0;
-    const step = 8; // sample every 8th pixel for speed
-
-    for (let y = 0; y < h; y += step) {
-      for (let x = 0; x < w; x += step) {
-        const i = (y * w + x) * 4;
-        const r = data[i], g = data[i + 1], b = data[i + 2];
-        if (r > 60 && g > 40 && b > 20 && r > g && r > b && Math.abs(r - g) > 15 && r - b > 15) {
-          skinCount++;
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-      }
-    }
-
-    const totalSampled = (w / step) * (h / step);
-    const skinRatio = skinCount / totalSampled;
-    const detected = skinRatio > 0.08;
-
-    if (!detected) return { detected: false, centered: false, sizeOk: false, centerX: 0.5, centerY: 0.5, coverage: 0 };
-
-    const faceCX = (minX + maxX) / 2 / w; // normalized 0-1
-    const faceCY = (minY + maxY) / 2 / h;
-    const faceW = (maxX - minX) / w;
-    const faceH = (maxY - minY) / h;
-    const coverage = Math.max(faceW, faceH);
-
-    const centered = Math.abs(faceCX - 0.5) < 0.15 && Math.abs(faceCY - 0.5) < 0.18;
-    const sizeOk = coverage > 0.15 && coverage < 0.95;
-
-    return { detected, centered, sizeOk, centerX: faceCX, centerY: faceCY, coverage };
-  }
-
-  const startPositionDetection = useCallback(() => {
-    let stablePositionFrames = 0;
-    const POSITION_READY_THRESHOLD = 12; // ~3 seconds of good positioning
-
-    detectionIntervalRef.current = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       if (!videoRef.current || !canvasRef.current) return;
-
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
@@ -126,39 +139,37 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      const analysis = analyzeFaceRegion(ctx, canvas);
-      
-      setFaceDetected(analysis.detected);
-      setFacePos({
-        centered: analysis.centered,
-        sizeOk: analysis.sizeOk,
-        stable: stablePositionFrames > 3,
-      });
+      const a = analyzeFace(ctx, canvas);
+      setFaceDetected(a.detected);
 
-      if (analysis.detected && analysis.centered && analysis.sizeOk) {
-        stablePositionFrames++;
-        setPositionHoldTime(Math.min(100, (stablePositionFrames / POSITION_READY_THRESHOLD) * 100));
+      if (a.detected && a.centered && a.sizeOk) {
+        stableFrames++;
+        // Record baseline position when stable
+        if (stableFrames >= 6 && !baselineRef.current) {
+          baselineRef.current = { x: a.centerX, y: a.centerY };
+        }
       } else {
-        stablePositionFrames = Math.max(0, stablePositionFrames - 2);
-        setPositionHoldTime(Math.min(100, (stablePositionFrames / POSITION_READY_THRESHOLD) * 100));
+        stableFrames = Math.max(0, stableFrames - 2);
       }
 
-      // Once positioned well enough, transition to scanning
-      if (stablePositionFrames >= POSITION_READY_THRESHOLD) {
-        if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
-        setPhase("scanning");
-        startVerificationScan();
+      setPositionHoldTime(Math.min(100, (stableFrames / THRESHOLD) * 100));
+
+      if (stableFrames >= THRESHOLD) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        if (!baselineRef.current) baselineRef.current = { x: a.centerX, y: a.centerY };
+        setPhase("challenge");
+        startChallenges();
       }
     }, 250);
   }, []);
 
-  const startVerificationScan = useCallback(() => {
-    let verifyFrames = 0;
-    const REQUIRED_VERIFY_FRAMES = 10; // ~2.5 seconds of stable scan
+  const startChallenges = useCallback(() => {
+    let holdFrames = 0;
+    const HOLD_THRESHOLD = 8; // ~2 seconds of holding direction
+    let idx = 0;
 
-    detectionIntervalRef.current = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       if (!videoRef.current || !canvasRef.current) return;
-
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
@@ -168,21 +179,59 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      const analysis = analyzeFaceRegion(ctx, canvas);
+      const a = analyzeFace(ctx, canvas);
+      setFaceDetected(a.detected);
 
-      if (analysis.detected && analysis.centered && analysis.sizeOk) {
-        verifyFrames++;
-        setFaceDetected(true);
-      } else {
-        verifyFrames = Math.max(0, verifyFrames - 1);
-        setFaceDetected(analysis.detected);
+      if (!a.detected) {
+        holdFrames = Math.max(0, holdFrames - 1);
+        setChallengeProgress(Math.min(100, (holdFrames / HOLD_THRESHOLD) * 100));
+        return;
       }
 
-      setScanProgress(Math.min(100, (verifyFrames / REQUIRED_VERIFY_FRAMES) * 100));
+      const baseline = baselineRef.current || { x: 0.5, y: 0.5 };
+      // Note: video is mirrored, so camera left = user's right
+      // We detect based on skin centroid shift
+      const dx = a.centerX - baseline.x; // positive = shifted right in camera frame (user turned left)
+      const dy = a.centerY - baseline.y; // positive = shifted down
 
-      if (verifyFrames >= REQUIRED_VERIFY_FRAMES) {
-        if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
-        completeVerification();
+      const currentChallenge = CHALLENGES[idx];
+      let directionMatched = false;
+
+      // Since camera is mirrored: user turning left moves centroid RIGHT in raw frame
+      if (currentChallenge.direction === "left" && dx > 0.06) {
+        directionMatched = true;
+      } else if (currentChallenge.direction === "right" && dx < -0.06) {
+        directionMatched = true;
+      } else if (currentChallenge.direction === "up" && dy < -0.04) {
+        directionMatched = true;
+      }
+
+      if (directionMatched) {
+        holdFrames++;
+      } else {
+        holdFrames = Math.max(0, holdFrames - 1);
+      }
+
+      setChallengeProgress(Math.min(100, (holdFrames / HOLD_THRESHOLD) * 100));
+
+      if (holdFrames >= HOLD_THRESHOLD) {
+        // Mark challenge complete
+        setChallenges(prev => {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], completed: true };
+          return updated;
+        });
+
+        holdFrames = 0;
+        setChallengeProgress(0);
+        idx++;
+        setCurrentChallengeIdx(idx);
+
+        if (idx >= CHALLENGES.length) {
+          // All challenges done
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          completeVerification();
+        }
       }
     }, 250);
   }, []);
@@ -192,9 +241,7 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
     setTimeout(() => {
       setPhase("verified");
       stopCamera();
-      setTimeout(() => {
-        onVerified();
-      }, 1200);
+      setTimeout(() => onVerified(), 1200);
     }, 1500);
   }, [onVerified, stopCamera]);
 
@@ -203,27 +250,35 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
     return () => stopCamera();
   }, []);
 
-  const positionChecks = [
-    { label: "Face detected", ok: faceDetected },
-    { label: "Centered in frame", ok: facePos.centered },
-    { label: "Correct distance", ok: facePos.sizeOk },
-    { label: "Holding steady", ok: facePos.stable },
-  ];
+  const currentChallenge = challenges[currentChallengeIdx] || null;
+  const completedCount = challenges.filter(c => c.completed).length;
+  const overallProgress = ((completedCount + (challengeProgress / 100)) / challenges.length) * 100;
 
-  // Guidance message
-  function getGuidance(): string {
-    if (!faceDetected) return "Move your face into the frame";
-    if (!facePos.centered) return "Center your face in the circle";
-    if (!facePos.sizeOk) return "Move closer or further from camera";
-    if (!facePos.stable) return "Hold still…";
-    return "Great! Hold position…";
-  }
+  const getGuidance = (): string => {
+    if (phase === "positioning") {
+      if (!faceDetected) return "Move your face into the frame";
+      return "Center your face and hold still…";
+    }
+    if (phase === "challenge" && currentChallenge) {
+      return currentChallenge.label;
+    }
+    return "";
+  };
+
+  const ringColor = phase === "challenge" || phase === "analyzing"
+    ? "url(#scanGrad)"
+    : faceDetected ? "url(#posGrad)" : "hsl(var(--border))";
+
+  const ringProgress = phase === "positioning"
+    ? positionHoldTime
+    : phase === "challenge"
+    ? overallProgress
+    : phase === "analyzing" ? 100 : 0;
 
   return (
     <div className="space-y-4 text-center">
       <AnimatePresence mode="wait">
-        {/* Camera View — Positioning + Scanning + Analyzing */}
-        {(phase === "init" || phase === "positioning" || phase === "scanning" || phase === "analyzing") && (
+        {(phase === "init" || phase === "positioning" || phase === "challenge" || phase === "analyzing") && (
           <motion.div
             key="camera"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -246,34 +301,17 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
                   </linearGradient>
                 </defs>
                 <circle cx="112" cy="112" r="106" fill="none" stroke="hsl(var(--border))" strokeWidth="2" />
-                {/* Position hold progress (positioning phase) */}
-                {phase === "positioning" && (
-                  <motion.circle
-                    cx="112" cy="112" r="106"
-                    fill="none"
-                    stroke="url(#posGrad)"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 106}`}
-                    strokeDashoffset={`${2 * Math.PI * 106 * (1 - positionHoldTime / 100)}`}
-                    transform="rotate(-90 112 112)"
-                    className="transition-all duration-300"
-                  />
-                )}
-                {/* Scan progress (scanning phase) */}
-                {(phase === "scanning" || phase === "analyzing") && (
-                  <motion.circle
-                    cx="112" cy="112" r="106"
-                    fill="none"
-                    stroke="url(#scanGrad)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 106}`}
-                    strokeDashoffset={`${2 * Math.PI * 106 * (1 - scanProgress / 100)}`}
-                    transform="rotate(-90 112 112)"
-                    className="transition-all duration-300"
-                  />
-                )}
+                <motion.circle
+                  cx="112" cy="112" r="106"
+                  fill="none"
+                  stroke={ringColor}
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 106}`}
+                  strokeDashoffset={`${2 * Math.PI * 106 * (1 - ringProgress / 100)}`}
+                  transform="rotate(-90 112 112)"
+                  className="transition-all duration-300"
+                />
               </svg>
 
               {/* Corner brackets */}
@@ -287,25 +325,36 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
                   <div
                     key={i}
                     className={`absolute w-8 h-8 transition-colors duration-300 ${cls} ${
-                      phase === "scanning" || phase === "analyzing"
+                      phase === "challenge" || phase === "analyzing"
                         ? "border-accent"
-                        : faceDetected && facePos.centered && facePos.sizeOk
-                        ? "border-accent"
-                        : faceDetected
-                        ? "border-warning"
-                        : "border-muted-foreground/40"
+                        : faceDetected ? "border-accent" : "border-muted-foreground/40"
                     }`}
                   />
                 ))}
               </div>
 
-              {/* Scanning line */}
-              {phase === "scanning" && (
+              {/* Direction arrow overlay during challenges */}
+              {phase === "challenge" && currentChallenge && (
                 <motion.div
-                  className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent"
-                  animate={{ top: ["15%", "85%", "15%"] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                />
+                  key={currentChallenge.direction}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+                >
+                  <motion.div
+                    animate={
+                      currentChallenge.direction === "left"
+                        ? { x: [-5, -15, -5] }
+                        : currentChallenge.direction === "right"
+                        ? { x: [5, 15, 5] }
+                        : { y: [-5, -15, -5] }
+                    }
+                    transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-12 h-12 rounded-full bg-accent/20 backdrop-blur-sm flex items-center justify-center"
+                  >
+                    <currentChallenge.icon className="w-6 h-6 text-accent" />
+                  </motion.div>
+                </motion.div>
               )}
 
               {/* Analyzing pulse */}
@@ -332,43 +381,72 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
             </div>
 
             {/* Status + Guidance */}
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               {phase === "init" && (
                 <p className="text-sm font-medium text-foreground">Starting camera…</p>
               )}
 
               {phase === "positioning" && (
-                <>
-                  <p className="text-sm font-medium text-foreground">{getGuidance()}</p>
-
-                  {/* Position checklist */}
-                  <div className="flex flex-col items-center gap-1 mt-2">
-                    {positionChecks.map((check, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="flex items-center gap-2 text-xs"
-                      >
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                          check.ok ? "bg-accent/20" : "bg-muted"
-                        }`}>
-                          {check.ok && <Check className="w-3 h-3 text-accent" />}
-                        </div>
-                        <span className={`transition-colors duration-300 ${check.ok ? "text-accent font-medium" : "text-muted-foreground"}`}>
-                          {check.label}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </>
+                <p className="text-sm font-medium text-foreground">{getGuidance()}</p>
               )}
 
-              {phase === "scanning" && (
+              {phase === "challenge" && (
                 <>
-                  <p className="text-sm font-medium text-accent">Scanning face… {Math.round(scanProgress)}%</p>
-                  <p className="text-xs text-muted-foreground">Hold still — verifying identity</p>
+                  <motion.p
+                    key={currentChallenge?.direction}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm font-semibold text-accent"
+                  >
+                    {getGuidance()}
+                  </motion.p>
+
+                  {/* Challenge progress bar */}
+                  <div className="w-40 mx-auto h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <motion.div
+                      className="h-full bg-accent rounded-full"
+                      style={{ width: `${challengeProgress}%` }}
+                      transition={{ duration: 0.2 }}
+                    />
+                  </div>
+
+                  {/* Challenge steps */}
+                  <div className="flex items-center justify-center gap-4 mt-2">
+                    {challenges.map((ch, i) => {
+                      const Icon = ch.icon;
+                      const isCurrent = i === currentChallengeIdx;
+                      return (
+                        <motion.div
+                          key={ch.direction}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          className={`flex flex-col items-center gap-1 ${
+                            ch.completed
+                              ? "text-accent"
+                              : isCurrent
+                              ? "text-foreground"
+                              : "text-muted-foreground/40"
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                            ch.completed
+                              ? "bg-accent/20 ring-2 ring-accent/40"
+                              : isCurrent
+                              ? "bg-secondary ring-2 ring-accent/30"
+                              : "bg-secondary/50"
+                          }`}>
+                            {ch.completed ? (
+                              <Check className="w-5 h-5 text-accent" />
+                            ) : (
+                              <Icon className="w-4 h-4" />
+                            )}
+                          </div>
+                          <span className="text-[10px] font-medium">{ch.direction === "up" ? "Up" : ch.direction === "left" ? "Left" : "Right"}</span>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 </>
               )}
 
@@ -431,7 +509,7 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
       </AnimatePresence>
 
       {/* Cancel */}
-      {(phase === "positioning" || phase === "scanning" || phase === "init") && (
+      {(phase === "positioning" || phase === "challenge" || phase === "init") && (
         <button onClick={() => { stopCamera(); onCancel(); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
           Cancel · use another method
         </button>
