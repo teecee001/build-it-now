@@ -80,6 +80,8 @@ const App = () => (
               <Route path="/premium" element={<Premium />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/verify" element={<KYCVerification />} />
+              <Route path="/analytics" element={<SpendingAnalytics />} />
+              <Route path="/qr" element={<QRPayments />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
