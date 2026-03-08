@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,10 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send, Loader2, CheckCircle2, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send, Loader2, CheckCircle2, X, QrCode, Camera, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
+import { Html5Qrcode } from "html5-qrcode";
 
 type TradeType = "buy" | "sell" | "swap" | "send";
 
@@ -60,8 +61,44 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
   const [amount, setAmount] = useState("");
   const [swapTo, setSwapTo] = useState(code === "BTC" ? "ETH" : "BTC");
   const [walletAddress, setWalletAddress] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
+
+  const startScanner = useCallback(async () => {
+    setShowScanner(true);
+    // Wait for DOM element to mount
+    setTimeout(async () => {
+      try {
+        const scanner = new Html5Qrcode("qr-reader-send");
+        scannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 200, height: 200 } },
+          (decodedText) => {
+            // Strip common crypto URI prefixes like "bitcoin:", "ethereum:"
+            const cleaned = decodedText.replace(/^(bitcoin|ethereum|solana|dogecoin|cardano|ripple|bnb):\/?\/?/i, "").split("?")[0];
+            setWalletAddress(cleaned.trim());
+            stopScanner();
+            toast.success("Address scanned!");
+          },
+          () => {} // ignore scan errors
+        );
+      } catch (err) {
+        toast.error("Camera access denied or unavailable");
+        setShowScanner(false);
+      }
+    }, 100);
+  }, []);
+
+  const stopScanner = useCallback(() => {
+    if (scannerRef.current) {
+      scannerRef.current.stop().catch(() => {});
+      scannerRef.current = null;
+    }
+    setShowScanner(false);
+  }, []);
 
   const usdWallet = getWallet("USD");
   const usdBalance = usdWallet?.balance ?? 0;
@@ -183,15 +220,46 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
             <label className="text-sm text-muted-foreground font-medium">
               Recipient {network.label} Address
             </label>
-            <Input
-              placeholder={network.placeholder}
-              value={walletAddress}
-              onChange={(e) => setWalletAddress(e.target.value.trim())}
-              className={`h-12 bg-secondary border-border font-mono text-sm ${
-                walletAddress && !addressValidation.valid ? "border-destructive" : 
-                walletAddress && addressValidation.valid ? "border-success" : ""
-              }`}
-            />
+            <div className="relative">
+              <Input
+                placeholder={network.placeholder}
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value.trim())}
+                className={`h-12 bg-secondary border-border font-mono text-sm pr-12 ${
+                  walletAddress && !addressValidation.valid ? "border-destructive" : 
+                  walletAddress && addressValidation.valid ? "border-success" : ""
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => showScanner ? stopScanner() : startScanner()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-background/50 rounded-md transition-colors"
+                title={showScanner ? "Close scanner" : "Scan QR code"}
+              >
+                {showScanner ? <XCircle className="w-4 h-4 text-destructive" /> : <QrCode className="w-4 h-4 text-muted-foreground" />}
+              </button>
+            </div>
+
+            {/* QR Scanner */}
+            <AnimatePresence>
+              {showScanner && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="rounded-lg overflow-hidden border border-border bg-black relative">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-secondary/80">
+                      <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Point camera at QR code</span>
+                    </div>
+                    <div id="qr-reader-send" className="w-full" style={{ minHeight: 220 }} />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {walletAddress && addressValidation.error && (
               <p className="text-xs text-destructive">{addressValidation.error}</p>
             )}
