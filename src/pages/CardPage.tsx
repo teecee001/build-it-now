@@ -398,7 +398,7 @@ function CardPageContent() {
         {!compact && (
           <div className="relative">
             {isVirtual ? (
-              <Wifi className="w-7 h-7 text-foreground/20 rotate-90" />
+              <Wifi className="w-7 h-7 text-white/20 rotate-90" />
             ) : (
               <div className="w-9 h-6 rounded bg-gradient-to-br from-yellow-600/60 to-yellow-800/40 border border-yellow-700/30" />
             )}
