@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTransactions } from "@/hooks/useTransactions";
 import { StatementExport } from "@/components/StatementExport";
+import { EmptyState } from "@/components/EmptyState";
 import { 
   ArrowUpRight, ArrowDownLeft, Repeat, Gift, Landmark, Send, 
-  CreditCard, Search, ShoppingBag, Percent, Loader2, Download
+  CreditCard, Search, ShoppingBag, Percent, Loader2, Download, Receipt
 } from "lucide-react";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
