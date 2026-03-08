@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
+import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
 import { TradingViewChart } from "@/components/TradingViewChart";
 import { CryptoTradeModal } from "@/components/CryptoTradeModal";
@@ -15,16 +16,9 @@ import {
   Search, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft,
   ArrowLeftRight, ChevronRight, Wallet, PieChart, Star, BarChart2, CandlestickChart, X
 } from "lucide-react";
-import {
-  LineChart, Line, ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 const TOP_COINS = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX"];
-
-// Mock holdings for demo
-const MOCK_HOLDINGS: Record<string, number> = {
-  BTC: 0.0025, ETH: 0.15, SOL: 2.5, DOGE: 500, ADA: 120,
-};
 
 function generateSparkline(code: string) {
   const seed = code.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -50,6 +44,7 @@ export default function WalletPage() {
   const navigate = useNavigate();
   const { rates, isLive } = useExchangeRates();
   const { wallets, getWallet } = useMultiCurrencyWallet();
+  const { holdingsMap, holdings, isLoading: holdingsLoading } = useCryptoHoldings();
   const [search, setSearch] = useState("");
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set(["BTC", "ETH", "SOL"]));
@@ -64,7 +59,7 @@ export default function WalletPage() {
   const getPrice = (code: string) => rates[code] ? 1 / rates[code] : 0;
   const getChange = (i: number) => parseFloat(((Math.sin(i * 1.7 + 0.3) * 8) + 0.5).toFixed(2));
 
-  const portfolioValue = Object.entries(MOCK_HOLDINGS).reduce((sum, [code, amount]) => sum + amount * getPrice(code), 0);
+  const portfolioValue = Object.entries(holdingsMap).reduce((sum, [code, amount]) => sum + amount * getPrice(code), 0);
   const usdBalance = getWallet("USD")?.balance ?? 0;
 
   const filteredCryptos = CRYPTO_LIST.filter(
@@ -75,6 +70,8 @@ export default function WalletPage() {
     setTradeModal({ type, code });
     setSelectedCoin(null);
   };
+
+  const holdingCodes = Object.keys(holdingsMap).filter(code => holdingsMap[code] > 0);
 
   return (
     <div className="space-y-5">
@@ -136,7 +133,13 @@ export default function WalletPage() {
           <PieChart className="w-4 h-4 text-muted-foreground" />
         </div>
         <div className="space-y-1.5">
-          {Object.entries(MOCK_HOLDINGS).map(([code, amount]) => {
+          {holdingCodes.length === 0 && !holdingsLoading && (
+            <Card className="p-6 bg-card border-border text-center">
+              <p className="text-sm text-muted-foreground">No crypto holdings yet. Buy your first coin!</p>
+            </Card>
+          )}
+          {holdingCodes.map((code) => {
+            const amount = holdingsMap[code];
             const price = getPrice(code);
             const value = amount * price;
             const pct = portfolioValue > 0 ? (value / portfolioValue * 100) : 0;
@@ -147,8 +150,8 @@ export default function WalletPage() {
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">{code.slice(0, 2)}</div>
                     <div>
-                      <p className="text-sm font-semibold">{crypto?.name}</p>
-                      <p className="text-xs text-muted-foreground">{amount} {code}</p>
+                      <p className="text-sm font-semibold">{crypto?.name ?? code}</p>
+                      <p className="text-xs text-muted-foreground">{amount.toFixed(6)} {code}</p>
                     </div>
                   </div>
                   <div className="text-right flex items-center gap-3">
@@ -191,13 +194,7 @@ export default function WalletPage() {
               <div className="flex items-center justify-between">
                 <div className="flex gap-1">
                   {[{ d: 1, l: "24H" }, { d: 7, l: "7D" }, { d: 30, l: "30D" }, { d: 90, l: "90D" }, { d: 365, l: "1Y" }].map(p => (
-                    <Button
-                      key={p.d}
-                      variant={chartDays === p.d ? "default" : "ghost"}
-                      size="sm"
-                      className="text-[10px] h-7 px-2"
-                      onClick={() => setChartDays(p.d)}
-                    >{p.l}</Button>
+                    <Button key={p.d} variant={chartDays === p.d ? "default" : "ghost"} size="sm" className="text-[10px] h-7 px-2" onClick={() => setChartDays(p.d)}>{p.l}</Button>
                   ))}
                 </div>
                 <div className="flex gap-1">
@@ -228,14 +225,14 @@ export default function WalletPage() {
                 </Button>
               </div>
 
-              {MOCK_HOLDINGS[selectedCoin] && (
+              {holdingsMap[selectedCoin] > 0 && (
                 <div className="p-3 bg-secondary/50 rounded-lg flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground">Your Holdings</p>
-                    <p className="text-sm font-semibold font-mono">{MOCK_HOLDINGS[selectedCoin]} {selectedCoin}</p>
+                    <p className="text-sm font-semibold font-mono">{holdingsMap[selectedCoin].toFixed(6)} {selectedCoin}</p>
                   </div>
                   <p className="text-sm font-bold font-mono text-success">
-                    ${(MOCK_HOLDINGS[selectedCoin] * getPrice(selectedCoin)).toFixed(2)}
+                    ${(holdingsMap[selectedCoin] * getPrice(selectedCoin)).toFixed(2)}
                   </p>
                 </div>
               )}
