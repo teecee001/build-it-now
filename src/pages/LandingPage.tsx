@@ -7,7 +7,7 @@ import {
   ArrowRight, Shield, Zap, TrendingUp, CreditCard,
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
   ChevronRight, Star, Lock, Users, Wallet,
-  Check, Sparkles
+  Check, Sparkles, X
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { AppShowcase } from "@/components/AppShowcase";
@@ -456,6 +456,104 @@ export default function LandingPage() {
                 </motion.div>
               ))}
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── Comparison Table ─── */}
+      <section className="px-6 py-20">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-6">
+              <BarChart3 className="w-3.5 h-3.5 text-accent" />
+              <span className="text-xs font-semibold text-accent">Side by Side</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+              ExoSky vs. Traditional Banks
+            </h2>
+            <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
+              See why thousands are making the switch.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border border-border overflow-hidden"
+          >
+            {/* Header row */}
+            <div className="grid grid-cols-3 bg-secondary/50">
+              <div className="p-4 sm:p-5 text-sm font-semibold text-muted-foreground">Feature</div>
+              <div className="p-4 sm:p-5 text-center">
+                <span className="text-sm font-bold text-accent">ExoSky</span>
+              </div>
+              <div className="p-4 sm:p-5 text-center">
+                <span className="text-sm font-bold text-muted-foreground">Banks</span>
+              </div>
+            </div>
+
+            {[
+              { feature: "Savings APY", exo: "6.00%", bank: "0.5%" },
+              { feature: "Monthly fees", exo: "$0", bank: "$5–25" },
+              { feature: "FX markup", exo: "0%", bank: "2–4%" },
+              { feature: "Global transfers", exo: "Instant", bank: "3–5 days" },
+              { feature: "Crypto & stocks", exo: true, bank: false },
+              { feature: "Virtual cards", exo: "Instant", bank: "7–10 days" },
+              { feature: "Welcome bonus", exo: "$25", bank: "$0" },
+              { feature: "150+ currencies", exo: true, bank: false },
+            ].map((row, i) => (
+              <motion.div
+                key={row.feature}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.04 }}
+                className="grid grid-cols-3 border-t border-border hover:bg-secondary/30 transition-colors"
+              >
+                <div className="p-4 sm:p-5 text-sm font-medium text-foreground">{row.feature}</div>
+                <div className="p-4 sm:p-5 flex items-center justify-center">
+                  {row.exo === true ? (
+                    <div className="w-6 h-6 rounded-full bg-accent/15 flex items-center justify-center">
+                      <Check className="w-3.5 h-3.5 text-accent" />
+                    </div>
+                  ) : (
+                    <span className="text-sm font-semibold text-accent">{String(row.exo)}</span>
+                  )}
+                </div>
+                <div className="p-4 sm:p-5 flex items-center justify-center">
+                  {row.bank === false ? (
+                    <div className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center">
+                      <X className="w-3.5 h-3.5 text-destructive" />
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{String(row.bank)}</span>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="mt-8 text-center"
+          >
+            <Button
+              size="lg"
+              onClick={() => navigate("/auth")}
+              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl"
+            >
+              Switch to ExoSky <ArrowRight className="w-4 h-4" />
+            </Button>
           </motion.div>
         </div>
       </section>
