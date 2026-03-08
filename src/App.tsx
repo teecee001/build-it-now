@@ -76,6 +76,7 @@ const App = () => (
               <Route path="/savings" element={<Savings />} />
               <Route path="/referrals" element={<Referrals />} />
               <Route path="/premium" element={<Premium />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/verify" element={<KYCVerification />} />
             </Route>
             <Route path="*" element={<NotFound />} />
