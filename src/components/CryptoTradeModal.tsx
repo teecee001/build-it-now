@@ -220,15 +220,46 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
             <label className="text-sm text-muted-foreground font-medium">
               Recipient {network.label} Address
             </label>
-            <Input
-              placeholder={network.placeholder}
-              value={walletAddress}
-              onChange={(e) => setWalletAddress(e.target.value.trim())}
-              className={`h-12 bg-secondary border-border font-mono text-sm ${
-                walletAddress && !addressValidation.valid ? "border-destructive" : 
-                walletAddress && addressValidation.valid ? "border-success" : ""
-              }`}
-            />
+            <div className="relative">
+              <Input
+                placeholder={network.placeholder}
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value.trim())}
+                className={`h-12 bg-secondary border-border font-mono text-sm pr-12 ${
+                  walletAddress && !addressValidation.valid ? "border-destructive" : 
+                  walletAddress && addressValidation.valid ? "border-success" : ""
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => showScanner ? stopScanner() : startScanner()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-background/50 rounded-md transition-colors"
+                title={showScanner ? "Close scanner" : "Scan QR code"}
+              >
+                {showScanner ? <XCircle className="w-4 h-4 text-destructive" /> : <QrCode className="w-4 h-4 text-muted-foreground" />}
+              </button>
+            </div>
+
+            {/* QR Scanner */}
+            <AnimatePresence>
+              {showScanner && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="rounded-lg overflow-hidden border border-border bg-black relative">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-secondary/80">
+                      <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Point camera at QR code</span>
+                    </div>
+                    <div id="qr-reader-send" className="w-full" style={{ minHeight: 220 }} />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {walletAddress && addressValidation.error && (
               <p className="text-xs text-destructive">{addressValidation.error}</p>
             )}
