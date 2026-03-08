@@ -9,7 +9,7 @@ export default function TermsOfService() {
   const sections = [
     {
       title: "1. Acceptance of Terms",
-      content: `By accessing or using ExoSky ("Service"), you agree to be bound by these Terms of Service ("Terms"). ExoSky is a global financial technology platform operated by ExoSky Inc. If you do not agree to these Terms, do not use the Service. These Terms constitute a legally binding agreement between you and ExoSky Inc.`,
+      content: `By accessing or using Ξ╳oSky ("Service"), you agree to be bound by these Terms of Service ("Terms"). Ξ╳oSky is a global financial technology platform operated by Ξ╳oSky Inc. If you do not agree to these Terms, do not use the Service. These Terms constitute a legally binding agreement between you and Ξ╳oSky Inc.`,
     },
     {
       title: "2. Eligibility & Geographic Restrictions",
