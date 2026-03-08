@@ -28,7 +28,7 @@ export default function ComplianceDisclosures() {
     },
     {
       title: "Banking Relationships",
-      content: `ExoSky is a financial technology company, not a bank. Banking services are provided by licensed partner institutions in applicable jurisdictions. Deposit insurance coverage varies by country: FDIC insurance (up to $250,000) in the United States, FSCS protection (up to £85,000) in the United Kingdom, and equivalent protections where available. Not all jurisdictions offer deposit insurance. Please verify coverage applicable to your country in your account settings.`,
+      content: `Ξ╳oSky is a financial technology company, not a bank. Banking services are provided by licensed partner institutions in applicable jurisdictions. Deposit insurance coverage varies by country: FDIC insurance (up to $250,000) in the United States, FSCS protection (up to £85,000) in the United Kingdom, and equivalent protections where available. Not all jurisdictions offer deposit insurance. Please verify coverage applicable to your country in your account settings.`,
     },
     {
       title: "Anti-Money Laundering (AML)",
