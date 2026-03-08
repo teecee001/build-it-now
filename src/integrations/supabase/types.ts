@@ -134,6 +134,36 @@ export type Database = {
         }
         Relationships: []
       }
+      crypto_holdings: {
+        Row: {
+          amount: number
+          avg_buy_price: number
+          created_at: string
+          crypto_code: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          avg_buy_price?: number
+          created_at?: string
+          crypto_code: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          avg_buy_price?: number
+          created_at?: string
+          crypto_code?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

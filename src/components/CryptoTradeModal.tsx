@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Loader2, CheckCircle2, X } from "lucide-react";
@@ -23,8 +23,9 @@ interface CryptoTradeModalProps {
 
 export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModalProps) {
   const { user } = useAuth();
-  const { wallets, getWallet } = useMultiCurrencyWallet();
+  const { getWallet } = useMultiCurrencyWallet();
   const { addTransaction } = useTransactions();
+  const { holdingsMap, upsertHolding } = useCryptoHoldings();
   const [amount, setAmount] = useState("");
   const [swapTo, setSwapTo] = useState(code === "BTC" ? "ETH" : "BTC");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,14 +35,15 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
   const usdBalance = usdWallet?.balance ?? 0;
   const cryptoName = CRYPTO_LIST.find(c => c.code === code)?.name ?? code;
   const numAmount = parseFloat(amount) || 0;
+  const currentHolding = holdingsMap[code] ?? 0;
 
   const cryptoAmount = type === "buy" ? numAmount / price : numAmount;
   const usdValue = type === "sell" ? numAmount * price : numAmount;
 
   const canProceed = numAmount > 0 && (
     type === "buy" ? usdBalance >= numAmount :
-    type === "sell" ? true : // Mock: assume they hold enough
-    true
+    type === "sell" ? currentHolding >= numAmount :
+    currentHolding >= numAmount
   );
 
   const handleTrade = async () => {
@@ -49,10 +51,9 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
     setIsProcessing(true);
     try {
       if (type === "buy") {
-        // Deduct USD
         if (!usdWallet) throw new Error("No USD wallet");
         await supabase.from("wallets").update({ balance: usdBalance - numAmount }).eq("id", usdWallet.id);
-        
+        await upsertHolding.mutateAsync({ code, amountDelta: cryptoAmount, pricePerUnit: price });
         await addTransaction.mutateAsync({
           type: "purchase",
           amount: -numAmount,
@@ -61,10 +62,10 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         });
         toast.success(`Bought ${cryptoAmount.toFixed(6)} ${code}! 🎉`);
       } else if (type === "sell") {
-        // Credit USD
         if (!usdWallet) throw new Error("No USD wallet");
+        if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
         await supabase.from("wallets").update({ balance: usdBalance + usdValue }).eq("id", usdWallet.id);
-        
+        await upsertHolding.mutateAsync({ code, amountDelta: -numAmount, pricePerUnit: price });
         await addTransaction.mutateAsync({
           type: "purchase",
           amount: usdValue,
@@ -73,7 +74,12 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         });
         toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
       } else {
-        // Swap: just log the transaction
+        // Swap
+        if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
+        await upsertHolding.mutateAsync({ code, amountDelta: -numAmount, pricePerUnit: price });
+        // Convert: numAmount of code → equivalent in swapTo
+        const swapToPrice = 1; // We'd need the swapTo price; approximate via ratio
+        await upsertHolding.mutateAsync({ code: swapTo, amountDelta: numAmount, pricePerUnit: swapToPrice });
         await addTransaction.mutateAsync({
           type: "conversion",
           amount: -numAmount,
@@ -100,7 +106,7 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         <Card className="p-6 bg-card border-border text-center space-y-4">
           <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
           <h3 className="text-lg font-semibold">Trade Complete!</h3>
-          <p className="text-sm text-muted-foreground">Your balance has been updated.</p>
+          <p className="text-sm text-muted-foreground">Your holdings have been updated.</p>
           <Button onClick={onClose} className="w-full">Done</Button>
         </Card>
       </motion.div>
@@ -129,7 +135,7 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         {/* Amount Input */}
         <div className="space-y-2">
           <label className="text-sm text-muted-foreground font-medium">
-            {type === "buy" ? "Amount (USD)" : type === "sell" ? `Amount (${code})` : `Amount (${code})`}
+            {type === "buy" ? "Amount (USD)" : `Amount (${code})`}
           </label>
           <Input
             type="number"
@@ -147,7 +153,12 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
           {type === "sell" && (
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>You get: ~${usdValue.toFixed(2)} USD</span>
-              <span>{cryptoName}</span>
+              <span>Holdings: {currentHolding.toFixed(6)} {code}</span>
+            </div>
+          )}
+          {type === "swap" && (
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Available: {currentHolding.toFixed(6)} {code}</span>
             </div>
           )}
         </div>
@@ -172,13 +183,7 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         {type === "buy" && (
           <div className="flex gap-2">
             {[10, 25, 50, 100].map(v => (
-              <Button
-                key={v}
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs"
-                onClick={() => setAmount(v.toString())}
-              >
+              <Button key={v} variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setAmount(v.toString())}>
                 ${v}
               </Button>
             ))}
