@@ -82,7 +82,7 @@ export function CountryOnboarding({ onComplete }: Props) {
           countryCode: selectedCountry,
           phoneNumber,
         });
-        toast.success("Welcome to ExoSky!");
+        toast.success("Welcome to Ξ╳oSky!");
         onComplete();
       }
     } catch (err: any) {
