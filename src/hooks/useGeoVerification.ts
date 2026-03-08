@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,21 +31,6 @@ export interface GeoVerification {
   country: Country | null;
 }
 
-// Get browser GPS coordinates (returns null if unavailable/denied)
-export function getBrowserLocation(): Promise<{ lat: number; lon: number } | null> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve(null);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
-    );
-  });
-}
-
 export function useCountries() {
   return useQuery({
     queryKey: ["countries"],
@@ -73,14 +57,8 @@ export function useGeoVerification() {
     queryFn: async (): Promise<GeoVerification | null> => {
       if (!user) return null;
       try {
-        // Collect GPS for session checks too
-        const gps = await getBrowserLocation();
         const { data, error } = await supabase.functions.invoke("geo-verify", {
-          body: {
-            action: "session_check",
-            user_id: user.id,
-            ...(gps ? { browser_lat: gps.lat, browser_lon: gps.lon } : {}),
-          },
+          body: { action: "session_check", user_id: user.id },
         });
         if (error) return null;
         if (!data?.success) return null;
@@ -111,14 +89,10 @@ export function useGeoVerification() {
 
   const hasCompletedGeoSetup = !!userGeoRecord && !!userGeoRecord.country_code;
 
-  const checkIp = useMutation({
-    mutationFn: async ({ countryCode, browserLat, browserLon }: { countryCode: string; browserLat?: number; browserLon?: number }) => {
+  const checkCountry = useMutation({
+    mutationFn: async (countryCode: string) => {
       const { data, error } = await supabase.functions.invoke("geo-verify", {
-        body: {
-          action: "check_ip",
-          country_code: countryCode,
-          ...(browserLat != null && browserLon != null ? { browser_lat: browserLat, browser_lon: browserLon } : {}),
-        },
+        body: { action: "check_country", country_code: countryCode },
       });
       if (error) throw error;
       return data;
@@ -136,19 +110,13 @@ export function useGeoVerification() {
   });
 
   const registerGeo = useMutation({
-    mutationFn: async ({ countryCode, phoneNumber, browserLat, browserLon }: { countryCode: string; phoneNumber: string; browserLat?: number; browserLon?: number }) => {
+    mutationFn: async ({ countryCode, phoneNumber }: { countryCode: string; phoneNumber: string }) => {
       if (!user) throw new Error("Not authenticated");
       const { data, error } = await supabase.functions.invoke("geo-verify", {
-        body: {
-          action: "register_geo",
-          user_id: user.id,
-          country_code: countryCode,
-          phone_number: phoneNumber,
-          ...(browserLat != null && browserLon != null ? { browser_lat: browserLat, browser_lon: browserLon } : {}),
-        },
+        body: { action: "register_geo", user_id: user.id, country_code: countryCode, phone_number: phoneNumber },
       });
       if (error) throw error;
-      if (!data.success) throw new Error(data.error || "Verification failed");
+      if (!data.success) throw new Error(data.error || "Registration failed");
       return data;
     },
     onSuccess: () => {
@@ -168,7 +136,7 @@ export function useGeoVerification() {
     isCheckingGeo,
     hasCompletedGeoSetup,
     userGeoRecord,
-    checkIp,
+    checkCountry,
     verifyPhone,
     registerGeo,
     isFeatureAvailable,

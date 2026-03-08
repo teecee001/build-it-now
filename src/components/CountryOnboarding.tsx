@@ -1,14 +1,13 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ExoLogo } from "@/components/ExoLogo";
-import { useCountries, useGeoVerification, getBrowserLocation } from "@/hooks/useGeoVerification";
+import { useCountries, useGeoVerification } from "@/hooks/useGeoVerification";
 import {
-  Globe, Phone, Shield, Search, ChevronRight, Loader2,
-  MapPin, AlertTriangle, CheckCircle2, FileText, Upload
+  Globe, Phone, Shield, Search, ChevronRight, Loader2, CheckCircle2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,27 +15,18 @@ interface Props {
   onComplete: () => void;
 }
 
-type Step = "country" | "phone" | "id_upload" | "verifying";
+type Step = "country" | "phone" | "registering";
 
 export function CountryOnboarding({ onComplete }: Props) {
   const [step, setStep] = useState<Step>("country");
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [search, setSearch] = useState("");
-  const [idType, setIdType] = useState<string>("passport");
-  const [browserCoords, setBrowserCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   const { data: countries = [], isLoading: countriesLoading } = useCountries();
-  const { checkIp, verifyPhone, registerGeo } = useGeoVerification();
+  const { checkCountry, verifyPhone, registerGeo } = useGeoVerification();
 
   const selectedCountryData = countries.find(c => c.code === selectedCountry);
-
-  // Request GPS on mount
-  useEffect(() => {
-    getBrowserLocation().then(coords => {
-      if (coords) setBrowserCoords(coords);
-    });
-  }, []);
 
   const groupedCountries = useMemo(() => {
     const q = search.toLowerCase();
@@ -59,40 +49,19 @@ export function CountryOnboarding({ onComplete }: Props) {
     }
 
     try {
-      const result = await checkIp.mutateAsync({
-        countryCode: code,
-        browserLat: browserCoords?.lat,
-        browserLon: browserCoords?.lon,
-      });
-
-      // Block if VPN detected
-      if (result.vpn_detected) {
-        toast.error("VPN or proxy detected. Please disable it to continue.", { duration: 5000 });
-        setSelectedCountry("");
-        return;
+      const result = await checkCountry.mutateAsync(code);
+      if (result.success) {
+        setStep("phone");
       }
-
-      // Block if spoofing detected (IP + GPS both mismatch)
-      if (result.is_blocked) {
-        toast.error(result.block_reason || "Location spoofing detected. Access denied.", { duration: 6000 });
-        setSelectedCountry("");
-        return;
-      }
-
-      // Warn if IP mismatches but GPS confirms or no GPS
-      if (result.ip_mismatch && !result.is_blocked) {
-        toast.warning(`Your IP appears to be from ${result.ip_country}. If traveling, this is normal.`, { duration: 5000 });
-      }
-
-      setStep("phone");
     } catch (err: any) {
       if (err?.message?.includes("SANCTIONED") || err?.message?.includes("regulatory")) {
         toast.error("Services are not available in this country due to regulatory restrictions.");
       } else if (err?.message?.includes("UNSUPPORTED")) {
         toast.error("Services are not yet available in this country.");
       } else {
-        toast.error(err.message || "Verification failed");
+        toast.error(err.message || "Something went wrong");
       }
+      setSelectedCountry("");
     }
   };
 
@@ -107,27 +76,18 @@ export function CountryOnboarding({ onComplete }: Props) {
         phoneNumber,
       });
       if (result.success) {
-        setStep("id_upload");
+        // Phone verified, now register
+        setStep("registering");
+        await registerGeo.mutateAsync({
+          countryCode: selectedCountry,
+          phoneNumber,
+        });
+        toast.success("Welcome to ExoSky!");
+        onComplete();
       }
     } catch (err: any) {
-      toast.error(err.message || "Phone verification failed");
-    }
-  };
-
-  const handleIdSubmit = async () => {
-    setStep("verifying");
-    try {
-      await registerGeo.mutateAsync({
-        countryCode: selectedCountry,
-        phoneNumber,
-        browserLat: browserCoords?.lat,
-        browserLon: browserCoords?.lon,
-      });
-      toast.success("Verification complete! Welcome to ExoSky.");
-      onComplete();
-    } catch (err: any) {
       toast.error(err.message || "Verification failed");
-      setStep("id_upload");
+      if (step === "registering") setStep("phone");
     }
   };
 
@@ -143,22 +103,21 @@ export function CountryOnboarding({ onComplete }: Props) {
           <div className="inline-flex items-center justify-center mb-3">
             <ExoLogo size="lg" variant="mark" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Verify Your Location</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome to ExoSky</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            We need to verify your country to comply with local regulations
+            Select your country to get started
           </p>
         </div>
 
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-6">
           {[
-            { s: "country", label: "Country", icon: Globe },
-            { s: "phone", label: "Phone", icon: Phone },
-            { s: "id_upload", label: "ID", icon: FileText },
+            { s: "country", icon: Globe },
+            { s: "phone", icon: Phone },
           ].map((item, i) => {
             const isCurrent = step === item.s;
-            const isPast = ["country", "phone", "id_upload", "verifying"].indexOf(step) >
-              ["country", "phone", "id_upload", "verifying"].indexOf(item.s);
+            const isPast = ["country", "phone", "registering"].indexOf(step) >
+              ["country", "phone", "registering"].indexOf(item.s);
             return (
               <div key={item.s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
@@ -168,7 +127,7 @@ export function CountryOnboarding({ onComplete }: Props) {
                 }`}>
                   {isPast ? <CheckCircle2 className="w-4 h-4" /> : <item.icon className="w-3.5 h-3.5" />}
                 </div>
-                {i < 2 && <div className={`w-8 h-0.5 ${isPast ? "bg-success" : "bg-border"}`} />}
+                {i < 1 && <div className={`w-8 h-0.5 ${isPast ? "bg-success" : "bg-border"}`} />}
               </div>
             );
           })}
@@ -208,7 +167,7 @@ export function CountryOnboarding({ onComplete }: Props) {
                             <button
                               key={c.code}
                               onClick={() => handleCountrySelect(c.code)}
-                              disabled={checkIp.isPending}
+                              disabled={checkCountry.isPending}
                               className={`w-full flex items-center justify-between p-2.5 rounded-lg transition-colors text-left ${
                                 selectedCountry === c.code
                                   ? "bg-primary/10 border border-primary/20"
@@ -222,7 +181,7 @@ export function CountryOnboarding({ onComplete }: Props) {
                                   <p className="text-[10px] text-muted-foreground">{c.phone_code} · {c.currency_code}</p>
                                 </div>
                               </div>
-                              {checkIp.isPending && selectedCountry === c.code ? (
+                              {checkCountry.isPending && selectedCountry === c.code ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                               ) : (
                                 <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
@@ -237,7 +196,7 @@ export function CountryOnboarding({ onComplete }: Props) {
 
                 <div className="pt-2 border-t border-border">
                   <p className="text-[10px] text-muted-foreground text-center flex items-center justify-center gap-1">
-                    <Shield className="w-3 h-3" /> Your location is verified via IP, GPS &amp; device signals
+                    <Shield className="w-3 h-3" /> Your data is protected and encrypted
                   </p>
                 </div>
               </Card>
@@ -250,7 +209,7 @@ export function CountryOnboarding({ onComplete }: Props) {
               <Card className="p-5 bg-card border-border space-y-4">
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold">Verify your phone number</h3>
+                  <h3 className="text-sm font-semibold">Enter your phone number</h3>
                 </div>
 
                 <div className="flex items-center gap-2 p-2.5 bg-secondary/50 rounded-lg">
@@ -268,7 +227,7 @@ export function CountryOnboarding({ onComplete }: Props) {
                     className="h-11 bg-secondary border-border font-mono text-base"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Must start with {selectedCountryData.phone_code} (your country's code)
+                    Must start with {selectedCountryData.phone_code}
                   </p>
                 </div>
 
@@ -278,85 +237,23 @@ export function CountryOnboarding({ onComplete }: Props) {
                   </Button>
                   <Button
                     onClick={handlePhoneSubmit}
-                    disabled={verifyPhone.isPending}
+                    disabled={verifyPhone.isPending || registerGeo.isPending}
                     className="flex-1 bg-foreground text-background hover:bg-foreground/90"
                   >
-                    {verifyPhone.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                    {(verifyPhone.isPending || registerGeo.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : "Get Started"}
                   </Button>
                 </div>
               </Card>
             </motion.div>
           )}
 
-          {/* Step 3: ID Upload */}
-          {step === "id_upload" && selectedCountryData && (
-            <motion.div key="id" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <Card className="p-5 bg-card border-border space-y-4">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold">Identity verification</h3>
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  Upload a government-issued ID to verify you're a resident of {selectedCountryData.name}.
-                </p>
-
-                <div>
-                  <label className="text-xs text-muted-foreground font-medium mb-1 block">Document type</label>
-                  <select
-                    value={idType}
-                    onChange={e => setIdType(e.target.value)}
-                    className="w-full h-10 rounded-md bg-secondary border border-border px-3 text-sm"
-                  >
-                    <option value="passport">Passport</option>
-                    <option value="national_id">National ID Card</option>
-                    <option value="drivers_license">Driver's License</option>
-                  </select>
-                </div>
-
-                {/* Upload area */}
-                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/30 transition-colors cursor-pointer">
-                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm font-medium">Upload your {idType.replace("_", " ")}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    JPG, PNG, or PDF · Max 10MB
-                  </p>
-                </div>
-
-                {selectedCountryData.requires_enhanced_kyc && (
-                  <div className="flex items-start gap-2 p-2.5 bg-warning/5 rounded-lg border border-warning/10">
-                    <AlertTriangle className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-                    <p className="text-[10px] text-warning">
-                      Enhanced verification is required for {selectedCountryData.name}. Additional documentation may be requested.
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setStep("phone")} className="flex-1">
-                    Back
-                  </Button>
-                  <Button
-                    onClick={handleIdSubmit}
-                    disabled={registerGeo.isPending}
-                    className="flex-1 bg-foreground text-background hover:bg-foreground/90"
-                  >
-                    {registerGeo.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Continue"}
-                  </Button>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Step 4: Verifying */}
-          {step === "verifying" && (
-            <motion.div key="verifying" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          {/* Registering */}
+          {step === "registering" && (
+            <motion.div key="registering" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <Card className="p-8 bg-card border-border text-center">
                 <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-                <h3 className="text-lg font-semibold">Verifying your identity</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Checking your location and documents...
-                </p>
+                <h3 className="text-lg font-semibold">Setting up your account</h3>
+                <p className="text-sm text-muted-foreground mt-2">Just a moment...</p>
               </Card>
             </motion.div>
           )}
