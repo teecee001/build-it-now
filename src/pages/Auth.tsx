@@ -133,6 +133,14 @@ export default function Auth() {
               {isSignUp ? "Sign In" : "Sign Up"}
             </button>
           </p>
+
+          <div className="flex items-center justify-center gap-3 mt-6 text-xs text-muted-foreground">
+            <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
+            <span>·</span>
+            <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
+            <span>·</span>
+            <a href="/disclosures" className="hover:text-foreground transition-colors">Disclosures</a>
+          </div>
         </Card>
       </motion.div>
     </div>

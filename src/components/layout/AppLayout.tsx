@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
-  Menu, CreditCard, Gift, Activity, Landmark, Receipt
+  Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,6 +63,14 @@ export function AppLayout() {
             );
           })}
         </nav>
+
+        {/* Legal Links */}
+        <div className="px-3 py-2 space-y-0.5">
+          <button onClick={() => navigate("/verify")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all">
+            <Shield className="w-4 h-4" />
+            Verify Identity
+          </button>
+        </div>
 
         {/* User section */}
         <div className="border-t border-border pt-4 space-y-1">
