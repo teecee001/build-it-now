@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   Wallet, TrendingUp, CreditCard, PiggyBank, Globe,
@@ -41,12 +41,11 @@ function Stagger({ children, delay = 0 }: { children: React.ReactNode; delay?: n
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 1 — Dashboard (mirrors Dashboard.tsx)
+   SCREEN 1 — Dashboard
    ═══════════════════════════════════════════ */
 function DashboardScreen() {
   return (
     <div className="p-3.5 space-y-3">
-      {/* Header — exactly like the real app */}
       <Stagger>
         <div className="flex items-center justify-between">
           <div>
@@ -63,7 +62,6 @@ function DashboardScreen() {
         </div>
       </Stagger>
 
-      {/* Total Balance Card — matches Card with gradient accent */}
       <Stagger delay={0.1}>
         <div className="rounded-xl p-3.5 border border-white/8 bg-white/[0.04] relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/8 to-transparent pointer-events-none" />
@@ -84,7 +82,6 @@ function DashboardScreen() {
               $24,856.32
             </motion.p>
 
-            {/* Sub-balances grid */}
             <div className="grid grid-cols-2 gap-2 mt-2.5">
               <div className="p-2 rounded-lg bg-white/[0.05]">
                 <p className="text-[7px] text-white/40">USD Wallet</p>
@@ -99,7 +96,6 @@ function DashboardScreen() {
               </div>
             </div>
 
-            {/* Monthly earnings */}
             <div className="mt-2 p-2 rounded-lg bg-green-500/[0.06] border border-green-500/10 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <PiggyBank className="w-3 h-3 text-green-400" />
@@ -108,7 +104,6 @@ function DashboardScreen() {
               <span className="text-[8px] font-mono font-semibold text-green-400">+$62.25/mo</span>
             </div>
 
-            {/* Quick Actions — exactly 4 buttons like the real app */}
             <div className="grid grid-cols-4 gap-1.5 mt-3">
               {[
                 { icon: ArrowDownLeft, label: "Deposit", filled: true },
@@ -134,7 +129,6 @@ function DashboardScreen() {
         </div>
       </Stagger>
 
-      {/* Recent Activity — matches real layout */}
       <Stagger delay={0.25}>
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[8px] text-white/40 uppercase tracking-wider font-semibold">Recent Activity</p>
@@ -167,7 +161,6 @@ function DashboardScreen() {
         ))}
       </Stagger>
 
-      {/* Feature Grid — mirrors the real 2x3 grid */}
       <Stagger delay={0.5}>
         <div className="grid grid-cols-3 gap-1.5">
           {[
@@ -197,12 +190,11 @@ function DashboardScreen() {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 2 — Markets (mirrors Markets.tsx)
+   SCREEN 2 — Markets
    ═══════════════════════════════════════════ */
 function MarketsScreen() {
   return (
     <div className="p-3.5 space-y-3">
-      {/* Header */}
       <Stagger>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
@@ -216,7 +208,6 @@ function MarketsScreen() {
         </div>
       </Stagger>
 
-      {/* Category Tabs — mirrors the real tabs */}
       <Stagger delay={0.08}>
         <div className="flex gap-1">
           {[
@@ -238,7 +229,6 @@ function MarketsScreen() {
         </div>
       </Stagger>
 
-      {/* Search */}
       <Stagger delay={0.12}>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
@@ -248,7 +238,6 @@ function MarketsScreen() {
         </div>
       </Stagger>
 
-      {/* Chart Preview for BTC */}
       <Stagger delay={0.18}>
         <div className="rounded-xl bg-white/[0.04] border border-white/8 p-3">
           <div className="flex items-center justify-between mb-2">
@@ -266,7 +255,6 @@ function MarketsScreen() {
               <span className="text-[8px] text-green-400 font-medium">+5.23%</span>
             </div>
           </div>
-          {/* Chart */}
           <svg viewBox="0 0 220 55" className="w-full h-11">
             <motion.path
               d="M0,42 C15,40 25,38 40,32 C55,26 65,30 85,24 C105,18 120,22 140,16 C160,10 175,14 195,8 C205,5 215,3 220,2"
@@ -301,7 +289,6 @@ function MarketsScreen() {
         </div>
       </Stagger>
 
-      {/* Asset list — mirrors real coin rows */}
       <Stagger delay={0.3}>
         {[
           { code: "ETH", name: "Ethereum", price: "$3,456.78", change: "+3.12%", pos: true },
@@ -328,7 +315,6 @@ function MarketsScreen() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* Mini sparkline */}
               <svg viewBox="0 0 30 12" className="w-7 h-3">
                 <path
                   d={`M0,${asset.pos ? 10 : 2} Q7,${asset.pos ? 6 : 8} 15,${asset.pos ? 4 : 6} T30,${asset.pos ? 2 : 10}`}
@@ -351,7 +337,7 @@ function MarketsScreen() {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 3 — Cards (mirrors CardPage.tsx)
+   SCREEN 3 — Cards
    ═══════════════════════════════════════════ */
 function CardsScreen() {
   return (
@@ -369,7 +355,6 @@ function CardsScreen() {
         </div>
       </Stagger>
 
-      {/* Card Visual — faithful recreation of CardVisual */}
       <Stagger delay={0.12}>
         <motion.div
           initial={{ rotateY: 60, opacity: 0 }}
@@ -381,11 +366,9 @@ function CardsScreen() {
             border: "1px solid hsl(220 40% 25%)",
           }}
         >
-          {/* Accent glow */}
           <div className="absolute inset-0 opacity-30" style={{
             backgroundImage: "radial-gradient(circle at 70% 30%, hsl(210 90% 50% / 0.4), transparent 60%)"
           }} />
-          {/* Logo watermark */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span className="text-4xl font-bold opacity-[0.05] select-none tracking-tighter text-white">Ξ╳</span>
           </div>
@@ -402,7 +385,6 @@ function CardsScreen() {
             </div>
           </div>
 
-          {/* Chip */}
           <div className="relative">
             <div className="w-7 h-5 rounded bg-gradient-to-br from-yellow-600/60 to-yellow-800/40 border border-yellow-700/30" />
           </div>
@@ -420,7 +402,6 @@ function CardsScreen() {
         </motion.div>
       </Stagger>
 
-      {/* Second card (virtual) */}
       <Stagger delay={0.35}>
         <div className="rounded-xl p-3 flex items-center justify-between border border-white/8 bg-white/[0.03]">
           <div className="flex items-center gap-2.5">
@@ -441,7 +422,6 @@ function CardsScreen() {
         </div>
       </Stagger>
 
-      {/* Card Controls — matches real settings */}
       <Stagger delay={0.45}>
         <div className="grid grid-cols-4 gap-1.5">
           {[
@@ -464,7 +444,6 @@ function CardsScreen() {
         </div>
       </Stagger>
 
-      {/* Spending Breakdown — matches real card page */}
       <Stagger delay={0.6}>
         <p className="text-[8px] text-white/40 uppercase tracking-wider font-semibold mb-1">This Month's Spending</p>
         {[
@@ -501,7 +480,7 @@ function CardsScreen() {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 4 — Savings (mirrors Savings.tsx)
+   SCREEN 4 — Savings
    ═══════════════════════════════════════════ */
 function SavingsScreen() {
   return (
@@ -515,7 +494,6 @@ function SavingsScreen() {
         <p className="text-[9px] text-white/40">Grow your money with industry-leading yields</p>
       </Stagger>
 
-      {/* Balance Card */}
       <Stagger delay={0.1}>
         <div className="rounded-xl p-4 border border-white/8 bg-white/[0.04] relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/8 to-transparent pointer-events-none" />
@@ -530,7 +508,6 @@ function SavingsScreen() {
               $12,450.00
             </motion.p>
 
-            {/* Earnings breakdown — matches real savings page */}
             <div className="grid grid-cols-3 gap-2 mt-3">
               {[
                 { label: "Daily", value: "+$2.05", icon: Calendar },
@@ -554,7 +531,6 @@ function SavingsScreen() {
         </div>
       </Stagger>
 
-      {/* Growth Chart — matches real area chart */}
       <Stagger delay={0.3}>
         <div className="rounded-xl bg-white/[0.04] border border-white/8 p-3">
           <div className="flex items-center justify-between mb-2">
@@ -598,7 +574,6 @@ function SavingsScreen() {
         </div>
       </Stagger>
 
-      {/* Transfer Controls */}
       <Stagger delay={0.5}>
         <div className="rounded-xl border border-white/8 bg-white/[0.04] p-3">
           <div className="flex items-center gap-2 mb-2">
@@ -628,7 +603,7 @@ function SavingsScreen() {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 5 — Send Money (mirrors SendMoney.tsx)
+   SCREEN 5 — Send Money
    ═══════════════════════════════════════════ */
 function SendScreen() {
   return (
@@ -640,7 +615,6 @@ function SendScreen() {
         </div>
       </Stagger>
 
-      {/* Amount input area — matches real send page */}
       <Stagger delay={0.1}>
         <div className="rounded-xl bg-white/[0.04] border border-white/8 p-4 text-center">
           <p className="text-[9px] text-white/40 mb-1">You're sending</p>
@@ -655,14 +629,9 @@ function SendScreen() {
             <Globe className="w-2.5 h-2.5 text-cyan-400" />
             <span className="text-[9px] text-cyan-400 font-medium">≈ €462.35 EUR</span>
           </div>
-          <div className="mt-2 flex items-center justify-center gap-1">
-            <div className="px-2 py-0.5 rounded bg-white/8 text-[8px] text-white/50 font-medium">USD $</div>
-            <Repeat className="w-2.5 h-2.5 text-white/20" />
-          </div>
         </div>
       </Stagger>
 
-      {/* Recipient — matches real layout */}
       <Stagger delay={0.25}>
         <p className="text-[8px] text-white/40 uppercase tracking-wider font-semibold">Recipient</p>
         <div className="flex items-center gap-2.5 rounded-xl bg-white/[0.04] border border-white/8 p-3">
@@ -677,7 +646,6 @@ function SendScreen() {
         </div>
       </Stagger>
 
-      {/* Recent contacts */}
       <Stagger delay={0.35}>
         <p className="text-[8px] text-white/40 uppercase tracking-wider font-semibold mb-1">Quick Send</p>
         <div className="flex gap-3">
@@ -703,7 +671,6 @@ function SendScreen() {
         </div>
       </Stagger>
 
-      {/* Fee Breakdown */}
       <Stagger delay={0.5}>
         <div className="rounded-xl bg-white/[0.04] border border-white/8 p-3 space-y-1.5">
           {[
@@ -719,7 +686,6 @@ function SendScreen() {
         </div>
       </Stagger>
 
-      {/* Send Button */}
       <Stagger delay={0.6}>
         <motion.div
           initial={{ y: 15, opacity: 0 }}
@@ -738,7 +704,7 @@ function SendScreen() {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 6 — Analytics (mirrors SpendingAnalytics.tsx)
+   SCREEN 6 — Analytics
    ═══════════════════════════════════════════ */
 function AnalyticsScreen() {
   return (
@@ -750,7 +716,6 @@ function AnalyticsScreen() {
         </div>
       </Stagger>
 
-      {/* Time range tabs */}
       <Stagger delay={0.08}>
         <div className="flex gap-1">
           {["7D", "30D", "All"].map((t, i) => (
@@ -761,7 +726,6 @@ function AnalyticsScreen() {
         </div>
       </Stagger>
 
-      {/* Income vs Spending cards */}
       <Stagger delay={0.15}>
         <div className="grid grid-cols-2 gap-2">
           <div className="p-3 rounded-xl bg-green-500/[0.06] border border-green-500/10">
@@ -781,7 +745,6 @@ function AnalyticsScreen() {
         </div>
       </Stagger>
 
-      {/* Pie Chart — SVG version */}
       <Stagger delay={0.25}>
         <div className="rounded-xl bg-white/[0.04] border border-white/8 p-3 flex items-center gap-4">
           <svg viewBox="0 0 60 60" className="w-16 h-16 flex-shrink-0">
@@ -819,7 +782,6 @@ function AnalyticsScreen() {
         </div>
       </Stagger>
 
-      {/* Weekly bar chart */}
       <Stagger delay={0.45}>
         <p className="text-[8px] text-white/40 uppercase tracking-wider font-semibold mb-1">Weekly Spending</p>
         <div className="flex items-end justify-between gap-1 h-16 px-1">
@@ -850,7 +812,7 @@ function AnalyticsScreen() {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 7 — Crypto Wallet (mirrors WalletPage.tsx)
+   SCREEN 7 — Crypto Wallet
    ═══════════════════════════════════════════ */
 function CryptoWalletScreen() {
   return (
@@ -868,7 +830,6 @@ function CryptoWalletScreen() {
         </div>
       </Stagger>
 
-      {/* Portfolio Card — matches real wallet page */}
       <Stagger delay={0.1}>
         <div className="rounded-xl p-3.5 border border-white/8 bg-white/[0.04] relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-green-500/5 pointer-events-none" />
@@ -884,7 +845,6 @@ function CryptoWalletScreen() {
             </motion.p>
             <p className="text-[8px] text-white/30 font-mono">USD Balance: $12,406.32</p>
 
-            {/* Action buttons — matches real 4-column layout */}
             <div className="grid grid-cols-4 gap-1.5 mt-3">
               {[
                 { icon: ArrowDownLeft, label: "Buy", color: "bg-green-500/10 text-green-400" },
@@ -908,7 +868,6 @@ function CryptoWalletScreen() {
         </div>
       </Stagger>
 
-      {/* Holdings — matches real holdings list */}
       <Stagger delay={0.3}>
         <div className="flex items-center justify-between mb-1">
           <p className="text-[8px] text-white/40 uppercase tracking-wider font-semibold">Holdings</p>
@@ -936,9 +895,8 @@ function CryptoWalletScreen() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* Mini sparkline */}
               <svg viewBox="0 0 28 10" className="w-6 h-2.5">
-                <path d={`M0,8 Q7,4 14,3 T28,1`} fill="none" stroke="#22c55e" strokeWidth="1" />
+                <path d="M0,8 Q7,4 14,3 T28,1" fill="none" stroke="#22c55e" strokeWidth="1" />
               </svg>
               <div className="text-right">
                 <p className="text-[9px] font-semibold text-white font-mono">{h.value}</p>
@@ -964,24 +922,56 @@ const SCREEN_COMPONENTS: Record<string, React.FC> = {
 };
 
 /* ═══════════════════════════════════════════
-   Main Showcase Component
+   Main Showcase — Continuous Vertical Scroll Film
    ═══════════════════════════════════════════ */
 export function AppShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const navigate = useNavigate();
+  const progressRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [progress, setProgress] = useState(0);
 
-  const next = useCallback(() => {
-    setActiveIndex((prev) => (prev + 1) % SCREENS.length);
+  const goTo = useCallback((index: number) => {
+    setIsTransitioning(true);
+    setActiveIndex(index);
+    setProgress(0);
+    progressRef.current = 0;
+    setTimeout(() => setIsTransitioning(false), 400);
   }, []);
 
+  const next = useCallback(() => {
+    goTo((activeIndex + 1) % SCREENS.length);
+  }, [activeIndex, goTo]);
+
+  // Auto-advance with progress bar
   useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(next, DURATION);
-    return () => clearInterval(timer);
-  }, [isPaused, next]);
+    if (isPaused || isTransitioning) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    const startTime = Date.now() - (progressRef.current / 100) * DURATION;
+
+    timerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min((elapsed / DURATION) * 100, 100);
+      progressRef.current = pct;
+      setProgress(pct);
+
+      if (pct >= 100) {
+        next();
+      }
+    }, 40);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isPaused, isTransitioning, next]);
 
   const ActiveScreen = SCREEN_COMPONENTS[SCREENS[activeIndex].id];
+  const currentColor = SCREENS[activeIndex].color;
 
   return (
     <div
@@ -991,22 +981,40 @@ export function AppShowcase() {
     >
       {/* Phone Frame */}
       <motion.div
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         className="relative will-change-transform"
-        style={{ transform: "translateZ(0)" }}
+        style={{ transform: "translateZ(0)", perspective: "1200px" }}
       >
-        {/* Dynamic glow — use CSS transition instead of framer for perf */}
+        {/* Multi-layered glow */}
         <div
-          className="absolute -inset-12 rounded-full blur-[80px] pointer-events-none transition-colors duration-600"
-          style={{ backgroundColor: SCREENS[activeIndex].color + "15" }}
+          className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: currentColor + "12" }}
+        />
+        <div
+          className="absolute -inset-8 rounded-full blur-[60px] pointer-events-none transition-all duration-700"
+          style={{ backgroundColor: currentColor + "08" }}
         />
 
-        {/* Phone body */}
-        <div
+        {/* Phone body with 3D perspective */}
+        <motion.div
           className="relative w-[260px] sm:w-[300px] lg:w-[340px] xl:w-[380px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
           onClick={() => navigate("/auth")}
+          whileHover={{
+            rotateY: -3,
+            rotateX: 2,
+            scale: 1.02,
+            transition: { duration: 0.4, ease: "easeOut" },
+          }}
+          style={{ transformStyle: "preserve-3d" }}
         >
+          {/* Subtle edge reflection */}
+          <div className="absolute inset-0 rounded-[2.2rem] pointer-events-none z-30"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%)",
+            }}
+          />
+
           {/* Status bar */}
           <div className="relative h-8 flex items-center justify-between px-6 pt-1 bg-[hsl(240,10%,6%)]">
             <span className="text-[8px] text-white/40 font-medium">9:41</span>
@@ -1024,22 +1032,30 @@ export function AppShowcase() {
             </div>
           </div>
 
-          {/* Screen content with scroll */}
-          <div className="h-[460px] sm:h-[520px] lg:h-[580px] xl:h-[660px] overflow-y-auto scrollbar-none">
+          {/* Screen content — vertical scroll film effect */}
+          <div className="h-[460px] sm:h-[520px] lg:h-[580px] xl:h-[660px] overflow-y-auto scrollbar-none relative">
+            {/* Color wash overlay that transitions with screen */}
+            <div
+              className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
+              style={{
+                backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)`,
+              }}
+            />
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={SCREENS[activeIndex].id}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                initial={{ opacity: 0, y: 60 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -60 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               >
                 <ActiveScreen />
               </motion.div>
             </AnimatePresence>
           </div>
 
-          {/* Bottom nav — matches AppLayout sidebar items */}
+          {/* Bottom nav */}
           <div className="h-12 border-t border-white/[0.06] flex items-center justify-around px-2 bg-[hsl(240,10%,5%)]">
             {SCREENS.slice(0, 5).map((screen, i) => {
               const Icon = screen.icon;
@@ -1047,19 +1063,36 @@ export function AppShowcase() {
               return (
                 <button
                   key={screen.id}
-                  onClick={() => setActiveIndex(i)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goTo(i);
+                  }}
                   className="flex flex-col items-center gap-[2px] py-1 px-1.5 transition-all"
                 >
-                  <Icon
-                    className="w-[14px] h-[14px] transition-colors"
-                    style={{ color: isActive ? screen.color : "rgba(255,255,255,0.25)" }}
-                  />
+                  <motion.div
+                    animate={isActive ? { scale: [1, 1.15, 1] } : {}}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Icon
+                      className="w-[14px] h-[14px] transition-colors duration-300"
+                      style={{ color: isActive ? screen.color : "rgba(255,255,255,0.25)" }}
+                    />
+                  </motion.div>
                   <span
-                    className="text-[6px] font-medium transition-colors"
+                    className="text-[6px] font-medium transition-colors duration-300"
                     style={{ color: isActive ? screen.color : "rgba(255,255,255,0.2)" }}
                   >
                     {screen.label}
                   </span>
+                  {/* Active indicator dot */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="navDot"
+                      className="w-0.5 h-0.5 rounded-full"
+                      style={{ backgroundColor: screen.color }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
                 </button>
               );
             })}
@@ -1070,66 +1103,71 @@ export function AppShowcase() {
             <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
           </div>
 
-          {/* Persistent pulse hint — hidden on mobile for perf */}
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none group-hover/phone:opacity-0 transition-opacity duration-300 hidden sm:block">
-            <div
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_30px_hsl(142_71%_45%/0.5)] animate-pulse"
-            >
-              <ArrowRight className="w-4 h-4 text-white" />
-            </div>
-            <p className="text-white/60 text-[9px] font-semibold text-center mt-1.5 tracking-wide">Try it live</p>
-          </div>
-
-          {/* Full hover CTA overlay */}
+          {/* Hover CTA overlay */}
           <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_40px_hsl(142_71%_45%/0.4)] animate-pulse">
-              <ArrowRight className="w-6 h-6 text-white" />
-            </div>
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow"
+            >
+              <ArrowRight className="w-6 h-6 text-accent-foreground" />
+            </motion.div>
             <p className="text-white text-base font-bold tracking-tight">Try it live</p>
             <p className="text-white/50 text-xs">Create a free account in 2 min</p>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
 
-      {/* Progress dots */}
-      <div className="flex items-center gap-1.5 mt-8">
+      {/* ─── Film-style progress timeline ─── */}
+      <div className="flex items-center gap-1 mt-8 w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[340px] xl:max-w-[380px]">
         {SCREENS.map((screen, i) => (
           <button
             key={screen.id}
-            onClick={() => setActiveIndex(i)}
-            className="relative rounded-full overflow-hidden transition-all duration-300"
-            style={{
-              width: i === activeIndex ? 28 : 6,
-              height: 6,
-              backgroundColor: "hsl(var(--border))",
-            }}
+            onClick={() => goTo(i)}
+            className="flex-1 h-1 rounded-full overflow-hidden relative cursor-pointer group/seg"
+            style={{ backgroundColor: "hsl(var(--border) / 0.4)" }}
+            title={screen.label}
           >
-            {i === activeIndex && (
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{ backgroundColor: screen.color }}
-                initial={{ scaleX: 0, transformOrigin: "left" }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: DURATION / 1000, ease: "linear" }}
-                key={`progress-${activeIndex}`}
-              />
-            )}
+            <motion.div
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{
+                backgroundColor: i < activeIndex
+                  ? SCREENS[i].color
+                  : i === activeIndex
+                    ? currentColor
+                    : "transparent",
+                width: i < activeIndex ? "100%" : i === activeIndex ? `${progress}%` : "0%",
+              }}
+            />
+            <div className="absolute inset-0 rounded-full opacity-0 group-hover/seg:opacity-100 transition-opacity"
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
+            />
           </button>
         ))}
       </div>
 
-      {/* Label */}
+      {/* Label with icon */}
       <AnimatePresence mode="wait">
-        <motion.p
+        <motion.div
           key={SCREENS[activeIndex].label}
-          initial={{ opacity: 0, y: 6 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.2 }}
-          className="mt-2 text-sm font-semibold text-muted-foreground"
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.25 }}
+          className="mt-3 flex items-center gap-2"
         >
-          {SCREENS[activeIndex].label}
-        </motion.p>
+          {(() => {
+            const Icon = SCREENS[activeIndex].icon;
+            return (
+              <Icon className="w-3.5 h-3.5" style={{ color: currentColor }} />
+            );
+          })()}
+          <span className="text-sm font-semibold text-muted-foreground">
+            {SCREENS[activeIndex].label}
+          </span>
+          <span className="text-[10px] text-muted-foreground/50 font-mono">
+            {activeIndex + 1}/{SCREENS.length}
+          </span>
+        </motion.div>
       </AnimatePresence>
     </div>
   );
