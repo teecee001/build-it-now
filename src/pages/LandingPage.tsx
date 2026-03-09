@@ -161,30 +161,32 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background overflow-hidden">
       {/* ─── Navbar ─── */}
       <nav className="fixed top-0 inset-x-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
-              <span className="text-sm font-black text-accent-foreground tracking-tighter">Ξ╳</span>
-            </div>
-            <span className="text-lg font-bold tracking-tight"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
-          </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
+              <span className="text-xs font-black text-accent-foreground tracking-tighter">Ξ╳</span>
+            </div>
+            <span className="text-base sm:text-lg font-bold tracking-tight"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
+            <span className="hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate("/auth")}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground hidden sm:inline-flex"
             >
               Log In
             </Button>
             <Button
               size="sm"
               onClick={() => navigate("/auth")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1 sm:gap-1.5 text-xs sm:text-sm"
             >
-              Get Started <ArrowRight className="w-3.5 h-3.5" />
+              <span className="sm:hidden">Sign Up</span>
+              <span className="hidden sm:inline">Get Started</span>
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </Button>
           </div>
         </div>
