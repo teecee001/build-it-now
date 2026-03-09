@@ -13,6 +13,22 @@ export interface Wallet {
   updated_at: string;
 }
 
+async function invokeWalletOp(body: Record<string, unknown>) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase.functions.invoke("wallet-operation", {
+    body,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (error) throw new Error(error.message || "Wallet operation failed");
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export { invokeWalletOp };
+
 export function useWallet() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -50,14 +66,17 @@ export function useWallet() {
   const updateBalance = useMutation({
     mutationFn: async ({ balance, savings_balance }: { balance?: number; savings_balance?: number }) => {
       if (!user || !wallet) throw new Error("No wallet");
-      const updates: Record<string, number> = {};
-      if (balance !== undefined) updates.balance = balance;
-      if (savings_balance !== undefined) updates.savings_balance = savings_balance;
-      const { error } = await supabase
-        .from("wallets")
-        .update(updates)
-        .eq("id", wallet.id);
-      if (error) throw error;
+      // Determine direction from balance changes
+      if (savings_balance !== undefined && balance !== undefined) {
+        const diff = wallet.savings_balance - (savings_balance ?? wallet.savings_balance);
+        if (diff < 0) {
+          // Transfer to savings
+          await invokeWalletOp({ operation: "savings_transfer", direction: "to_savings", amount: Math.abs(diff) });
+        } else if (diff > 0) {
+          // Transfer to wallet
+          await invokeWalletOp({ operation: "savings_transfer", direction: "to_wallet", amount: diff });
+        }
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["wallet"] }),
   });

@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useWallet } from "@/hooks/useWallet";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
 import { toast } from "sonner";
 
 const APY_RATE = 6.0;
 
 export function useSavings() {
-  const { wallet, balance, savingsBalance, updateBalance } = useWallet();
-  const { addTransaction } = useTransactions();
+  const { wallet, balance, savingsBalance } = useWallet();
+  const queryClient = useQueryClient();
   const [isTransferring, setIsTransferring] = useState(false);
 
   const monthlyRate = APY_RATE / 100 / 12;
@@ -29,27 +29,19 @@ export function useSavings() {
     return points;
   };
 
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["wallet"] });
+    queryClient.invalidateQueries({ queryKey: ["multi-wallets"] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+  };
+
   const transferToSavings = async (amount: number) => {
-    if (amount <= 0) {
-      toast.error("Enter a valid amount");
-      return;
-    }
-    if (amount > balance) {
-      toast.error("Insufficient wallet balance");
-      return;
-    }
+    if (amount <= 0) { toast.error("Enter a valid amount"); return; }
+    if (amount > balance) { toast.error("Insufficient wallet balance"); return; }
     setIsTransferring(true);
     try {
-      await updateBalance.mutateAsync({
-        balance: balance - amount,
-        savings_balance: savingsBalance + amount,
-      });
-      await addTransaction.mutateAsync({
-        type: "deposit",
-        amount: -amount,
-        description: `Transfer to Savings — ${APY_RATE}% APY`,
-        metadata: { savings_transfer: true, direction: "to_savings" },
-      });
+      await invokeWalletOp({ operation: "savings_transfer", direction: "to_savings", amount });
+      invalidate();
       toast.success(`$${amount.toFixed(2)} moved to Savings`);
     } catch (err: any) {
       toast.error(err.message || "Transfer failed");
@@ -59,26 +51,12 @@ export function useSavings() {
   };
 
   const transferToWallet = async (amount: number) => {
-    if (amount <= 0) {
-      toast.error("Enter a valid amount");
-      return;
-    }
-    if (amount > savingsBalance) {
-      toast.error("Insufficient savings balance");
-      return;
-    }
+    if (amount <= 0) { toast.error("Enter a valid amount"); return; }
+    if (amount > savingsBalance) { toast.error("Insufficient savings balance"); return; }
     setIsTransferring(true);
     try {
-      await updateBalance.mutateAsync({
-        balance: balance + amount,
-        savings_balance: savingsBalance - amount,
-      });
-      await addTransaction.mutateAsync({
-        type: "deposit",
-        amount,
-        description: "Withdrawal from Savings",
-        metadata: { savings_transfer: true, direction: "to_wallet" },
-      });
+      await invokeWalletOp({ operation: "savings_transfer", direction: "to_wallet", amount });
+      invalidate();
       toast.success(`$${amount.toFixed(2)} moved to Wallet`);
     } catch (err: any) {
       toast.error(err.message || "Transfer failed");

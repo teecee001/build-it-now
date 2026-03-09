@@ -12,7 +12,7 @@ import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { TransactionPinModal } from "@/components/TransactionPinModal";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWalletOp } from "@/hooks/useWallet";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowRight, QrCode, Users, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -51,19 +51,14 @@ function SendMoneyContent() {
       if (!activeWallet) throw new Error(`No ${activeCurrency} wallet found`);
       if (parsedAmount > activeWallet.balance) throw new Error("Insufficient balance");
 
-      // Deduct from active currency wallet
-      const { error: updateErr } = await supabase
-        .from("wallets")
-        .update({ balance: activeWallet.balance - parsedAmount })
-        .eq("id", activeWallet.id);
-      if (updateErr) throw updateErr;
-
-      await addTransaction.mutateAsync({
-        type: "send",
-        amount: -usdAmount,
-        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient}`,
+      await invokeWalletOp({
+        operation: "send",
+        wallet_id: activeWallet.id,
+        amount: parsedAmount,
+        usd_amount: usdAmount,
+        currency: activeCurrency,
         recipient,
-        metadata: { currency: activeCurrency, original_amount: parsedAmount },
+        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient}`,
       });
       setSent(true);
       toast.success(`${formatBalance(parsedAmount)} sent to ${recipient}`);
