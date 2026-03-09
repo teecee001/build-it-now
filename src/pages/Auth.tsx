@@ -40,19 +40,7 @@ export default function Auth() {
       });
 
       if (!isApproved) {
-        // Check if they're on the waitlist at all
-        const { data: waitlistEntry } = await supabase
-          .from("waitlist")
-          .select("email")
-          .eq("email", email.trim().toLowerCase())
-          .maybeSingle();
-
-        if (waitlistEntry) {
-          setPendingApproval(true);
-          toast.info("You're on the waitlist! We'll notify you once approved.");
-        } else {
-          toast.error("Please join the waitlist first from our homepage.");
-        }
+        toast.error("Your email hasn't been approved yet. Please join the waitlist from our homepage if you haven't already.");
         setIsSubmitting(false);
         return;
       }
