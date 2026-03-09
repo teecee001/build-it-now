@@ -161,30 +161,32 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background overflow-hidden">
       {/* ─── Navbar ─── */}
       <nav className="fixed top-0 inset-x-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
-              <span className="text-sm font-black text-accent-foreground tracking-tighter">Ξ╳</span>
-            </div>
-            <span className="text-lg font-bold tracking-tight"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
-          </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
+              <span className="text-xs font-black text-accent-foreground tracking-tighter">Ξ╳</span>
+            </div>
+            <span className="text-base sm:text-lg font-bold tracking-tight"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</span>
+            <span className="hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate("/auth")}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground hidden sm:inline-flex"
             >
               Log In
             </Button>
             <Button
               size="sm"
               onClick={() => navigate("/auth")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1 sm:gap-1.5 text-xs sm:text-sm"
             >
-              Get Started <ArrowRight className="w-3.5 h-3.5" />
+              <span className="sm:hidden">Sign Up</span>
+              <span className="hidden sm:inline">Get Started</span>
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </Button>
           </div>
         </div>
@@ -194,11 +196,10 @@ export default function LandingPage() {
       <motion.section
         ref={heroRef}
         style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative pt-32 pb-20 px-6"
+        className="relative pt-32 pb-20 px-6 will-change-transform"
       >
-        {/* Ambient glow */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/8 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+        {/* Ambient glow — simplified for perf */}
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[400px] sm:w-[600px] h-[300px] sm:h-[400px] bg-accent/8 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           {/* Left: Text */}
@@ -219,7 +220,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.05]"
+              className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05]"
             >
               The future of
               <br />
@@ -555,12 +556,8 @@ export default function LandingPage() {
               { feature: "Welcome bonus", exo: "$25", bank: "$0" },
               { feature: "150+ currencies", exo: true, bank: false },
             ].map((row, i) => (
-              <motion.div
+              <div
                 key={row.feature}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }}
                 className="grid grid-cols-3 border-t border-border hover:bg-secondary/30 transition-colors"
               >
                 <div className="p-4 sm:p-5 text-sm font-medium text-foreground">{row.feature}</div>
@@ -582,7 +579,7 @@ export default function LandingPage() {
                     <span className="text-sm text-muted-foreground">{String(row.bank)}</span>
                   )}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </motion.div>
 

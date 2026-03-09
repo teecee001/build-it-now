@@ -993,13 +993,13 @@ export function AppShowcase() {
       <motion.div
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="relative"
+        className="relative will-change-transform"
+        style={{ transform: "translateZ(0)" }}
       >
-        {/* Dynamic glow */}
-        <motion.div
-          className="absolute -inset-12 rounded-full blur-[80px] pointer-events-none"
-          animate={{ backgroundColor: SCREENS[activeIndex].color + "15" }}
-          transition={{ duration: 0.6 }}
+        {/* Dynamic glow — use CSS transition instead of framer for perf */}
+        <div
+          className="absolute -inset-12 rounded-full blur-[80px] pointer-events-none transition-colors duration-600"
+          style={{ backgroundColor: SCREENS[activeIndex].color + "15" }}
         />
 
         {/* Phone body */}
@@ -1070,28 +1070,21 @@ export function AppShowcase() {
             <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
           </div>
 
-          {/* Persistent pulse hint — visible before hover */}
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none group-hover/phone:opacity-0 transition-opacity duration-300">
-            <motion.div
-              animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_30px_hsl(142_71%_45%/0.5)]"
+          {/* Persistent pulse hint — hidden on mobile for perf */}
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none group-hover/phone:opacity-0 transition-opacity duration-300 hidden sm:block">
+            <div
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_30px_hsl(142_71%_45%/0.5)] animate-pulse"
             >
               <ArrowRight className="w-4 h-4 text-white" />
-            </motion.div>
+            </div>
             <p className="text-white/60 text-[9px] font-semibold text-center mt-1.5 tracking-wide">Try it live</p>
           </div>
 
           {/* Full hover CTA overlay */}
           <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
-            <motion.div
-              initial={false}
-              animate={{ scale: [1, 1.08, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_40px_hsl(142_71%_45%/0.4)]"
-            >
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_40px_hsl(142_71%_45%/0.4)] animate-pulse">
               <ArrowRight className="w-6 h-6 text-white" />
-            </motion.div>
+            </div>
             <p className="text-white text-base font-bold tracking-tight">Try it live</p>
             <p className="text-white/50 text-xs">Create a free account in 2 min</p>
           </div>
