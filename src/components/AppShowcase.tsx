@@ -11,7 +11,8 @@ import {
   ArrowRightLeft, Calendar, ArrowRight,
   Users, ShoppingBag, Utensils, Fuel,
   CheckCircle2, ShieldCheck, Loader2,
-  LineChart as LineChartIcon, PieChart
+  LineChart as LineChartIcon, PieChart,
+  Smartphone, Monitor
 } from "lucide-react";
 
 /* ─── Screen definitions ─── */
