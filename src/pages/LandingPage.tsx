@@ -220,7 +220,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="text-5xl sm:text-7xl font-black tracking-tight leading-[1.05]"
+              className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05]"
             >
               The future of
               <br />

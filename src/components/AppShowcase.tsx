@@ -1070,15 +1070,13 @@ export function AppShowcase() {
             <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
           </div>
 
-          {/* Persistent pulse hint — visible before hover */}
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none group-hover/phone:opacity-0 transition-opacity duration-300">
-            <motion.div
-              animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_30px_hsl(142_71%_45%/0.5)]"
+          {/* Persistent pulse hint — hidden on mobile for perf */}
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none group-hover/phone:opacity-0 transition-opacity duration-300 hidden sm:block">
+            <div
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_30px_hsl(142_71%_45%/0.5)] animate-pulse"
             >
               <ArrowRight className="w-4 h-4 text-white" />
-            </motion.div>
+            </div>
             <p className="text-white/60 text-[9px] font-semibold text-center mt-1.5 tracking-wide">Try it live</p>
           </div>
 
