@@ -77,7 +77,7 @@ export function StatementExport({ open, onClose }: StatementExportProps) {
   .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e5e5; font-size: 11px; color: #999; }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; background: #f0f0f0; }
 </style></head><body>
-<h1>X Money Statement</h1>
+<h1>Ξ╳oSky Statement</h1>
 <div class="subtitle">${name} ${handle} · ${dateRange} · Generated ${format(new Date(), "MMM d, yyyy")}</div>
 <div class="summary">
   <div class="summary-item"><div class="summary-label">Money In</div><div class="summary-value positive">+$${totalIn.toFixed(2)}</div></div>
