@@ -79,7 +79,7 @@ export function useBiometricAuth(): BiometricAuthState {
           const credential = await navigator.credentials.create({
             publicKey: {
               challenge,
-              rp: { name: "X Money", id: window.location.hostname },
+              rp: { name: "Ξ╳oSky", id: window.location.hostname },
               user: {
                 id: new Uint8Array(16),
                 name: "card-verify",
