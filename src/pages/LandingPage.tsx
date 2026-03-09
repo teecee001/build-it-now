@@ -9,7 +9,7 @@ import {
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
   ChevronRight, Star, Lock, Users, Wallet,
   Check, Sparkles, X, HelpCircle,
-  Twitter, Github, Mail
+  Twitter, Github, Mail, ArrowUp
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
@@ -174,6 +174,15 @@ export default function LandingPage() {
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 60]);
   const [waitlistCount, setWaitlistCount] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -924,6 +933,17 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      {/* ─── Scroll to Top ─── */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={showScrollTop ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.25 }}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className={`fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-lg hover:bg-accent/90 transition-colors ${!showScrollTop ? "pointer-events-none" : ""}`}
+        aria-label="Scroll to top"
+      >
+        <ArrowUp className="w-5 h-5" />
+      </motion.button>
     </div>
   );
 }
