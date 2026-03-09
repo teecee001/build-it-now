@@ -1082,14 +1082,9 @@ export function AppShowcase() {
 
           {/* Full hover CTA overlay */}
           <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
-            <motion.div
-              initial={false}
-              animate={{ scale: [1, 1.08, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_40px_hsl(142_71%_45%/0.4)]"
-            >
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(142,71%,45%)] to-[hsl(160,84%,39%)] flex items-center justify-center shadow-[0_0_40px_hsl(142_71%_45%/0.4)] animate-pulse">
               <ArrowRight className="w-6 h-6 text-white" />
-            </motion.div>
+            </div>
             <p className="text-white text-base font-bold tracking-tight">Try it live</p>
             <p className="text-white/50 text-xs">Create a free account in 2 min</p>
           </div>
