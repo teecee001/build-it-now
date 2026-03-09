@@ -194,7 +194,7 @@ export default function LandingPage() {
       <motion.section
         ref={heroRef}
         style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative pt-32 pb-20 px-6"
+        className="relative pt-32 pb-20 px-6 will-change-transform"
       >
         {/* Ambient glow */}
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/8 rounded-full blur-[120px] pointer-events-none" />
