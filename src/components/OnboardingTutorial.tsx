@@ -706,7 +706,7 @@ export function OnboardingTutorial() {
                   <Sparkles className="w-2.5 h-2.5 text-accent-foreground" />
                 </div>
                 <span className="text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
-                  Welcome Film
+                  Welcome
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   {currentScene + 1}/{SCENES.length}
