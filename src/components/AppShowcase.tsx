@@ -11,7 +11,8 @@ import {
   ArrowRightLeft, Calendar, ArrowRight,
   Users, ShoppingBag, Utensils, Fuel,
   CheckCircle2, ShieldCheck, Loader2,
-  LineChart as LineChartIcon, PieChart
+  LineChart as LineChartIcon, PieChart,
+  Smartphone, Monitor
 } from "lucide-react";
 
 /* ─── Screen definitions ─── */
@@ -921,13 +922,75 @@ const SCREEN_COMPONENTS: Record<string, React.FC> = {
   wallet: CryptoWalletScreen,
 };
 
+/* ─── Desktop sidebar for laptop frame ─── */
+const SIDEBAR_ITEMS = [
+  { icon: Wallet, label: "Account", id: "dashboard" },
+  { icon: Coins, label: "Crypto", id: "wallet" },
+  { icon: Briefcase, label: "Stocks", id: "stocks" },
+  { icon: Send, label: "Send", id: "send" },
+  { icon: TrendingUp, label: "Markets", id: "markets" },
+  { icon: PiggyBank, label: "Savings", id: "savings" },
+  { icon: CreditCard, label: "Cards", id: "cards" },
+  { icon: BarChart3, label: "Analytics", id: "analytics" },
+  { icon: Bot, label: "AI Advisor", id: "advisor" },
+];
+
+function DesktopSidebar({ activeScreenId }: { activeScreenId: string }) {
+  return (
+    <div className="w-[100px] border-r border-white/[0.06] bg-[hsl(240,10%,5%)] flex flex-col py-2 px-1.5 flex-shrink-0">
+      {/* Logo */}
+      <div className="flex items-center gap-1.5 px-2 py-2 mb-2">
+        <div className="w-4 h-4 rounded bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center">
+          <span className="text-[5px] font-bold text-white/80 tracking-tighter">Ξ╳</span>
+        </div>
+        <span className="text-[7px] font-bold tracking-wider text-white/60">Ξ╳OSKY</span>
+      </div>
+
+      {/* Nav items */}
+      <div className="space-y-0.5 flex-1">
+        {SIDEBAR_ITEMS.map((item) => {
+          const isActive = item.id === activeScreenId || 
+            (activeScreenId === "dashboard" && item.id === "dashboard");
+          return (
+            <div
+              key={item.id}
+              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[7px] font-medium transition-all ${
+                isActive
+                  ? "bg-white/10 text-white"
+                  : "text-white/30 hover:text-white/50"
+              }`}
+            >
+              <item.icon className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="truncate">{item.label}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* User */}
+      <div className="border-t border-white/[0.06] pt-2 mt-1 px-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
+            <span className="text-[6px] font-bold text-green-400">AJ</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[6px] font-medium text-white/70 truncate">Alex Johnson</p>
+            <p className="text-[5px] text-white/30 truncate">@alexjohnson</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════
-   Main Showcase — Continuous Vertical Scroll Film
+   Main Showcase — Phone + Laptop Cycle
    ═══════════════════════════════════════════ */
 export function AppShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [deviceMode, setDeviceMode] = useState<"phone" | "laptop">("phone");
   const navigate = useNavigate();
   const progressRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -942,7 +1005,20 @@ export function AppShowcase() {
   }, []);
 
   const next = useCallback(() => {
-    goTo((activeIndex + 1) % SCREENS.length);
+    const nextIndex = (activeIndex + 1) % SCREENS.length;
+    if (nextIndex === 0) {
+      // Completed a full cycle — switch device
+      setIsTransitioning(true);
+      setProgress(0);
+      progressRef.current = 0;
+      setTimeout(() => {
+        setDeviceMode((prev) => (prev === "phone" ? "laptop" : "phone"));
+        setActiveIndex(0);
+        setTimeout(() => setIsTransitioning(false), 600);
+      }, 300);
+    } else {
+      goTo(nextIndex);
+    }
   }, [activeIndex, goTo]);
 
   // Auto-advance with progress bar
@@ -979,146 +1055,312 @@ export function AppShowcase() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Phone Frame */}
-      <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="relative will-change-transform"
-        style={{ transform: "translateZ(0)", perspective: "1200px" }}
-      >
-        {/* Multi-layered glow */}
-        <div
-          className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: currentColor + "12" }}
-        />
-        <div
-          className="absolute -inset-8 rounded-full blur-[60px] pointer-events-none transition-all duration-700"
-          style={{ backgroundColor: currentColor + "08" }}
-        />
-
-        {/* Phone body with 3D perspective */}
-        <motion.div
-          className="relative w-[260px] sm:w-[300px] lg:w-[340px] xl:w-[380px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
-          onClick={() => navigate("/auth")}
-          whileHover={{
-            rotateY: -3,
-            rotateX: 2,
-            scale: 1.02,
-            transition: { duration: 0.4, ease: "easeOut" },
-          }}
-          style={{ transformStyle: "preserve-3d" }}
-        >
-          {/* Subtle edge reflection */}
-          <div className="absolute inset-0 rounded-[2.2rem] pointer-events-none z-30"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%)",
-            }}
-          />
-
-          {/* Status bar */}
-          <div className="relative h-8 flex items-center justify-between px-6 pt-1 bg-[hsl(240,10%,6%)]">
-            <span className="text-[8px] text-white/40 font-medium">9:41</span>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[76px] h-[22px] bg-black rounded-b-2xl" />
-            <div className="flex items-center gap-1.5">
-              <div className="flex gap-[1px]">
-                {[3, 4, 5, 6].map(h => (
-                  <div key={h} className="w-[2px] rounded-sm bg-white/40" style={{ height: h }} />
-                ))}
-              </div>
-              <div className="w-3.5 h-2 border border-white/40 rounded-[2px] relative">
-                <div className="absolute inset-[1px] right-[2px] bg-green-400 rounded-[1px]" />
-                <div className="absolute -right-[1.5px] top-1/2 -translate-y-1/2 w-[1px] h-1 bg-white/40 rounded-r" />
-              </div>
-            </div>
-          </div>
-
-          {/* Screen content — vertical scroll film effect */}
-          <div className="h-[460px] sm:h-[520px] lg:h-[580px] xl:h-[660px] overflow-y-auto scrollbar-none relative">
-            {/* Color wash overlay that transitions with screen */}
-            <div
-              className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
-              style={{
-                backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)`,
-              }}
-            />
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={SCREENS[activeIndex].id}
-                initial={{ opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -60 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <ActiveScreen />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Bottom nav */}
-          <div className="h-12 border-t border-white/[0.06] flex items-center justify-around px-2 bg-[hsl(240,10%,5%)]">
-            {SCREENS.slice(0, 5).map((screen, i) => {
-              const Icon = screen.icon;
-              const isActive = i === activeIndex || (activeIndex >= 5 && i === 0);
-              return (
-                <button
-                  key={screen.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    goTo(i);
-                  }}
-                  className="flex flex-col items-center gap-[2px] py-1 px-1.5 transition-all"
-                >
-                  <motion.div
-                    animate={isActive ? { scale: [1, 1.15, 1] } : {}}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Icon
-                      className="w-[14px] h-[14px] transition-colors duration-300"
-                      style={{ color: isActive ? screen.color : "rgba(255,255,255,0.25)" }}
-                    />
-                  </motion.div>
-                  <span
-                    className="text-[6px] font-medium transition-colors duration-300"
-                    style={{ color: isActive ? screen.color : "rgba(255,255,255,0.2)" }}
-                  >
-                    {screen.label}
-                  </span>
-                  {/* Active indicator dot */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="navDot"
-                      className="w-0.5 h-0.5 rounded-full"
-                      style={{ backgroundColor: screen.color }}
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Home indicator */}
-          <div className="flex justify-center py-1.5 bg-[hsl(240,10%,5%)]">
-            <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
-          </div>
-
-          {/* Hover CTA overlay */}
-          <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
+      <AnimatePresence mode="wait">
+        {deviceMode === "phone" ? (
+          /* ═══ Phone Frame ═══ */
+          <motion.div
+            key="phone-device"
+            initial={{ opacity: 0, scale: 0.85, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.7, y: 30 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
             <motion.div
-              whileHover={{ scale: 1.1 }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              className="relative will-change-transform"
+              style={{ transform: "translateZ(0)", perspective: "1200px" }}
             >
-              <ArrowRight className="w-6 h-6 text-accent-foreground" />
+              {/* Multi-layered glow */}
+              <div
+                className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none transition-all duration-700"
+                style={{ backgroundColor: currentColor + "12" }}
+              />
+              <div
+                className="absolute -inset-8 rounded-full blur-[60px] pointer-events-none transition-all duration-700"
+                style={{ backgroundColor: currentColor + "08" }}
+              />
+
+              {/* Phone body */}
+              <motion.div
+                className="relative w-[260px] sm:w-[300px] lg:w-[340px] xl:w-[380px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
+                onClick={() => navigate("/auth")}
+                whileHover={{
+                  rotateY: -3,
+                  rotateX: 2,
+                  scale: 1.02,
+                  transition: { duration: 0.4, ease: "easeOut" },
+                }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                {/* Edge reflection */}
+                <div className="absolute inset-0 rounded-[2.2rem] pointer-events-none z-30"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%)",
+                  }}
+                />
+
+                {/* Status bar */}
+                <div className="relative h-8 flex items-center justify-between px-6 pt-1 bg-[hsl(240,10%,6%)]">
+                  <span className="text-[8px] text-white/40 font-medium">9:41</span>
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[76px] h-[22px] bg-black rounded-b-2xl" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex gap-[1px]">
+                      {[3, 4, 5, 6].map(h => (
+                        <div key={h} className="w-[2px] rounded-sm bg-white/40" style={{ height: h }} />
+                      ))}
+                    </div>
+                    <div className="w-3.5 h-2 border border-white/40 rounded-[2px] relative">
+                      <div className="absolute inset-[1px] right-[2px] bg-green-400 rounded-[1px]" />
+                      <div className="absolute -right-[1.5px] top-1/2 -translate-y-1/2 w-[1px] h-1 bg-white/40 rounded-r" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Screen content */}
+                <div className="h-[460px] sm:h-[520px] lg:h-[580px] xl:h-[660px] overflow-y-auto scrollbar-none relative">
+                  <div
+                    className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
+                    style={{
+                      backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)`,
+                    }}
+                  />
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={SCREENS[activeIndex].id}
+                      initial={{ opacity: 0, y: 60 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -60 }}
+                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <ActiveScreen />
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Bottom nav */}
+                <div className="h-12 border-t border-white/[0.06] flex items-center justify-around px-2 bg-[hsl(240,10%,5%)]">
+                  {SCREENS.slice(0, 5).map((screen, i) => {
+                    const Icon = screen.icon;
+                    const isActive = i === activeIndex || (activeIndex >= 5 && i === 0);
+                    return (
+                      <button
+                        key={screen.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          goTo(i);
+                        }}
+                        className="flex flex-col items-center gap-[2px] py-1 px-1.5 transition-all"
+                      >
+                        <motion.div
+                          animate={isActive ? { scale: [1, 1.15, 1] } : {}}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Icon
+                            className="w-[14px] h-[14px] transition-colors duration-300"
+                            style={{ color: isActive ? screen.color : "rgba(255,255,255,0.25)" }}
+                          />
+                        </motion.div>
+                        <span
+                          className="text-[6px] font-medium transition-colors duration-300"
+                          style={{ color: isActive ? screen.color : "rgba(255,255,255,0.2)" }}
+                        >
+                          {screen.label}
+                        </span>
+                        {isActive && (
+                          <motion.div
+                            layoutId="navDotPhone"
+                            className="w-0.5 h-0.5 rounded-full"
+                            style={{ backgroundColor: screen.color }}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Home indicator */}
+                <div className="flex justify-center py-1.5 bg-[hsl(240,10%,5%)]">
+                  <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
+                </div>
+
+                {/* Hover CTA overlay */}
+                <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow"
+                  >
+                    <ArrowRight className="w-6 h-6 text-accent-foreground" />
+                  </motion.div>
+                  <p className="text-white text-base font-bold tracking-tight">Try it live</p>
+                  <p className="text-white/50 text-xs">Create a free account in 2 min</p>
+                </div>
+              </motion.div>
             </motion.div>
-            <p className="text-white text-base font-bold tracking-tight">Try it live</p>
-            <p className="text-white/50 text-xs">Create a free account in 2 min</p>
-          </div>
-        </motion.div>
-      </motion.div>
+          </motion.div>
+        ) : (
+          /* ═══ Laptop Frame ═══ */
+          <motion.div
+            key="laptop-device"
+            initial={{ opacity: 0, scale: 0.8, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.85, y: 20 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <motion.div
+              animate={{ y: [0, -4, 0] }}
+              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+              className="relative will-change-transform"
+              style={{ transform: "translateZ(0)", perspective: "1200px" }}
+            >
+              {/* Glow */}
+              <div
+                className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none transition-all duration-700"
+                style={{ backgroundColor: currentColor + "10" }}
+              />
+              <div
+                className="absolute -inset-10 rounded-full blur-[70px] pointer-events-none transition-all duration-700"
+                style={{ backgroundColor: currentColor + "06" }}
+              />
+
+              <motion.div
+                className="relative cursor-pointer group/laptop"
+                onClick={() => navigate("/auth")}
+                whileHover={{
+                  rotateY: -2,
+                  rotateX: 1,
+                  scale: 1.01,
+                  transition: { duration: 0.4, ease: "easeOut" },
+                }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                {/* Laptop screen */}
+                <div
+                  className="relative w-[340px] sm:w-[480px] md:w-[560px] lg:w-[640px] xl:w-[720px] rounded-t-xl border-[4px] border-b-0 overflow-hidden"
+                  style={{
+                    borderColor: "hsl(240, 6%, 18%)",
+                    background: "hsl(240, 10%, 6%)",
+                  }}
+                >
+                  {/* Camera notch / top bezel */}
+                  <div className="h-5 bg-[hsl(240,6%,14%)] flex items-center justify-center relative">
+                    <div className="w-2 h-2 rounded-full bg-[hsl(240,6%,22%)] border border-[hsl(240,6%,28%)]" />
+                    {/* Traffic lights */}
+                    <div className="absolute left-3 flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500/60" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/60" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500/60" />
+                    </div>
+                    {/* URL bar hint */}
+                    <div className="absolute right-3 flex items-center gap-1">
+                      <div className="w-16 h-2 rounded bg-white/[0.06] flex items-center justify-center">
+                        <span className="text-[5px] text-white/20 font-mono">exosky.app</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop layout: sidebar + content */}
+                  <div className="flex h-[280px] sm:h-[340px] md:h-[380px] lg:h-[420px] xl:h-[460px]">
+                    {/* Sidebar */}
+                    <DesktopSidebar activeScreenId={SCREENS[activeIndex].id} />
+
+                    {/* Main content */}
+                    <div className="flex-1 overflow-y-auto scrollbar-none relative">
+                      {/* Color wash */}
+                      <div
+                        className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
+                        style={{
+                          backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)`,
+                        }}
+                      />
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={SCREENS[activeIndex].id + "-desktop"}
+                          initial={{ opacity: 0, y: 40 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -40 }}
+                          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          <ActiveScreen />
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Laptop hinge */}
+                <div
+                  className="w-full h-[3px] rounded-b-sm"
+                  style={{ background: "linear-gradient(to bottom, hsl(240,6%,20%), hsl(240,6%,14%))" }}
+                />
+
+                {/* Keyboard base — trapezoidal wedge */}
+                <div className="relative flex justify-center">
+                  <div
+                    className="h-3 sm:h-4 rounded-b-lg"
+                    style={{
+                      width: "108%",
+                      marginLeft: "-4%",
+                      background: "linear-gradient(to bottom, hsl(240,6%,16%), hsl(240,6%,12%))",
+                      borderLeft: "1px solid hsl(240,6%,20%)",
+                      borderRight: "1px solid hsl(240,6%,20%)",
+                      borderBottom: "1px solid hsl(240,6%,20%)",
+                    }}
+                  >
+                    {/* Trackpad hint */}
+                    <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-12 sm:w-16 h-1.5 sm:h-2 rounded-sm border border-white/[0.06] bg-white/[0.02]" />
+                  </div>
+                </div>
+
+                {/* Shadow base */}
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[90%] h-4 bg-black/30 blur-xl rounded-full" />
+
+                {/* Hover CTA overlay */}
+                <div className="absolute inset-0 rounded-xl bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/laptop:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/laptop:pointer-events-auto">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow"
+                  >
+                    <ArrowRight className="w-6 h-6 text-accent-foreground" />
+                  </motion.div>
+                  <p className="text-white text-base font-bold tracking-tight">Try it live</p>
+                  <p className="text-white/50 text-xs">Create a free account in 2 min</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Device mode indicator ─── */}
+      <div className="flex items-center gap-3 mt-6">
+        <button
+          onClick={() => { setDeviceMode("phone"); goTo(0); }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            deviceMode === "phone"
+              ? "bg-accent/20 text-accent"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Smartphone className="w-3.5 h-3.5" />
+          Mobile
+        </button>
+        <button
+          onClick={() => { setDeviceMode("laptop"); goTo(0); }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            deviceMode === "laptop"
+              ? "bg-accent/20 text-accent"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Monitor className="w-3.5 h-3.5" />
+          Desktop
+        </button>
+      </div>
 
       {/* ─── Film-style progress timeline ─── */}
-      <div className="flex items-center gap-1 mt-8 w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[340px] xl:max-w-[380px]">
+      <div className="flex items-center gap-1 mt-4 w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[340px] xl:max-w-[380px]">
         {SCREENS.map((screen, i) => (
           <button
             key={screen.id}
@@ -1148,7 +1390,7 @@ export function AppShowcase() {
       {/* Label with icon */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={SCREENS[activeIndex].label}
+          key={SCREENS[activeIndex].label + deviceMode}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
@@ -1166,6 +1408,9 @@ export function AppShowcase() {
           </span>
           <span className="text-[10px] text-muted-foreground/50 font-mono">
             {activeIndex + 1}/{SCREENS.length}
+          </span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+            {deviceMode === "phone" ? "Mobile" : "Desktop"}
           </span>
         </motion.div>
       </AnimatePresence>
