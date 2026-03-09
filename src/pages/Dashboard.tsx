@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 
 const TX_ICON_MAP: Record<string, typeof Send> = {
   send: ArrowUpRight,
