@@ -12,7 +12,7 @@ import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { TransactionPinModal } from "@/components/TransactionPinModal";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWalletOp } from "@/hooks/useWallet";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowRight, QrCode, Users, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
