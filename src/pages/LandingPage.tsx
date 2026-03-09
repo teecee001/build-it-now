@@ -175,10 +175,14 @@ export default function LandingPage() {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 60]);
   const [waitlistCount, setWaitlistCount] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setShowScrollTop(scrollTop > 400);
+      setScrollProgress(docHeight > 0 ? scrollTop / docHeight : 0);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
