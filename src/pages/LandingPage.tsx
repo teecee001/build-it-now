@@ -198,9 +198,8 @@ export default function LandingPage() {
         style={{ opacity: heroOpacity, scale: heroScale }}
         className="relative pt-32 pb-20 px-6 will-change-transform"
       >
-        {/* Ambient glow */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/8 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-40 left-1/4 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+        {/* Ambient glow — simplified for perf */}
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[400px] sm:w-[600px] h-[300px] sm:h-[400px] bg-accent/8 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           {/* Left: Text */}
