@@ -993,13 +993,13 @@ export function AppShowcase() {
       <motion.div
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="relative"
+        className="relative will-change-transform"
+        style={{ transform: "translateZ(0)" }}
       >
-        {/* Dynamic glow */}
-        <motion.div
-          className="absolute -inset-12 rounded-full blur-[80px] pointer-events-none"
-          animate={{ backgroundColor: SCREENS[activeIndex].color + "15" }}
-          transition={{ duration: 0.6 }}
+        {/* Dynamic glow — use CSS transition instead of framer for perf */}
+        <div
+          className="absolute -inset-12 rounded-full blur-[80px] pointer-events-none transition-colors duration-600"
+          style={{ backgroundColor: SCREENS[activeIndex].color + "15" }}
         />
 
         {/* Phone body */}
