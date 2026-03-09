@@ -341,6 +341,13 @@ export type Database = {
             referencedRelation: "countries"
             referencedColumns: ["code"]
           },
+          {
+            foreignKeyName: "profiles_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries_public"
+            referencedColumns: ["code"]
+          },
         ]
       }
       rate_alerts: {
@@ -589,6 +596,13 @@ export type Database = {
             referencedRelation: "countries"
             referencedColumns: ["code"]
           },
+          {
+            foreignKeyName: "user_geo_verification_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries_public"
+            referencedColumns: ["code"]
+          },
         ]
       }
       user_roles: {
@@ -662,7 +676,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      countries_public: {
+        Row: {
+          code: string | null
+          currency_code: string | null
+          features_bill_pay: boolean | null
+          features_cards: boolean | null
+          features_crypto: boolean | null
+          features_forex: boolean | null
+          features_premium: boolean | null
+          features_savings: boolean | null
+          features_send_money: boolean | null
+          features_stocks: boolean | null
+          is_supported: boolean | null
+          name: string | null
+          phone_code: string | null
+          region: string | null
+        }
+        Insert: {
+          code?: string | null
+          currency_code?: string | null
+          features_bill_pay?: boolean | null
+          features_cards?: boolean | null
+          features_crypto?: boolean | null
+          features_forex?: boolean | null
+          features_premium?: boolean | null
+          features_savings?: boolean | null
+          features_send_money?: boolean | null
+          features_stocks?: boolean | null
+          is_supported?: boolean | null
+          name?: string | null
+          phone_code?: string | null
+          region?: string | null
+        }
+        Update: {
+          code?: string | null
+          currency_code?: string | null
+          features_bill_pay?: boolean | null
+          features_cards?: boolean | null
+          features_crypto?: boolean | null
+          features_forex?: boolean | null
+          features_premium?: boolean | null
+          features_savings?: boolean | null
+          features_send_money?: boolean | null
+          features_stocks?: boolean | null
+          is_supported?: boolean | null
+          name?: string | null
+          phone_code?: string | null
+          region?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_waitlist_approved: {
