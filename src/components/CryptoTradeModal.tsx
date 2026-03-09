@@ -7,7 +7,7 @@ import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWalletOp } from "@/hooks/useWallet";
 import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send, Loader2, CheckCircle2, X, QrCode, Camera, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
