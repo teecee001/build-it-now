@@ -933,6 +933,17 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      {/* ─── Scroll to Top ─── */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={showScrollTop ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.25 }}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className={`fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-lg hover:bg-accent/90 transition-colors ${!showScrollTop ? "pointer-events-none" : ""}`}
+        aria-label="Scroll to top"
+      >
+        <ArrowUp className="w-5 h-5" />
+      </motion.button>
     </div>
   );
 }
