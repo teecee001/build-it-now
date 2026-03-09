@@ -180,7 +180,7 @@ export function OnboardingTutorial() {
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                   key={currentStep}
@@ -190,10 +190,10 @@ export function OnboardingTutorial() {
                   exit={{ opacity: 0, x: direction * -40 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <p className="text-foreground/80 text-sm leading-relaxed mb-4">
+                  <p className="text-foreground/80 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4">
                     {step.description}
                   </p>
-                  <div className="flex items-start gap-2.5 bg-accent/10 rounded-xl p-3.5">
+                  <div className="flex items-start gap-2 sm:gap-2.5 bg-accent/10 rounded-lg sm:rounded-xl p-3 sm:p-3.5">
                     <Sparkles className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                     <p className="text-xs text-accent font-medium leading-relaxed">
                       {step.tip}
