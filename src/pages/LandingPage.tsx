@@ -555,12 +555,8 @@ export default function LandingPage() {
               { feature: "Welcome bonus", exo: "$25", bank: "$0" },
               { feature: "150+ currencies", exo: true, bank: false },
             ].map((row, i) => (
-              <motion.div
+              <div
                 key={row.feature}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }}
                 className="grid grid-cols-3 border-t border-border hover:bg-secondary/30 transition-colors"
               >
                 <div className="p-4 sm:p-5 text-sm font-medium text-foreground">{row.feature}</div>
@@ -582,7 +578,7 @@ export default function LandingPage() {
                     <span className="text-sm text-muted-foreground">{String(row.bank)}</span>
                   )}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </motion.div>
 
