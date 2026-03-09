@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { resetOnboarding } from "@/components/OnboardingTutorial";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { useTrustedDevices } from "@/hooks/useTrustedDevices";
 import {
   User, Camera, Save, Loader2, LogOut, Shield, Bell,
   Eye, Moon, Crown, Mail, AtSign, CheckCircle2,
-  KeyRound, Smartphone, Trash2, Monitor, Plus, FileText, Lock, Scale
+  KeyRound, Smartphone, Trash2, Monitor, Plus, FileText, Lock, Scale, Play
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -389,7 +390,21 @@ export default function Settings() {
         </Card>
       </motion.div>
 
-      {/* Sign Out */}
+      {/* Replay Welcome Film */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}>
+        <Button
+          variant="outline"
+          className="w-full gap-2 border-accent/20 text-accent hover:bg-accent/10"
+          onClick={() => {
+            resetOnboarding();
+            navigate("/dashboard");
+            toast.success("Welcome film will play now!");
+          }}
+        >
+          <Play className="w-4 h-4" /> Replay Welcome Film
+        </Button>
+      </motion.div>
+
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
         <Button variant="outline" onClick={signOut} className="w-full border-destructive/20 text-destructive hover:bg-destructive/10 gap-2">
           <LogOut className="w-4 h-4" /> Sign Out
