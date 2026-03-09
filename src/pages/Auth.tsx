@@ -54,7 +54,11 @@ export default function Auth() {
     } else {
       const { error } = await signIn(email, password);
       if (error) {
-        toast.error(error.message);
+        if (error.message === "Invalid login credentials") {
+          toast.error("Invalid email or password. If you just signed up, please check your email to confirm your account first.");
+        } else {
+          toast.error(error.message);
+        }
       }
     }
     setIsSubmitting(false);
