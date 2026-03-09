@@ -101,7 +101,7 @@ export function StatementExport({ open, onClose }: StatementExportProps) {
 
     html += `</tbody></table>
 <div class="footer">
-  <p>X Money · Confidential Account Statement · This document is generated for informational purposes only.</p>
+  <p>Ξ╳oSky · Confidential Account Statement · This document is generated for informational purposes only.</p>
 </div></body></html>`;
     return html;
   };

@@ -285,7 +285,7 @@ export default function KYCVerification() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                By submitting, you certify that the information provided is accurate and authorize X Money to verify your identity in accordance with our{" "}
+                By submitting, you certify that the information provided is accurate and authorize Ξ╳oSky to verify your identity in accordance with our{" "}
                 <a href="/privacy" className="text-accent underline">Privacy Policy</a>.
               </p>
 
