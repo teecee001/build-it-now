@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { resetOnboarding } from "@/components/OnboardingTutorial";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
