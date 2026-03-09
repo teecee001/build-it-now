@@ -203,7 +203,7 @@ export function OnboardingTutorial() {
               </AnimatePresence>
 
               {/* Progress dots */}
-              <div className="flex items-center justify-center gap-1.5 my-6">
+              <div className="flex items-center justify-center gap-1.5 my-4 sm:my-6">
                 {STEPS.map((_, i) => (
                   <button
                     key={i}
