@@ -34,11 +34,15 @@ export default function AdminWaitlist() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
     supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => {
       setIsAdmin(!!data);
     });
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchEntries = async () => {
     setLoading(true);
