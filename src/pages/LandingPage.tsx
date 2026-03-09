@@ -9,7 +9,7 @@ import {
   Globe, Gift, PiggyBank, BarChart3, Smartphone,
   ChevronRight, Star, Lock, Users, Wallet,
   Check, Sparkles, X, HelpCircle,
-  Twitter, Github, Mail
+  Twitter, Github, Mail, ArrowUp
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
