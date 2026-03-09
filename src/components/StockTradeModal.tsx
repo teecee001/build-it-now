@@ -7,7 +7,7 @@ import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useStockHoldings } from "@/hooks/useStockHoldings";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeWalletOp } from "@/hooks/useWallet";
 import { ArrowDownLeft, ArrowUpRight, Loader2, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { STOCK_LIST } from "@/constants/stockList";
