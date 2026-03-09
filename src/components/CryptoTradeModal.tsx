@@ -124,25 +124,17 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
     try {
       if (type === "buy") {
         if (!usdWallet) throw new Error("No USD wallet");
-        await supabase.from("wallets").update({ balance: usdBalance - numAmount }).eq("id", usdWallet.id);
-        await upsertHolding.mutateAsync({ code, amountDelta: cryptoAmount, pricePerUnit: price });
-        await addTransaction.mutateAsync({
-          type: "purchase",
-          amount: -numAmount,
-          description: `Bought ${cryptoAmount.toFixed(6)} ${code} at $${price.toLocaleString()}`,
-          metadata: { crypto: code, crypto_amount: cryptoAmount, price_per_unit: price, action: "buy" },
+        await invokeWalletOp({
+          operation: "crypto_trade", action: "buy", code,
+          amount: numAmount, crypto_amount: cryptoAmount, price, usd_value: numAmount,
         });
         toast.success(`Bought ${cryptoAmount.toFixed(6)} ${code}! 🎉`);
       } else if (type === "sell") {
         if (!usdWallet) throw new Error("No USD wallet");
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
-        await supabase.from("wallets").update({ balance: usdBalance + usdValue }).eq("id", usdWallet.id);
-        await upsertHolding.mutateAsync({ code, amountDelta: -numAmount, pricePerUnit: price });
-        await addTransaction.mutateAsync({
-          type: "purchase",
-          amount: usdValue,
-          description: `Sold ${numAmount.toFixed(6)} ${code} at $${price.toLocaleString()}`,
-          metadata: { crypto: code, crypto_amount: numAmount, price_per_unit: price, action: "sell" },
+        await invokeWalletOp({
+          operation: "crypto_trade", action: "sell", code,
+          amount: numAmount, crypto_amount: numAmount, price, usd_value: usdValue,
         });
         toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
       } else if (type === "send") {

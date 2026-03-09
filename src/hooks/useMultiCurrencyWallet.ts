@@ -93,57 +93,27 @@ export function useMultiCurrencyWallet() {
       fromCurrency: string;
       toCurrency: string;
       amount: number;
-      rate: number; // how many units of toCurrency per 1 unit of fromCurrency
+      rate: number;
     }) => {
       if (!user) throw new Error("Not authenticated");
       const fromWallet = wallets.find(w => w.currency === fromCurrency);
       if (!fromWallet) throw new Error(`No ${fromCurrency} wallet found`);
       if (fromWallet.balance < amount) throw new Error(`Insufficient ${fromCurrency} balance`);
 
-      let toWallet = wallets.find(w => w.currency === toCurrency);
-
-      // Auto-create destination wallet if within tier limit
-      if (!toWallet) {
-        if (wallets.length >= maxCurrencies) {
-          throw new Error(`Your ${tier} account supports up to ${maxCurrencies} currencies. Upgrade to add more.`);
-        }
-        const { data, error } = await supabase
-          .from("wallets")
-          .insert({ user_id: user.id, balance: 0, savings_balance: 0, currency: toCurrency })
-          .select()
-          .single();
-        if (error) throw error;
-        toWallet = data as CurrencyWallet;
+      if (!wallets.find(w => w.currency === toCurrency) && wallets.length >= maxCurrencies) {
+        throw new Error(`Your ${tier} account supports up to ${maxCurrencies} currencies. Upgrade to add more.`);
       }
 
-      const convertedAmount = amount * rate;
-
-      // Deduct from source
-      const { error: deductErr } = await supabase
-        .from("wallets")
-        .update({ balance: fromWallet.balance - amount })
-        .eq("id", fromWallet.id);
-      if (deductErr) throw deductErr;
-
-      // Credit to destination
-      const { error: creditErr } = await supabase
-        .from("wallets")
-        .update({ balance: toWallet.balance + convertedAmount })
-        .eq("id", toWallet.id);
-      if (creditErr) throw creditErr;
-
-      // Log transaction
-      const usdEquivalent = fromCurrency === "USD" ? amount : amount; // simplified
-      await supabase.from("transactions").insert({
-        user_id: user.id,
-        type: "conversion" as any,
-        amount: -Math.abs(usdEquivalent),
-        description: `Converted ${amount.toFixed(2)} ${fromCurrency} → ${convertedAmount.toFixed(4)} ${toCurrency}`,
-        status: "completed" as any,
-        metadata: { from: fromCurrency, to: toCurrency, from_amount: amount, to_amount: convertedAmount, rate } as any,
+      const { invokeWalletOp } = await import("@/hooks/useWallet");
+      const result = await invokeWalletOp({
+        operation: "convert",
+        from_currency: fromCurrency,
+        to_currency: toCurrency,
+        amount,
+        rate,
       });
 
-      return { convertedAmount };
+      return { convertedAmount: result.convertedAmount ?? amount * rate };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["multi-wallets"] });

@@ -51,19 +51,14 @@ function SendMoneyContent() {
       if (!activeWallet) throw new Error(`No ${activeCurrency} wallet found`);
       if (parsedAmount > activeWallet.balance) throw new Error("Insufficient balance");
 
-      // Deduct from active currency wallet
-      const { error: updateErr } = await supabase
-        .from("wallets")
-        .update({ balance: activeWallet.balance - parsedAmount })
-        .eq("id", activeWallet.id);
-      if (updateErr) throw updateErr;
-
-      await addTransaction.mutateAsync({
-        type: "send",
-        amount: -usdAmount,
-        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient}`,
+      await invokeWalletOp({
+        operation: "send",
+        wallet_id: activeWallet.id,
+        amount: parsedAmount,
+        usd_amount: usdAmount,
+        currency: activeCurrency,
         recipient,
-        metadata: { currency: activeCurrency, original_amount: parsedAmount },
+        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient}`,
       });
       setSent(true);
       toast.success(`${formatBalance(parsedAmount)} sent to ${recipient}`);

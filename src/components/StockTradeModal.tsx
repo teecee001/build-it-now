@@ -51,25 +51,17 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
     try {
       if (type === "buy") {
         if (!usdWallet) throw new Error("No USD wallet");
-        await supabase.from("wallets").update({ balance: usdBalance - dollarValue }).eq("id", usdWallet.id);
-        await upsertHolding.mutateAsync({ ticker, sharesDelta: sharesToTrade, pricePerShare: price });
-        await addTransaction.mutateAsync({
-          type: "purchase",
-          amount: -dollarValue,
-          description: `Bought ${sharesToTrade.toFixed(4)} shares of ${ticker} at $${price.toFixed(2)}`,
-          metadata: { stock: ticker, shares: sharesToTrade, price_per_share: price, action: "stock_buy" },
+        await invokeWalletOp({
+          operation: "stock_trade", action: "buy", ticker,
+          shares: sharesToTrade, dollar_value: dollarValue, price,
         });
         toast.success(`Bought ${sharesToTrade.toFixed(4)} shares of ${ticker}! 📈`);
       } else {
         if (!usdWallet) throw new Error("No USD wallet");
         if (currentShares < sharesToTrade) throw new Error(`Insufficient ${ticker} shares`);
-        await supabase.from("wallets").update({ balance: usdBalance + dollarValue }).eq("id", usdWallet.id);
-        await upsertHolding.mutateAsync({ ticker, sharesDelta: -sharesToTrade, pricePerShare: price });
-        await addTransaction.mutateAsync({
-          type: "purchase",
-          amount: dollarValue,
-          description: `Sold ${sharesToTrade.toFixed(4)} shares of ${ticker} at $${price.toFixed(2)}`,
-          metadata: { stock: ticker, shares: sharesToTrade, price_per_share: price, action: "stock_sell" },
+        await invokeWalletOp({
+          operation: "stock_trade", action: "sell", ticker,
+          shares: sharesToTrade, dollar_value: dollarValue, price,
         });
         toast.success(`Sold ${sharesToTrade.toFixed(4)} shares of ${ticker} for $${dollarValue.toFixed(2)} 💰`);
       }
