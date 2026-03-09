@@ -132,31 +132,31 @@ export function OnboardingTutorial() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:px-4"
         onClick={(e) => e.target === e.currentTarget && handleComplete()}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, y: 60 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 60 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full max-w-md"
+          className="w-full sm:max-w-md"
         >
-          <Card className="relative overflow-hidden border-border bg-card shadow-2xl">
+          <Card className="relative overflow-hidden border-border bg-card shadow-2xl rounded-b-none sm:rounded-b-xl max-h-[90dvh] overflow-y-auto">
             {/* Close button */}
             <button
               onClick={handleComplete}
-              className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-1.5 rounded-full bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Header gradient */}
-            <div className={`relative bg-gradient-to-br ${step.gradient} p-8 pb-12`}>
+            <div className={`relative bg-gradient-to-br ${step.gradient} p-5 pb-8 sm:p-8 sm:pb-12`}>
               {/* Step counter */}
-              <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-2 mb-4 sm:mb-6">
                 <ExoLogo size="sm" variant="mark" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Welcome Tour · {currentStep + 1}/{STEPS.length}
                 </span>
               </div>
@@ -171,10 +171,10 @@ export function OnboardingTutorial() {
                   exit={{ opacity: 0, x: direction * -40 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <div className="w-16 h-16 rounded-2xl bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg mb-4">
-                    <Icon className="w-8 h-8 text-foreground" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg mb-3 sm:mb-4">
+                    <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground">{step.title}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">{step.title}</h2>
                 </motion.div>
               </AnimatePresence>
             </div>
