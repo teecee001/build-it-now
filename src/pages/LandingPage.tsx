@@ -939,14 +939,30 @@ export default function LandingPage() {
       </footer>
       {/* ─── Scroll to Top ─── */}
       <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={showScrollTop ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-        transition={{ duration: 0.25 }}
+        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+        animate={showScrollTop ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.8, y: 20 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={`fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-lg hover:bg-accent/90 transition-colors ${!showScrollTop ? "pointer-events-none" : ""}`}
+        className={`fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full flex items-center justify-center group ${!showScrollTop ? "pointer-events-none" : ""}`}
         aria-label="Scroll to top"
       >
-        <ArrowUp className="w-5 h-5" />
+        {/* Progress ring */}
+        <svg className="absolute inset-0 w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20" fill="none" stroke="hsl(var(--border))" strokeWidth="2" opacity="0.3" />
+          <circle
+            cx="24" cy="24" r="20" fill="none"
+            stroke="hsl(var(--accent))"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray={`${2 * Math.PI * 20}`}
+            strokeDashoffset={`${2 * Math.PI * 20 * (1 - scrollProgress)}`}
+            className="transition-all duration-150"
+          />
+        </svg>
+        {/* Inner pill */}
+        <div className="w-9 h-9 rounded-full bg-accent/15 backdrop-blur-sm border border-accent/30 flex items-center justify-center group-hover:bg-accent/25 group-hover:border-accent/50 transition-all duration-200">
+          <ArrowUp className="w-4 h-4 text-accent group-hover:-translate-y-0.5 transition-transform duration-200" />
+        </div>
       </motion.button>
     </div>
   );
