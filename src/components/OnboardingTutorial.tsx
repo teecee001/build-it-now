@@ -252,38 +252,52 @@ function SceneVisual({ visual, accentColor }: { visual: string; accentColor: str
             initial={{ rotateY: 90, opacity: 0 }}
             animate={{ rotateY: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-            className="w-full max-w-[200px]"
+            className="w-full max-w-[210px]"
             style={{ perspective: 800 }}
           >
             <div
-              className="rounded-xl p-4 aspect-[1.586/1] flex flex-col justify-between relative overflow-hidden"
-              style={{ background: `linear-gradient(135deg, hsl(280 50% 20%), hsl(260 60% 10%))` }}
+              className="rounded-2xl p-4 aspect-[1.586/1] flex flex-col justify-between relative overflow-hidden"
+              style={{
+                background: "linear-gradient(135deg, hsl(160 30% 12%), hsl(150 40% 6%))",
+                border: "1px solid hsl(150 30% 20%)",
+              }}
             >
-              <div className="absolute inset-0 opacity-20" style={{
-                backgroundImage: "radial-gradient(circle at 80% 20%, hsl(280 73% 58% / 0.4), transparent 60%)"
+              {/* Accent glow */}
+              <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: "radial-gradient(circle at 20% 80%, hsl(142 71% 45% / 0.4), transparent 50%), radial-gradient(circle at 80% 20%, hsl(160 60% 40% / 0.2), transparent 50%)"
               }} />
-              <div className="flex justify-between items-start relative z-10">
-                <span className="text-[7px] font-bold text-white/50 tracking-widest">EXO</span>
-                <Wifi className="w-3 h-3 text-white/40 rotate-90" />
+              {/* Watermark */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="text-4xl font-bold opacity-[0.06] select-none tracking-tighter text-white">Ξ╳</span>
               </div>
-              <div className="relative z-10">
+              {/* Top row: logo + type */}
+              <div className="relative flex items-start justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-4 rounded bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center">
+                    <span className="text-[6px] font-bold text-white/80 tracking-tighter">Ξ╳</span>
+                  </div>
+                  <span className="text-[8px] font-bold tracking-wider text-white/80">Ξ╳OSKY</span>
+                </div>
+                <span className="text-[7px] font-medium text-white/50">METAL</span>
+              </div>
+              {/* Chip */}
+              <div className="relative">
+                <div className="w-7 h-5 rounded bg-gradient-to-br from-yellow-600/60 to-yellow-800/40 border border-yellow-700/30" />
+              </div>
+              {/* Bottom: number, expiry, visa */}
+              <div className="relative space-y-1.5">
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1 }}
-                  className="text-[9px] font-mono text-white/50 tracking-[0.2em] mb-2"
+                  className="text-[10px] font-mono tracking-[0.15em] text-white/90"
                 >
-                  •••• •••• •••• 4832
+                  •••• 4832
                 </motion.p>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[6px] text-white/30">CARDHOLDER</p>
-                    <p className="text-[8px] font-semibold text-white/80">ALEX JOHNSON</p>
-                  </div>
-                  <div className="flex gap-0.5">
-                    <div className="w-4 h-4 rounded-full bg-red-500/80" />
-                    <div className="w-4 h-4 rounded-full bg-amber-500/80 -ml-1.5" />
-                  </div>
+                <div className="flex items-end justify-between">
+                  <p className="text-[7px] text-white/40">ExoSky Card</p>
+                  <p className="text-[8px] font-mono text-white/80">09/28</p>
+                  <span className="text-[9px] font-bold italic tracking-tighter text-white/60">VISA</span>
                 </div>
               </div>
             </div>
