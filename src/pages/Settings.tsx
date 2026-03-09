@@ -390,7 +390,7 @@ export default function Settings() {
         </Card>
       </motion.div>
 
-      {/* Replay Welcome Film */}
+      {/* Replay Welcome Tutorial */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}>
         <Button
           variant="outline"
@@ -398,10 +398,10 @@ export default function Settings() {
           onClick={() => {
             resetOnboarding();
             navigate("/dashboard");
-            toast.success("Welcome film will play now!");
+            toast.success("Welcome tutorial will play now!");
           }}
         >
-          <Play className="w-4 h-4" /> Replay Welcome Film
+          <Play className="w-4 h-4" /> Replay Welcome Tutorial
         </Button>
       </motion.div>
 
