@@ -1781,6 +1781,7 @@ export function AppShowcase() {
   }, [isPaused, isTransitioning, next]);
 
   const ActiveScreen = SCREEN_COMPONENTS[SCREENS[activeIndex].id];
+  const ActiveDesktopScreen = DESKTOP_SCREEN_COMPONENTS[SCREENS[activeIndex].id];
   const currentColor = SCREENS[activeIndex].color;
 
   return (
