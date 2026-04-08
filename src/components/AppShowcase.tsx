@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,16 +15,61 @@ import {
 
 /* ─── Screen definitions ─── */
 const SCREENS = [
-  { id: "dashboard", label: "Dashboard", icon: Wallet, color: "hsl(142 71% 45%)" },
-  { id: "markets", label: "Markets", icon: TrendingUp, color: "hsl(217 91% 60%)" },
-  { id: "cards", label: "Cards", icon: CreditCard, color: "hsl(280 73% 58%)" },
-  { id: "savings", label: "Savings", icon: PiggyBank, color: "hsl(38 92% 50%)" },
-  { id: "send", label: "Send", icon: Send, color: "hsl(190 90% 50%)" },
-  { id: "analytics", label: "Analytics", icon: BarChart3, color: "hsl(280 70% 55%)" },
-  { id: "wallet", label: "Crypto", icon: Coins, color: "hsl(38 80% 50%)" },
+  { id: "dashboard", label: "Dashboard", icon: Wallet, color: "hsl(142 71% 45%)", hint: "Real-time balance tracking" },
+  { id: "markets", label: "Markets", icon: TrendingUp, color: "hsl(217 91% 60%)", hint: "Live crypto & stock prices" },
+  { id: "cards", label: "Cards", icon: CreditCard, color: "hsl(280 73% 58%)", hint: "Virtual & physical cards" },
+  { id: "savings", label: "Savings", icon: PiggyBank, color: "hsl(38 92% 50%)", hint: "6% APY savings vault" },
+  { id: "send", label: "Send", icon: Send, color: "hsl(190 90% 50%)", hint: "Instant global transfers" },
+  { id: "analytics", label: "Analytics", icon: BarChart3, color: "hsl(280 70% 55%)", hint: "Smart spending insights" },
+  { id: "wallet", label: "Crypto", icon: Coins, color: "hsl(38 80% 50%)", hint: "Multi-asset portfolio" },
 ];
 
-const DURATION = 4500;
+const DURATION = 5000;
+
+/* ─── Animation hooks ─── */
+function useCountUp(target: number, duration = 1200, delay = 200) {
+  const [value, setValue] = useState(0);
+  const frameRef = useRef<number>();
+  
+  useEffect(() => {
+    setValue(0);
+    const timeout = setTimeout(() => {
+      const start = performance.now();
+      const animate = (now: number) => {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setValue(target * eased);
+        if (progress < 1) frameRef.current = requestAnimationFrame(animate);
+      };
+      frameRef.current = requestAnimationFrame(animate);
+    }, delay);
+    return () => {
+      clearTimeout(timeout);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [target, duration, delay]);
+  
+  return value;
+}
+
+function useTypewriter(text: string, speed = 60, delay = 400) {
+  const [displayed, setDisplayed] = useState("");
+  useEffect(() => {
+    setDisplayed("");
+    let i = 0;
+    const timeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        i++;
+        setDisplayed(text.slice(0, i));
+        if (i >= text.length) clearInterval(interval);
+      }, speed);
+      return () => clearInterval(interval);
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [text, speed, delay]);
+  return displayed;
+}
 
 /* ─── Shared animated entry wrapper ─── */
 function Stagger({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -39,13 +84,63 @@ function Stagger({ children, delay = 0 }: { children: React.ReactNode; delay?: n
   );
 }
 
+/* ─── Touch ripple effect ─── */
+function TouchRipple({ x, y, delay = 0 }: { x: string; y: string; delay?: number }) {
+  return (
+    <motion.div
+      className="absolute pointer-events-none z-20"
+      style={{ left: x, top: y }}
+      initial={{ scale: 0, opacity: 0.7 }}
+      animate={{ scale: 2.5, opacity: 0 }}
+      transition={{ delay, duration: 0.8, ease: "easeOut" }}
+    >
+      <div className="w-6 h-6 -ml-3 -mt-3 rounded-full border-2 border-white/40" />
+    </motion.div>
+  );
+}
+
+/* ─── Notification pop-in ─── */
+function NotificationBanner() {
+  return (
+    <motion.div
+      className="absolute top-10 left-3 right-3 z-30 rounded-2xl p-2.5 flex items-center gap-2.5"
+      style={{ background: "rgba(15,15,20,0.92)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)" }}
+      initial={{ y: -60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -60, opacity: 0 }}
+      transition={{ delay: 1.5, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="w-8 h-8 rounded-xl bg-green-500/15 border border-green-500/20 flex items-center justify-center flex-shrink-0">
+        <ArrowDownLeft className="w-3.5 h-3.5 text-green-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-semibold text-white">Deposit received</p>
+        <p className="text-[8px] text-white/40">Just now</p>
+      </div>
+      <span className="text-[11px] font-bold text-green-400 font-mono">+$4,200</span>
+    </motion.div>
+  );
+}
+
 /* ═══════════════════════════════════════════
-   PHONE SCREENS — Production-Ready UI
+   PHONE SCREENS — Cinematic Animated UI
    ═══════════════════════════════════════════ */
 
 function DashboardScreen() {
+  const balance = useCountUp(24856.32, 1400, 300);
+  const usdWallet = useCountUp(12406.32, 1200, 500);
+  const savings = useCountUp(12450.0, 1200, 600);
+
   return (
-    <div className="p-4 space-y-3.5">
+    <div className="p-4 space-y-3.5 relative">
+      {/* Notification */}
+      <AnimatePresence>
+        <NotificationBanner />
+      </AnimatePresence>
+      
+      {/* Touch ripple on Deposit button */}
+      <TouchRipple x="18%" y="58%" delay={2.5} />
+
       <Stagger>
         <div className="flex items-center justify-between">
           <div>
@@ -53,9 +148,13 @@ function DashboardScreen() {
             <p className="text-[15px] font-bold text-white tracking-tight">Alex Johnson</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center">
+            <motion.div 
+              className="w-7 h-7 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center"
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ delay: 1.8, duration: 0.3 }}
+            >
               <Bell className="w-3 h-3 text-white/50" />
-            </div>
+            </motion.div>
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/20 flex items-center justify-center">
               <span className="text-[8px] font-bold text-green-400">AJ</span>
             </div>
@@ -70,18 +169,13 @@ function DashboardScreen() {
             <div className="flex items-center gap-2 mb-1">
               <p className="text-[10px] text-white/50 font-medium">Total Balance</p>
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/10 border border-green-500/15">
-                <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+                <motion.div className="w-1 h-1 rounded-full bg-green-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
                 <span className="text-[7px] font-semibold text-green-400">Live</span>
               </div>
             </div>
-            <motion.p
-              className="text-[26px] font-bold text-white tracking-tight font-mono"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              $24,856.32
-            </motion.p>
+            <p className="text-[26px] font-bold text-white tracking-tight font-mono">
+              ${balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
 
             <div className="grid grid-cols-2 gap-2.5 mt-3">
               <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06]">
@@ -89,7 +183,9 @@ function DashboardScreen() {
                   <Wallet className="w-2.5 h-2.5 text-white/40" />
                   <p className="text-[8px] text-white/40 font-medium">USD Wallet</p>
                 </div>
-                <p className="text-[12px] font-bold text-white font-mono">$12,406.32</p>
+                <p className="text-[12px] font-bold text-white font-mono">
+                  ${usdWallet.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
               </div>
               <div className="p-2.5 rounded-xl bg-green-500/[0.04] border border-green-500/[0.08]">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -97,7 +193,9 @@ function DashboardScreen() {
                   <p className="text-[8px] text-green-400/60 font-medium">Savings</p>
                   <span className="text-[6px] px-1 py-0 rounded-full bg-green-500/15 text-green-400 font-bold">6%</span>
                 </div>
-                <p className="text-[12px] font-bold text-white font-mono">$12,450.00</p>
+                <p className="text-[12px] font-bold text-white font-mono">
+                  ${savings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
               </div>
             </div>
 
@@ -141,9 +239,9 @@ function DashboardScreen() {
         ].map((tx, i) => (
           <motion.div
             key={tx.label}
-            initial={{ x: -12, opacity: 0 }}
+            initial={{ x: 30, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 + i * 0.06 }}
+            transition={{ delay: 0.4 + i * 0.1 }}
             className="flex items-center gap-3 py-2 border-b border-white/[0.04] last:border-0"
           >
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
@@ -162,7 +260,7 @@ function DashboardScreen() {
         ))}
       </Stagger>
 
-      <Stagger delay={0.5}>
+      <Stagger delay={0.7}>
         <div className="grid grid-cols-3 gap-2">
           {[
             { icon: CreditCard, label: "Cards", desc: "Visa Debit", color: "text-purple-400", borderColor: "border-purple-500/10" },
@@ -171,9 +269,9 @@ function DashboardScreen() {
           ].map((f, i) => (
             <motion.div
               key={f.label}
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.55 + i * 0.04 }}
+              transition={{ delay: 0.75 + i * 0.06 }}
               className={`p-2.5 rounded-xl border bg-white/[0.02] ${f.borderColor}`}
             >
               <f.icon className={`w-4 h-4 ${f.color} mb-1.5`} />
@@ -188,6 +286,9 @@ function DashboardScreen() {
 }
 
 function MarketsScreen() {
+  const btcPrice = useCountUp(67842.50, 1500, 400);
+  const searchText = useTypewriter("Bitcoin", 80, 800);
+
   return (
     <div className="p-4 space-y-3.5">
       <Stagger>
@@ -197,7 +298,7 @@ function MarketsScreen() {
             <p className="text-[15px] font-bold text-white tracking-tight">Markets</p>
           </div>
           <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/15">
-            <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+            <motion.div className="w-1 h-1 rounded-full bg-green-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
             <span className="text-[8px] font-semibold text-green-400">Live</span>
           </div>
         </div>
@@ -211,12 +312,9 @@ function MarketsScreen() {
             { icon: Globe, label: "Forex" },
             { icon: Gem, label: "Comm." },
           ].map((tab) => (
-            <div
-              key={tab.label}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold ${
-                tab.active ? "bg-white/10 text-white border border-white/[0.08]" : "text-white/30"
-              }`}
-            >
+            <div key={tab.label} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold ${
+              tab.active ? "bg-white/10 text-white border border-white/[0.08]" : "text-white/30"
+            }`}>
               <tab.icon className="w-2.5 h-2.5" />
               {tab.label}
             </div>
@@ -228,7 +326,7 @@ function MarketsScreen() {
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/25" />
           <div className="w-full h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] pl-8 flex items-center">
-            <span className="text-[10px] text-white/20">Search assets...</span>
+            <span className="text-[10px] text-white/60 font-mono">{searchText}<motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.6, repeat: Infinity }} className="text-white/40">|</motion.span></span>
           </div>
         </div>
       </Stagger>
@@ -246,40 +344,44 @@ function MarketsScreen() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[12px] font-bold text-white font-mono">$67,842.50</p>
-              <span className="text-[9px] text-green-400 font-semibold">+5.23%</span>
+              <p className="text-[12px] font-bold text-white font-mono">
+                ${btcPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <motion.span 
+                className="text-[9px] text-green-400 font-semibold"
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >+5.23%</motion.span>
             </div>
           </div>
           <svg viewBox="0 0 220 55" className="w-full h-12">
             <motion.path
               d="M0,42 C15,40 25,38 40,32 C55,26 65,30 85,24 C105,18 120,22 140,16 C160,10 175,14 195,8 C205,5 215,3 220,2"
-              fill="none"
-              stroke="hsl(142 71% 45%)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1.5, delay: 0.2 }}
+              fill="none" stroke="hsl(142 71% 45%)" strokeWidth="1.5" strokeLinecap="round"
+              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 2, delay: 0.3, ease: "easeInOut" }}
             />
             <motion.path
               d="M0,42 C15,40 25,38 40,32 C55,26 65,30 85,24 C105,18 120,22 140,16 C160,10 175,14 195,8 C205,5 215,3 220,2 L220,55 L0,55 Z"
-              fill="url(#mktGrad)"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.15 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
+              fill="url(#mktGrad)" initial={{ opacity: 0 }} animate={{ opacity: 0.15 }} transition={{ duration: 0.6, delay: 1.5 }}
+            />
+            {/* Animated dot at chart tip */}
+            <motion.circle
+              cx="220" cy="2" r="2.5" fill="hsl(142 71% 45%)"
+              initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.2, duration: 0.3 }}
+            />
+            <motion.circle
+              cx="220" cy="2" r="5" fill="none" stroke="hsl(142 71% 45%)" strokeWidth="1"
+              initial={{ opacity: 0, scale: 0 }} animate={{ opacity: [0, 0.5, 0], scale: [0.5, 2, 2.5] }} transition={{ delay: 2.2, duration: 1.5, repeat: Infinity }}
             />
             <defs>
               <linearGradient id="mktGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(142 71% 45%)" />
-                <stop offset="100%" stopColor="transparent" />
+                <stop offset="0%" stopColor="hsl(142 71% 45%)" /><stop offset="100%" stopColor="transparent" />
               </linearGradient>
             </defs>
           </svg>
           <div className="flex gap-1 mt-2">
             {["24H", "7D", "30D", "90D", "1Y"].map((p, i) => (
-              <div key={p} className={`px-2 py-0.5 rounded-md text-[8px] font-semibold ${i === 2 ? "bg-white/10 text-white" : "text-white/25"}`}>
-                {p}
-              </div>
+              <div key={p} className={`px-2 py-0.5 rounded-md text-[8px] font-semibold ${i === 2 ? "bg-white/10 text-white" : "text-white/25"}`}>{p}</div>
             ))}
           </div>
         </div>
@@ -287,17 +389,17 @@ function MarketsScreen() {
 
       <Stagger delay={0.28}>
         {[
-          { code: "ETH", name: "Ethereum", price: "$3,456.78", change: "+3.12%", pos: true },
-          { code: "SOL", name: "Solana", price: "$142.67", change: "+8.43%", pos: true },
-          { code: "BNB", name: "BNB", price: "$612.34", change: "-1.25%", pos: false },
-          { code: "XRP", name: "Ripple", price: "$0.6234", change: "+2.18%", pos: true },
-          { code: "ADA", name: "Cardano", price: "$0.4521", change: "-0.87%", pos: false },
+          { code: "ETH", name: "Ethereum", price: 3456.78, change: "+3.12%", pos: true },
+          { code: "SOL", name: "Solana", price: 142.67, change: "+8.43%", pos: true },
+          { code: "BNB", name: "BNB", price: 612.34, change: "-1.25%", pos: false },
+          { code: "XRP", name: "Ripple", price: 0.6234, change: "+2.18%", pos: true },
+          { code: "ADA", name: "Cardano", price: 0.4521, change: "-0.87%", pos: false },
         ].map((asset, i) => (
           <motion.div
             key={asset.code}
-            initial={{ x: 12, opacity: 0 }}
+            initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.32 + i * 0.06 }}
+            transition={{ delay: 0.4 + i * 0.08 }}
             className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0"
           >
             <div className="flex items-center gap-2.5">
@@ -311,17 +413,19 @@ function MarketsScreen() {
             </div>
             <div className="flex items-center gap-2.5">
               <svg viewBox="0 0 32 12" className="w-8 h-3">
-                <path
+                <motion.path
                   d={`M0,${asset.pos ? 10 : 2} Q8,${asset.pos ? 5 : 8} 16,${asset.pos ? 4 : 6} T32,${asset.pos ? 2 : 10}`}
-                  fill="none"
-                  stroke={asset.pos ? "#22c55e" : "#ef4444"}
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
+                  fill="none" stroke={asset.pos ? "#22c55e" : "#ef4444"} strokeWidth="1.2" strokeLinecap="round"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5 + i * 0.08, duration: 0.6 }}
                 />
               </svg>
               <div className="text-right">
-                <p className="text-[10px] font-semibold text-white font-mono">{asset.price}</p>
-                <p className={`text-[8px] font-semibold ${asset.pos ? "text-green-400" : "text-red-400"}`}>{asset.change}</p>
+                <p className="text-[10px] font-semibold text-white font-mono">${asset.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <motion.p 
+                  className={`text-[8px] font-semibold ${asset.pos ? "text-green-400" : "text-red-400"}`}
+                  animate={{ opacity: [1, 0.6, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}
+                >{asset.change}</motion.p>
               </div>
             </div>
           </motion.div>
@@ -349,21 +453,29 @@ function CardsScreen() {
 
       <Stagger delay={0.1}>
         <motion.div
-          initial={{ rotateY: 50, opacity: 0 }}
+          initial={{ rotateY: 90, opacity: 0 }}
           animate={{ rotateY: 0, opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.7, ease: "easeOut" }}
+          transition={{ delay: 0.2, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transformStyle: "preserve-3d" }}
           className="rounded-2xl p-4 aspect-[1.586/1] flex flex-col justify-between relative overflow-hidden"
-          style={{
+        >
+          <div className="absolute inset-0" style={{
             background: "linear-gradient(145deg, hsl(225 45% 16%), hsl(230 55% 8%))",
             border: "1px solid hsl(225 35% 22%)",
-          }}
-        >
+            borderRadius: "1rem",
+          }} />
           <div className="absolute inset-0 opacity-25" style={{
             backgroundImage: "radial-gradient(circle at 75% 25%, hsl(215 80% 50% / 0.3), transparent 55%)"
           }} />
-          <div className="absolute top-0 left-0 w-full h-full opacity-[0.03]" style={{
-            backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px)"
-          }} />
+          {/* Animated shine sweep */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)",
+            }}
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ delay: 1, duration: 1.5, ease: "easeInOut" }}
+          />
           
           <div className="relative flex items-start justify-between">
             <div className="flex items-center gap-1.5">
@@ -382,9 +494,7 @@ function CardsScreen() {
           <div className="relative space-y-1.5">
             <p className="text-[14px] font-mono tracking-[0.18em] text-white/90">•••• •••• •••• 4829</p>
             <div className="flex items-end justify-between">
-              <div>
-                <p className="text-[7px] text-white/30 uppercase tracking-wider">Midnight Blue</p>
-              </div>
+              <p className="text-[7px] text-white/30 uppercase tracking-wider">Midnight Blue</p>
               <p className="text-[10px] font-mono text-white/70">12/28</p>
               <span className="text-[11px] font-bold italic tracking-tight text-white/50">VISA</span>
             </div>
@@ -418,13 +528,8 @@ function CardsScreen() {
             { icon: Eye, label: "Details", color: "text-white/50" },
             { icon: Star, label: "Rewards", color: "text-amber-400" },
           ].map((ctrl, i) => (
-            <motion.div
-              key={ctrl.label}
-              initial={{ y: 8, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.45 + i * 0.05 }}
-              className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]"
-            >
+            <motion.div key={ctrl.label} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.45 + i * 0.05 }}
+              className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
               <ctrl.icon className={`w-3.5 h-3.5 ${ctrl.color}`} />
               <span className="text-[8px] text-white/40 font-medium">{ctrl.label}</span>
             </motion.div>
@@ -440,25 +545,14 @@ function CardsScreen() {
           { category: "Transport", amount: "$67.00", pct: 10, color: "hsl(200 70% 50%)" },
           { category: "Subscriptions", amount: "$42.97", pct: 7, color: "hsl(142 71% 45%)" },
         ].map((cat, i) => (
-          <motion.div
-            key={cat.category}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 + i * 0.06 }}
-            className="mb-2.5"
-          >
+          <motion.div key={cat.category} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 + i * 0.06 }} className="mb-2.5">
             <div className="flex justify-between text-[9px] mb-1">
               <span className="text-white/60 font-medium">{cat.category}</span>
               <span className="text-white/80 font-semibold font-mono">{cat.amount}</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/[0.06]">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: cat.color }}
-                initial={{ width: 0 }}
-                animate={{ width: `${cat.pct}%` }}
-                transition={{ delay: 0.7 + i * 0.06, duration: 0.5 }}
-              />
+              <motion.div className="h-full rounded-full" style={{ background: cat.color }}
+                initial={{ width: 0 }} animate={{ width: `${cat.pct}%` }} transition={{ delay: 0.7 + i * 0.06, duration: 0.8, ease: "easeOut" }} />
             </div>
           </motion.div>
         ))}
@@ -468,6 +562,9 @@ function CardsScreen() {
 }
 
 function SavingsScreen() {
+  const savingsBalance = useCountUp(12450.0, 1200, 300);
+  const interestAccruing = useCountUp(2.05, 2000, 1000);
+
   return (
     <div className="p-4 space-y-3.5">
       <Stagger>
@@ -485,14 +582,22 @@ function SavingsScreen() {
           <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-green-500/[0.06] to-transparent pointer-events-none rounded-full -translate-y-6 translate-x-6" />
           <div className="relative">
             <p className="text-[10px] text-white/50 mb-1 font-medium">Savings Balance</p>
-            <motion.p
-              className="text-[26px] font-bold text-white tracking-tight font-mono"
+            <p className="text-[26px] font-bold text-white tracking-tight font-mono">
+              ${savingsBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+
+            {/* Live interest accruing indicator */}
+            <motion.div
+              className="flex items-center gap-1.5 mt-1"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 1.2 }}
             >
-              $12,450.00
-            </motion.p>
+              <motion.div className="w-1.5 h-1.5 rounded-full bg-green-400" animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 2, repeat: Infinity }} />
+              <span className="text-[9px] text-green-400 font-mono font-semibold">
+                +${interestAccruing.toFixed(2)} earned today
+              </span>
+            </motion.div>
 
             <div className="grid grid-cols-3 gap-2 mt-3">
               {[
@@ -500,13 +605,8 @@ function SavingsScreen() {
                 { label: "Monthly", value: "+$62.25", icon: TrendingUp },
                 { label: "Yearly", value: "+$747.00", icon: Percent },
               ].map((e, i) => (
-                <motion.div
-                  key={e.label}
-                  initial={{ y: 8, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 + i * 0.06 }}
-                  className="p-2.5 rounded-xl bg-green-500/[0.06] border border-green-500/[0.08] text-center"
-                >
+                <motion.div key={e.label} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.06 }}
+                  className="p-2.5 rounded-xl bg-green-500/[0.06] border border-green-500/[0.08] text-center">
                   <e.icon className="w-3 h-3 text-green-400/70 mx-auto mb-1" />
                   <p className="text-[8px] text-white/40">{e.label}</p>
                   <p className="text-[10px] font-bold text-green-400 font-mono">{e.value}</p>
@@ -526,25 +626,25 @@ function SavingsScreen() {
           <svg viewBox="0 0 220 50" className="w-full h-11">
             <motion.path
               d="M0,45 C25,43 50,40 75,36 C100,32 120,27 145,21 C170,15 190,10 210,6 L220,4"
-              fill="none"
-              stroke="hsl(38 92% 50%)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 1.3, delay: 0.3 }}
+              fill="none" stroke="hsl(38 92% 50%)" strokeWidth="1.5" strokeLinecap="round"
+              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.8, delay: 0.3, ease: "easeInOut" }}
             />
             <motion.path
               d="M0,45 C25,43 50,40 75,36 C100,32 120,27 145,21 C170,15 190,10 210,6 L220,4 L220,50 L0,50 Z"
-              fill="url(#savGrad)"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.12 }}
-              transition={{ delay: 0.8, duration: 0.5 }}
+              fill="url(#savGrad)" initial={{ opacity: 0 }} animate={{ opacity: 0.12 }} transition={{ delay: 1.5, duration: 0.5 }}
             />
+            {/* Data points appearing */}
+            {[
+              { cx: 0, cy: 45 }, { cx: 55, cy: 38 }, { cx: 110, cy: 29 },
+              { cx: 165, cy: 18 }, { cx: 220, cy: 4 },
+            ].map((pt, i) => (
+              <motion.circle key={i} cx={pt.cx} cy={pt.cy} r="2" fill="hsl(38 92% 50%)"
+                initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + i * 0.35, duration: 0.3 }} />
+            ))}
             <defs>
               <linearGradient id="savGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(38 92% 50%)" />
-                <stop offset="100%" stopColor="transparent" />
+                <stop offset="0%" stopColor="hsl(38 92% 50%)" /><stop offset="100%" stopColor="transparent" />
               </linearGradient>
             </defs>
           </svg>
@@ -590,8 +690,19 @@ function SavingsScreen() {
 }
 
 function SendScreen() {
+  const typedAmount = useTypewriter("500.00", 100, 500);
+  const [showConfirm, setShowConfirm] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setShowConfirm(true), 3500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="p-4 space-y-3.5">
+    <div className="p-4 space-y-3.5 relative">
+      {/* Touch ripple on Send button */}
+      <TouchRipple x="50%" y="82%" delay={3.2} />
+      
       <Stagger>
         <div className="flex items-center gap-2">
           <Send className="w-4 h-4 text-cyan-400" />
@@ -602,23 +713,29 @@ function SendScreen() {
       <Stagger delay={0.08}>
         <div className="rounded-2xl bg-white/[0.04] border border-white/[0.06] p-5 text-center">
           <p className="text-[10px] text-white/40 mb-1 font-medium">You're sending</p>
-          <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          <div className="text-[30px] font-black text-white font-mono tracking-tight">
+            ${typedAmount}<motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }} className="text-white/30">|</motion.span>
+          </div>
+          <motion.div 
+            className="flex items-center justify-center gap-1.5 mt-1.5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
           >
-            <p className="text-[30px] font-black text-white font-mono tracking-tight">$500.00</p>
-          </motion.div>
-          <div className="flex items-center justify-center gap-1.5 mt-1.5">
             <Globe className="w-3 h-3 text-cyan-400" />
             <span className="text-[10px] text-cyan-400 font-semibold">≈ €462.35 EUR</span>
-          </div>
+          </motion.div>
         </div>
       </Stagger>
 
       <Stagger delay={0.2}>
         <p className="text-[10px] text-white/50 font-semibold">Recipient</p>
-        <div className="flex items-center gap-3 rounded-2xl bg-white/[0.04] border border-white/[0.06] p-3.5">
+        <motion.div 
+          className="flex items-center gap-3 rounded-2xl bg-white/[0.04] border border-white/[0.06] p-3.5"
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.4 }}
+        >
           <div className="w-10 h-10 rounded-full bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center">
             <span className="text-[11px] font-bold text-cyan-400">SM</span>
           </div>
@@ -627,7 +744,7 @@ function SendScreen() {
             <p className="text-[9px] text-white/30">@sarahm · Berlin, Germany</p>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-white/15" />
-        </div>
+        </motion.div>
       </Stagger>
 
       <Stagger delay={0.3}>
@@ -639,13 +756,8 @@ function SendScreen() {
             { initials: "AR", name: "Aisha", color: "bg-purple-500/15 text-purple-400 border-purple-500/20" },
             { initials: "MK", name: "Mike", color: "bg-amber-500/15 text-amber-400 border-amber-500/20" },
           ].map((c, i) => (
-            <motion.div
-              key={c.name}
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.35 + i * 0.05 }}
-              className="flex flex-col items-center gap-1.5"
-            >
+            <motion.div key={c.name} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.4 + i * 0.07, type: "spring" }}
+              className="flex flex-col items-center gap-1.5">
               <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${c.color}`}>
                 <span className="text-[10px] font-bold">{c.initials}</span>
               </div>
@@ -671,23 +783,40 @@ function SendScreen() {
       </Stagger>
 
       <Stagger delay={0.55}>
-        <motion.div
-          initial={{ y: 12, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="rounded-2xl py-3.5 text-center font-bold text-[12px] text-white flex items-center justify-center gap-2"
-          style={{ background: "linear-gradient(135deg, hsl(190 85% 40%), hsl(200 80% 50%))" }}
-        >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          Send $500.00
-          <ArrowRight className="w-3.5 h-3.5" />
-        </motion.div>
+        <AnimatePresence mode="wait">
+          {showConfirm ? (
+            <motion.div
+              key="confirmed"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="rounded-2xl py-3.5 text-center font-bold text-[12px] text-white flex items-center justify-center gap-2 bg-green-500"
+            >
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}>
+                <ShieldCheck className="w-4 h-4" />
+              </motion.div>
+              Sent successfully!
+            </motion.div>
+          ) : (
+            <motion.div
+              key="sendBtn"
+              className="rounded-2xl py-3.5 text-center font-bold text-[12px] text-white flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(135deg, hsl(190 85% 40%), hsl(200 80% 50%))" }}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Send $500.00
+              <ArrowRight className="w-3.5 h-3.5" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Stagger>
     </div>
   );
 }
 
 function AnalyticsScreen() {
+  const income = useCountUp(4225, 1200, 400);
+  const spending = useCountUp(644.67, 1000, 600);
+
   return (
     <div className="p-4 space-y-3.5">
       <Stagger>
@@ -698,9 +827,7 @@ function AnalyticsScreen() {
           </div>
           <div className="flex gap-1.5">
             {["7D", "30D", "All"].map((t, i) => (
-              <div key={t} className={`px-2.5 py-1 rounded-lg text-[9px] font-semibold ${i === 1 ? "bg-white/10 text-white border border-white/[0.08]" : "text-white/30"}`}>
-                {t}
-              </div>
+              <div key={t} className={`px-2.5 py-1 rounded-lg text-[9px] font-semibold ${i === 1 ? "bg-white/10 text-white border border-white/[0.08]" : "text-white/30"}`}>{t}</div>
             ))}
           </div>
         </div>
@@ -713,14 +840,18 @@ function AnalyticsScreen() {
               <ArrowDownLeft className="w-3 h-3 text-green-400" />
               <span className="text-[9px] text-green-400 font-semibold">Income</span>
             </div>
-            <p className="text-[16px] font-bold text-green-400 font-mono">$4,225</p>
+            <p className="text-[16px] font-bold text-green-400 font-mono">
+              ${income.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </p>
           </div>
           <div className="p-3.5 rounded-2xl bg-red-500/[0.04] border border-red-500/[0.1]">
             <div className="flex items-center gap-1.5 mb-1.5">
               <ArrowUpRight className="w-3 h-3 text-red-400" />
               <span className="text-[9px] text-red-400 font-semibold">Spending</span>
             </div>
-            <p className="text-[16px] font-bold text-red-400 font-mono">$644.67</p>
+            <p className="text-[16px] font-bold text-red-400 font-mono">
+              ${spending.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
           </div>
         </div>
       </Stagger>
@@ -731,19 +862,19 @@ function AnalyticsScreen() {
             <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(280 70% 55%)" strokeWidth="7"
               strokeDasharray="62.8 94.2" strokeDashoffset="0" transform="rotate(-90 30 30)"
               initial={{ strokeDashoffset: 157 }} animate={{ strokeDashoffset: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }} />
+              transition={{ delay: 0.3, duration: 1 }} />
             <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(38 92% 50%)" strokeWidth="7"
               strokeDasharray="43.9 113.1" strokeDashoffset="-62.8" transform="rotate(-90 30 30)"
               initial={{ strokeDashoffset: 94.2 }} animate={{ strokeDashoffset: -62.8 }}
-              transition={{ delay: 0.5, duration: 0.7 }} />
+              transition={{ delay: 0.6, duration: 0.8 }} />
             <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(200 70% 50%)" strokeWidth="7"
               strokeDasharray="15.7 141.3" strokeDashoffset="-106.7" transform="rotate(-90 30 30)"
               initial={{ strokeDashoffset: 50.3 }} animate={{ strokeDashoffset: -106.7 }}
-              transition={{ delay: 0.7, duration: 0.5 }} />
+              transition={{ delay: 0.9, duration: 0.6 }} />
             <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(142 71% 45%)" strokeWidth="7"
               strokeDasharray="12.6 144.4" strokeDashoffset="-122.4" transform="rotate(-90 30 30)"
               initial={{ strokeDashoffset: 34.6 }} animate={{ strokeDashoffset: -122.4 }}
-              transition={{ delay: 0.9, duration: 0.4 }} />
+              transition={{ delay: 1.1, duration: 0.5 }} />
           </svg>
           <div className="space-y-2 flex-1">
             {[
@@ -753,26 +884,21 @@ function AnalyticsScreen() {
               { label: "Shopping", pct: "8%", color: "bg-green-500" },
             ].map((cat) => (
               <div key={cat.label} className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${cat.color}`} />
-                <span className="text-[9px] text-white/60 flex-1 font-medium">{cat.label}</span>
-                <span className="text-[9px] text-white/80 font-semibold">{cat.pct}</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${cat.color}`} />
+                <span className="text-[9px] text-white/50 flex-1">{cat.label}</span>
+                <span className="text-[9px] text-white/70 font-mono font-semibold">{cat.pct}</span>
               </div>
             ))}
           </div>
         </div>
       </Stagger>
 
-      <Stagger delay={0.4}>
+      <Stagger delay={0.45}>
         <p className="text-[10px] text-white/50 font-semibold mb-2">Weekly Spending</p>
-        <div className="flex items-end justify-between gap-1.5 h-[72px] px-1">
+        <div className="flex items-end justify-between gap-2 h-[72px] px-1">
           {[
-            { day: "Mon", h: 55 },
-            { day: "Tue", h: 35 },
-            { day: "Wed", h: 75 },
-            { day: "Thu", h: 40 },
-            { day: "Fri", h: 90 },
-            { day: "Sat", h: 60 },
-            { day: "Sun", h: 25 },
+            { day: "Mon", h: 55 }, { day: "Tue", h: 35 }, { day: "Wed", h: 75 }, { day: "Thu", h: 40 },
+            { day: "Fri", h: 90 }, { day: "Sat", h: 60 }, { day: "Sun", h: 25 },
           ].map((bar, i) => (
             <div key={bar.day} className="flex-1 flex flex-col items-center gap-1">
               <motion.div
@@ -780,9 +906,9 @@ function AnalyticsScreen() {
                 style={{ background: i === 4 ? "hsl(280 70% 55%)" : "hsl(280 70% 55% / 0.25)" }}
                 initial={{ height: 0 }}
                 animate={{ height: `${bar.h}%` }}
-                transition={{ delay: 0.5 + i * 0.05, duration: 0.4 }}
+                transition={{ delay: 0.55 + i * 0.06, duration: 0.6, ease: "easeOut" }}
               />
-              <span className="text-[7px] text-white/30 font-medium">{bar.day}</span>
+              <span className="text-[8px] text-white/30 font-medium">{bar.day}</span>
             </div>
           ))}
         </div>
@@ -792,6 +918,8 @@ function AnalyticsScreen() {
 }
 
 function CryptoWalletScreen() {
+  const portfolioValue = useCountUp(8234.56, 1400, 300);
+
   return (
     <div className="p-4 space-y-3.5">
       <Stagger>
@@ -801,7 +929,7 @@ function CryptoWalletScreen() {
             <p className="text-[15px] font-bold text-white tracking-tight">Crypto Wallet</p>
           </div>
           <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/15">
-            <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+            <motion.div className="w-1 h-1 rounded-full bg-green-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
             <span className="text-[8px] font-semibold text-green-400">Live</span>
           </div>
         </div>
@@ -812,14 +940,9 @@ function CryptoWalletScreen() {
           <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-amber-500/[0.05] to-transparent pointer-events-none rounded-full -translate-y-6 translate-x-6" />
           <div className="relative">
             <p className="text-[10px] text-white/50 font-medium mb-1">Portfolio Value</p>
-            <motion.p
-              className="text-[24px] font-bold text-white font-mono tracking-tight"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              $8,234.56
-            </motion.p>
+            <p className="text-[24px] font-bold text-white font-mono tracking-tight">
+              ${portfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
             <p className="text-[9px] text-white/30 font-mono mt-0.5">USD Balance: $12,406.32</p>
 
             <div className="grid grid-cols-4 gap-2 mt-3.5">
@@ -829,13 +952,8 @@ function CryptoWalletScreen() {
                 { icon: ArrowRightLeft, label: "Swap", color: "bg-blue-500/10 text-blue-400 border-blue-500/15" },
                 { icon: Send, label: "Send", color: "bg-amber-500/10 text-amber-400 border-amber-500/15" },
               ].map((a, i) => (
-                <motion.div
-                  key={a.label}
-                  initial={{ y: 6, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 + i * 0.05 }}
-                  className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border ${a.color}`}
-                >
+                <motion.div key={a.label} initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.05 }}
+                  className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border ${a.color}`}>
                   <a.icon className="w-3.5 h-3.5" />
                   <span className="text-[8px] font-bold uppercase tracking-wider">{a.label}</span>
                 </motion.div>
@@ -851,15 +969,15 @@ function CryptoWalletScreen() {
           <PieChart className="w-3 h-3 text-white/20" />
         </div>
         {[
-          { code: "BTC", name: "Bitcoin", amount: "0.084521", value: "$5,734.12", pct: "69.6%", change: "+5.2%" },
-          { code: "ETH", name: "Ethereum", amount: "0.543200", value: "$1,878.32", pct: "22.8%", change: "+3.1%" },
-          { code: "SOL", name: "Solana", amount: "4.350000", value: "$620.62", pct: "7.5%", change: "+8.4%" },
+          { code: "BTC", name: "Bitcoin", amount: "0.084521", value: 5734.12, pct: "69.6%", change: "+5.2%" },
+          { code: "ETH", name: "Ethereum", amount: "0.543200", value: 1878.32, pct: "22.8%", change: "+3.1%" },
+          { code: "SOL", name: "Solana", amount: "4.350000", value: 620.62, pct: "7.5%", change: "+8.4%" },
         ].map((h, i) => (
           <motion.div
             key={h.code}
-            initial={{ x: -10, opacity: 0 }}
+            initial={{ x: -15, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.35 + i * 0.07 }}
+            transition={{ delay: 0.4 + i * 0.1 }}
             className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0"
           >
             <div className="flex items-center gap-2.5">
@@ -873,11 +991,15 @@ function CryptoWalletScreen() {
             </div>
             <div className="flex items-center gap-2">
               <svg viewBox="0 0 30 10" className="w-7 h-3">
-                <path d="M0,8 Q7,4 15,3 T30,1" fill="none" stroke="#22c55e" strokeWidth="1.2" strokeLinecap="round" />
+                <motion.path d="M0,8 Q7,4 15,3 T30,1" fill="none" stroke="#22c55e" strokeWidth="1.2" strokeLinecap="round"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5 + i * 0.1, duration: 0.7 }} />
               </svg>
               <div className="text-right">
-                <p className="text-[10px] font-bold text-white font-mono">{h.value}</p>
-                <p className="text-[8px] text-green-400 font-semibold">{h.change}</p>
+                <p className="text-[10px] font-bold text-white font-mono">${h.value.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+                <motion.p className="text-[8px] text-green-400 font-semibold"
+                  animate={{ opacity: [1, 0.5, 1] }}
+                  transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
+                >{h.change}</motion.p>
               </div>
             </div>
           </motion.div>
@@ -903,6 +1025,10 @@ const SCREEN_COMPONENTS: Record<string, React.FC> = {
    ═══════════════════════════════════════════ */
 
 function DesktopDashboardScreen() {
+  const balance = useCountUp(24856.32, 1400, 200);
+  const usdWallet = useCountUp(12406.32, 1200, 400);
+  const savings = useCountUp(12450.0, 1200, 500);
+
   return (
     <div className="p-5 space-y-3.5">
       <Stagger>
@@ -925,9 +1051,11 @@ function DesktopDashboardScreen() {
           <div className="rounded-xl p-3.5 border border-white/[0.08] bg-gradient-to-br from-green-500/[0.04] to-white/[0.02] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-green-500/[0.06] to-transparent pointer-events-none rounded-full -translate-y-4 translate-x-4" />
             <p className="text-[9px] text-white/40 font-medium relative">Total Balance</p>
-            <motion.p className="text-[18px] font-bold text-white font-mono relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>$24,856.32</motion.p>
+            <p className="text-[18px] font-bold text-white font-mono relative">
+              ${balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
             <div className="flex items-center gap-1.5 mt-1.5 relative">
-              <div className="w-1 h-1 rounded-full bg-green-400" />
+              <motion.div className="w-1 h-1 rounded-full bg-green-400" animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 2, repeat: Infinity }} />
               <span className="text-[8px] text-green-400 font-semibold">+2.4% today</span>
             </div>
           </div>
@@ -936,16 +1064,20 @@ function DesktopDashboardScreen() {
               <Wallet className="w-2.5 h-2.5 text-white/35" />
               <p className="text-[9px] text-white/40 font-medium">USD Wallet</p>
             </div>
-            <p className="text-[18px] font-bold text-white font-mono">$12,406.32</p>
+            <p className="text-[18px] font-bold text-white font-mono">
+              ${usdWallet.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
             <p className="text-[8px] text-white/25 mt-1">Available</p>
           </div>
-          <div className="rounded-xl p-3.5 border border-green-500/[0.1] bg-green-500/[0.03] relative overflow-hidden">
+          <div className="rounded-xl p-3.5 border border-green-500/[0.1] bg-green-500/[0.03]">
             <div className="flex items-center gap-1.5 mb-0.5">
               <PiggyBank className="w-2.5 h-2.5 text-green-400/50" />
               <p className="text-[9px] text-green-400/50 font-medium">Savings</p>
               <span className="text-[7px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400 font-bold">6%</span>
             </div>
-            <p className="text-[18px] font-bold text-white font-mono">$12,450</p>
+            <p className="text-[18px] font-bold text-white font-mono">
+              ${savings.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </p>
             <p className="text-[8px] text-green-400/60 font-mono mt-1">+$62.25/mo</p>
           </div>
         </div>
@@ -980,7 +1112,7 @@ function DesktopDashboardScreen() {
               { icon: ArrowDownLeft, label: "Bank Deposit", amount: "+$4,200.00", positive: true },
               { icon: ArrowUpRight, label: "Sent to @sarah", amount: "-$500.00", positive: false },
             ].map((tx, i) => (
-              <motion.div key={tx.label} initial={{ x: -6, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.25 + i * 0.05 }}
+              <motion.div key={tx.label} initial={{ x: 12, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.08 }}
                 className="flex items-center gap-2.5 py-2 border-b border-white/[0.04] last:border-0">
                 <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${tx.positive ? "bg-green-500/10" : "bg-white/[0.04]"}`}>
                   <tx.icon className={`w-3 h-3 ${tx.positive ? "text-green-400" : "text-white/50"}`} />
@@ -1001,7 +1133,7 @@ function DesktopDashboardScreen() {
             { icon: Globe, label: "Multi-Currency", desc: "Hold & convert", color: "text-green-400", borderColor: "border-green-500/10" },
             { icon: Bot, label: "AI Advisor", desc: "Smart insights", color: "text-amber-400", borderColor: "border-amber-500/10" },
           ].map((f, i) => (
-            <motion.div key={f.label} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.35 + i * 0.03 }}
+            <motion.div key={f.label} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.35 + i * 0.04 }}
               className={`p-2.5 rounded-xl border bg-white/[0.02] ${f.borderColor}`}>
               <f.icon className={`w-4 h-4 ${f.color} mb-1.5`} />
               <p className="text-[9px] font-semibold text-white">{f.label}</p>
@@ -1015,12 +1147,15 @@ function DesktopDashboardScreen() {
 }
 
 function DesktopMarketsScreen() {
+  const btcPrice = useCountUp(67842.50, 1500, 300);
+  const searchText = useTypewriter("Search assets...", 50, 600);
+  
   const assets = [
-    { code: "ETH", name: "Ethereum", price: "$3,456.78", change: "+3.12%", pos: true, vol: "$18.2B" },
-    { code: "SOL", name: "Solana", price: "$142.67", change: "+8.43%", pos: true, vol: "$4.1B" },
-    { code: "BNB", name: "BNB", price: "$612.34", change: "-1.25%", pos: false, vol: "$2.8B" },
-    { code: "XRP", name: "Ripple", price: "$0.6234", change: "+2.18%", pos: true, vol: "$1.9B" },
-    { code: "ADA", name: "Cardano", price: "$0.4521", change: "-0.87%", pos: false, vol: "$0.8B" },
+    { code: "ETH", name: "Ethereum", price: 3456.78, change: "+3.12%", pos: true, vol: "$18.2B" },
+    { code: "SOL", name: "Solana", price: 142.67, change: "+8.43%", pos: true, vol: "$4.1B" },
+    { code: "BNB", name: "BNB", price: 612.34, change: "-1.25%", pos: false, vol: "$2.8B" },
+    { code: "XRP", name: "Ripple", price: 0.6234, change: "+2.18%", pos: true, vol: "$1.9B" },
+    { code: "ADA", name: "Cardano", price: 0.4521, change: "-0.87%", pos: false, vol: "$0.8B" },
   ];
 
   return (
@@ -1031,7 +1166,7 @@ function DesktopMarketsScreen() {
             <TrendingUp className="w-4 h-4 text-blue-400" />
             <p className="text-[16px] font-bold text-white tracking-tight">Markets</p>
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/15">
-              <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+              <motion.div className="w-1 h-1 rounded-full bg-green-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
               <span className="text-[8px] font-semibold text-green-400">Live</span>
             </div>
           </div>
@@ -1063,20 +1198,26 @@ function DesktopMarketsScreen() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[12px] font-bold text-white font-mono">$67,842.50</p>
-                <span className="text-[9px] text-green-400 font-semibold">+5.23%</span>
+                <p className="text-[12px] font-bold text-white font-mono">
+                  ${btcPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <motion.span className="text-[9px] text-green-400 font-semibold" animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Infinity }}>+5.23%</motion.span>
               </div>
             </div>
             <svg viewBox="0 0 300 60" className="w-full h-14">
               <motion.path
                 d="M0,50 C10,48 20,46 35,42 C50,38 60,40 80,35 C100,30 115,32 135,26 C155,20 170,24 190,18 C210,12 225,16 245,10 C260,6 275,8 290,4 L300,2"
                 fill="none" stroke="hsl(142 71% 45%)" strokeWidth="1.5" strokeLinecap="round"
-                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.15 }}
+                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 2, delay: 0.2, ease: "easeInOut" }}
               />
               <motion.path
                 d="M0,50 C10,48 20,46 35,42 C50,38 60,40 80,35 C100,30 115,32 135,26 C155,20 170,24 190,18 C210,12 225,16 245,10 C260,6 275,8 290,4 L300,2 L300,60 L0,60 Z"
-                fill="url(#dMktGrad)" initial={{ opacity: 0 }} animate={{ opacity: 0.15 }} transition={{ duration: 0.6, delay: 0.7 }}
+                fill="url(#dMktGrad)" initial={{ opacity: 0 }} animate={{ opacity: 0.15 }} transition={{ duration: 0.6, delay: 1.5 }}
               />
+              <motion.circle cx="300" cy="2" r="3" fill="hsl(142 71% 45%)"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.1 }} />
+              <motion.circle cx="300" cy="2" r="6" fill="none" stroke="hsl(142 71% 45%)" strokeWidth="1"
+                initial={{ opacity: 0 }} animate={{ opacity: [0, 0.4, 0], scale: [0.5, 2, 2.5] }} transition={{ delay: 2.1, duration: 1.5, repeat: Infinity }} />
               <defs>
                 <linearGradient id="dMktGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="hsl(142 71% 45%)" /><stop offset="100%" stopColor="transparent" />
@@ -1092,7 +1233,7 @@ function DesktopMarketsScreen() {
           <div className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-3.5">
             <p className="text-[9px] text-white/40 font-semibold mb-2.5">Top Movers</p>
             {assets.slice(0, 4).map((a, i) => (
-              <motion.div key={a.code} initial={{ x: 8, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 + i * 0.05 }}
+              <motion.div key={a.code} initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.08 }}
                 className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
@@ -1104,8 +1245,9 @@ function DesktopMarketsScreen() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-semibold text-white font-mono">{a.price}</p>
-                  <p className={`text-[8px] font-semibold ${a.pos ? "text-green-400" : "text-red-400"}`}>{a.change}</p>
+                  <p className="text-[10px] font-semibold text-white font-mono">${a.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <motion.p className={`text-[8px] font-semibold ${a.pos ? "text-green-400" : "text-red-400"}`}
+                    animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 3, repeat: Infinity, delay: i * 0.4 }}>{a.change}</motion.p>
                 </div>
               </motion.div>
             ))}
@@ -1119,20 +1261,21 @@ function DesktopMarketsScreen() {
             <span>Asset</span><span>Price</span><span>24h</span><span>Volume</span><span>Chart</span>
           </div>
           {assets.map((a, i) => (
-            <motion.div key={a.code} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 + i * 0.04 }}
-              className="grid grid-cols-5 gap-2 px-3.5 py-2 border-b border-white/[0.03] last:border-0 items-center">
+            <motion.div key={a.code} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.06 }}
+              className="grid grid-cols-5 gap-2 px-3.5 py-2 border-b border-white/[0.04] last:border-0 items-center">
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center">
                   <span className="text-[7px] font-bold text-white/60">{a.code.slice(0, 2)}</span>
                 </div>
-                <span className="text-[10px] font-semibold text-white">{a.name}</span>
+                <span className="text-[9px] font-semibold text-white">{a.name}</span>
               </div>
-              <span className="text-[10px] text-white font-mono">{a.price}</span>
-              <span className={`text-[10px] font-semibold ${a.pos ? "text-green-400" : "text-red-400"}`}>{a.change}</span>
+              <span className="text-[9px] font-mono text-white/80">${a.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className={`text-[9px] font-semibold ${a.pos ? "text-green-400" : "text-red-400"}`}>{a.change}</span>
               <span className="text-[9px] text-white/40 font-mono">{a.vol}</span>
-              <svg viewBox="0 0 40 14" className="w-9 h-3.5">
-                <path d={`M0,${a.pos ? 12 : 2} Q10,${a.pos ? 5 : 8} 20,${a.pos ? 3 : 7} T40,${a.pos ? 2 : 12}`}
-                  fill="none" stroke={a.pos ? "#22c55e" : "#ef4444"} strokeWidth="1.2" strokeLinecap="round" />
+              <svg viewBox="0 0 40 12" className="w-10 h-3">
+                <motion.path d={`M0,${a.pos ? 10 : 2} Q10,${a.pos ? 5 : 8} 20,${a.pos ? 4 : 6} T40,${a.pos ? 2 : 10}`}
+                  fill="none" stroke={a.pos ? "#22c55e" : "#ef4444"} strokeWidth="1.2" strokeLinecap="round"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5 + i * 0.06, duration: 0.6 }} />
               </svg>
             </motion.div>
           ))}
@@ -1152,8 +1295,7 @@ function DesktopCardsScreen() {
             <p className="text-[16px] font-bold text-white tracking-tight">My Cards</p>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.06] border border-white/[0.08]">
-            <Plus className="w-2.5 h-2.5 text-white/50" />
-            <span className="text-[9px] text-white/50 font-semibold">New Card</span>
+            <Plus className="w-2.5 h-2.5 text-white/50" /><span className="text-[9px] text-white/50 font-semibold">New Card</span>
           </div>
         </div>
       </Stagger>
@@ -1161,42 +1303,42 @@ function DesktopCardsScreen() {
       <Stagger delay={0.08}>
         <div className="grid gap-3" style={{ gridTemplateColumns: "2fr 3fr" }}>
           <div className="space-y-2.5">
-            <motion.div initial={{ rotateY: 35, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ delay: 0.12, duration: 0.6 }}
-              className="rounded-2xl p-3.5 aspect-[1.586/1] flex flex-col justify-between relative overflow-hidden"
-              style={{ background: "linear-gradient(145deg, hsl(225 45% 16%), hsl(230 55% 8%))", border: "1px solid hsl(225 35% 22%)" }}>
-              <div className="absolute inset-0 opacity-25" style={{ backgroundImage: "radial-gradient(circle at 75% 25%, hsl(215 80% 50% / 0.3), transparent 55%)" }} />
+            <motion.div
+              initial={{ rotateY: 90, opacity: 0 }}
+              animate={{ rotateY: 0, opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              style={{ transformStyle: "preserve-3d" }}
+              className="rounded-2xl p-4 aspect-[1.586/1] flex flex-col justify-between relative overflow-hidden"
+            >
+              <div className="absolute inset-0 rounded-2xl" style={{
+                background: "linear-gradient(145deg, hsl(225 45% 16%), hsl(230 55% 8%))",
+                border: "1px solid hsl(225 35% 22%)",
+              }} />
+              <div className="absolute inset-0 opacity-25" style={{
+                backgroundImage: "radial-gradient(circle at 75% 25%, hsl(215 80% 50% / 0.3), transparent 55%)"
+              }} />
+              <motion.div className="absolute inset-0 pointer-events-none"
+                style={{ background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)" }}
+                animate={{ x: ["-100%", "200%"] }} transition={{ delay: 1.2, duration: 1.5, ease: "easeInOut" }} />
               <div className="relative flex items-start justify-between">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-4 rounded-md bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center">
-                    <span className="text-[6px] font-bold text-white/90">Ξ╳</span>
+                  <div className="w-5 h-5 rounded-md bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center">
+                    <span className="text-[7px] font-bold text-white/90 tracking-tighter">Ξ╳</span>
                   </div>
-                  <span className="text-[9px] font-bold tracking-widest text-white/70">EXOSKY</span>
+                  <span className="text-[10px] font-bold tracking-widest text-white/70">EXOSKY</span>
                 </div>
-                <span className="text-[7px] text-white/40 tracking-wide">METAL</span>
+                <span className="text-[8px] text-white/40 font-medium tracking-wide">METAL</span>
               </div>
-              <div className="relative"><div className="w-7 h-5 rounded-[3px] bg-gradient-to-br from-yellow-500/50 to-yellow-800/30 border border-yellow-600/25" /></div>
-              <div className="relative space-y-1">
-                <p className="text-[12px] font-mono tracking-[0.15em] text-white/90">•••• •••• •••• 4829</p>
+              <div className="relative"><div className="w-8 h-6 rounded-[3px] bg-gradient-to-br from-yellow-500/50 to-yellow-800/30 border border-yellow-600/25" /></div>
+              <div className="relative space-y-1.5">
+                <p className="text-[14px] font-mono tracking-[0.18em] text-white/90">•••• •••• •••• 4829</p>
                 <div className="flex items-end justify-between">
-                  <p className="text-[7px] text-white/30">Midnight Blue</p>
-                  <p className="text-[9px] font-mono text-white/70">12/28</p>
-                  <span className="text-[10px] font-bold italic text-white/50">VISA</span>
+                  <p className="text-[7px] text-white/30 uppercase tracking-wider">Midnight Blue</p>
+                  <p className="text-[10px] font-mono text-white/70">12/28</p>
+                  <span className="text-[11px] font-bold italic tracking-tight text-white/50">VISA</span>
                 </div>
               </div>
             </motion.div>
-            <div className="rounded-xl p-2.5 flex items-center gap-2 border border-white/[0.06] bg-white/[0.03]">
-              <div className="w-8 h-6 rounded-lg relative overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(160 25% 12%), hsl(150 35% 6%))", border: "1px solid hsl(150 25% 18%)" }}>
-                <Wifi className="w-2.5 h-2.5 text-white/15 rotate-90 absolute bottom-0.5 right-0.5" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] font-semibold text-white">Virtual Card</p>
-                <p className="text-[8px] text-white/30 font-mono">•••• 7612</p>
-              </div>
-              <span className="text-[7px] text-blue-400 font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/15">VIRTUAL</span>
-            </div>
-          </div>
-
-          <div className="space-y-2.5">
             <div className="grid grid-cols-4 gap-2">
               {[
                 { icon: Snowflake, label: "Freeze", color: "text-blue-400" },
@@ -1210,6 +1352,22 @@ function DesktopCardsScreen() {
                   <span className="text-[8px] text-white/40 font-medium">{ctrl.label}</span>
                 </motion.div>
               ))}
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            <div className="rounded-xl p-3 flex items-center justify-between border border-white/[0.06] bg-white/[0.03]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-7 rounded-lg relative overflow-hidden" style={{
+                  background: "linear-gradient(135deg, hsl(160 25% 12%), hsl(150 35% 6%))", border: "1px solid hsl(150 25% 18%)"
+                }}>
+                  <Wifi className="w-2.5 h-2.5 text-white/15 rotate-90 absolute bottom-0.5 right-0.5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold text-white">Virtual Card</p>
+                  <p className="text-[8px] text-white/30 font-mono">•••• 7612</p>
+                </div>
+              </div>
+              <span className="text-[8px] text-blue-400 font-bold px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/15">VIRTUAL</span>
             </div>
             <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5">
               <p className="text-[9px] text-white/40 font-semibold mb-2.5">This Month's Spending</p>
@@ -1226,7 +1384,7 @@ function DesktopCardsScreen() {
                   </div>
                   <div className="h-1.5 rounded-full bg-white/[0.06]">
                     <motion.div className="h-full rounded-full" style={{ background: cat.color }}
-                      initial={{ width: 0 }} animate={{ width: `${cat.pct}%` }} transition={{ delay: 0.4 + i * 0.05, duration: 0.5 }} />
+                      initial={{ width: 0 }} animate={{ width: `${cat.pct}%` }} transition={{ delay: 0.4 + i * 0.05, duration: 0.8, ease: "easeOut" }} />
                   </div>
                 </motion.div>
               ))}
@@ -1239,6 +1397,7 @@ function DesktopCardsScreen() {
 }
 
 function DesktopSavingsScreen() {
+  const savingsBalance = useCountUp(12450.0, 1200, 200);
   return (
     <div className="p-5 space-y-3.5">
       <Stagger>
@@ -1257,7 +1416,9 @@ function DesktopSavingsScreen() {
             <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-green-500/[0.06] to-transparent pointer-events-none rounded-full -translate-y-4 translate-x-4" />
             <div className="relative">
               <p className="text-[10px] text-white/50 mb-1 font-medium">Savings Balance</p>
-              <motion.p className="text-[22px] font-bold text-white font-mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>$12,450.00</motion.p>
+              <p className="text-[22px] font-bold text-white font-mono">
+                ${savingsBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
               <div className="grid grid-cols-3 gap-2 mt-3">
                 {[
                   { label: "Daily", value: "+$2.05", icon: Calendar },
@@ -1321,9 +1482,9 @@ function DesktopSavingsScreen() {
           <svg viewBox="0 0 400 50" className="w-full h-12">
             <motion.path d="M0,45 C30,43 60,41 100,37 C140,33 170,28 210,23 C250,18 280,14 320,10 C350,7 370,5 400,3"
               fill="none" stroke="hsl(38 92% 50%)" strokeWidth="1.5" strokeLinecap="round"
-              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.3, delay: 0.3 }} />
+              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.8, delay: 0.3, ease: "easeInOut" }} />
             <motion.path d="M0,45 C30,43 60,41 100,37 C140,33 170,28 210,23 C250,18 280,14 320,10 C350,7 370,5 400,3 L400,50 L0,50 Z"
-              fill="url(#dSavGrad)" initial={{ opacity: 0 }} animate={{ opacity: 0.12 }} transition={{ delay: 0.8, duration: 0.5 }} />
+              fill="url(#dSavGrad)" initial={{ opacity: 0 }} animate={{ opacity: 0.12 }} transition={{ delay: 1.5, duration: 0.5 }} />
             <defs><linearGradient id="dSavGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(38 92% 50%)" /><stop offset="100%" stopColor="transparent" /></linearGradient></defs>
           </svg>
           <div className="flex justify-between mt-2">
@@ -1338,6 +1499,7 @@ function DesktopSavingsScreen() {
 }
 
 function DesktopSendScreen() {
+  const typedAmount = useTypewriter("500.00", 100, 400);
   return (
     <div className="p-5 space-y-3.5">
       <Stagger>
@@ -1375,18 +1537,16 @@ function DesktopSendScreen() {
               </motion.div>
             ))}
           </div>
-
           <div className="space-y-2.5">
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-4 text-center">
               <p className="text-[10px] text-white/40 mb-1 font-medium">You're sending</p>
-              <motion.p className="text-[28px] font-black text-white font-mono tracking-tight"
-                initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, type: "spring" }}>$500.00</motion.p>
-              <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                <Globe className="w-3 h-3 text-cyan-400" />
-                <span className="text-[10px] text-cyan-400 font-semibold">≈ €462.35 EUR</span>
+              <div className="text-[28px] font-black text-white font-mono tracking-tight">
+                ${typedAmount}<motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }} className="text-white/30">|</motion.span>
               </div>
+              <motion.div className="flex items-center justify-center gap-1.5 mt-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
+                <Globe className="w-3 h-3 text-cyan-400" /><span className="text-[10px] text-cyan-400 font-semibold">≈ €462.35 EUR</span>
+              </motion.div>
             </div>
-
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-3.5 space-y-2">
               <p className="text-[9px] text-white/40 font-semibold mb-1">Transfer Details</p>
               {[
@@ -1401,7 +1561,6 @@ function DesktopSendScreen() {
                 </div>
               ))}
             </div>
-
             <motion.div initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}
               className="rounded-xl py-3 text-center font-bold text-[12px] text-white flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(135deg, hsl(190 85% 40%), hsl(200 80% 50%))" }}>
@@ -1415,6 +1574,9 @@ function DesktopSendScreen() {
 }
 
 function DesktopAnalyticsScreen() {
+  const income = useCountUp(4225, 1200, 300);
+  const spending = useCountUp(644.67, 1000, 500);
+
   return (
     <div className="p-5 space-y-3.5">
       <Stagger>
@@ -1434,10 +1596,10 @@ function DesktopAnalyticsScreen() {
       <Stagger delay={0.06}>
         <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: ArrowDownLeft, label: "Income", value: "$4,225", color: "text-green-400", bg: "bg-green-500/[0.04] border-green-500/[0.1]" },
-            { icon: ArrowUpRight, label: "Spending", value: "$644.67", color: "text-red-400", bg: "bg-red-500/[0.04] border-red-500/[0.1]" },
-            { icon: PiggyBank, label: "Saved", value: "$3,580", color: "text-green-400", bg: "bg-green-500/[0.04] border-green-500/[0.1]" },
-            { icon: TrendingUp, label: "Net +/-", value: "+85%", color: "text-green-400", bg: "bg-white/[0.03] border-white/[0.08]" },
+            { icon: ArrowDownLeft, label: "Income", value: income, fmt: "$0", color: "text-green-400", bg: "bg-green-500/[0.04] border-green-500/[0.1]" },
+            { icon: ArrowUpRight, label: "Spending", value: spending, fmt: "$2", color: "text-red-400", bg: "bg-red-500/[0.04] border-red-500/[0.1]" },
+            { icon: PiggyBank, label: "Saved", value: 3580, fmt: "$0", color: "text-green-400", bg: "bg-green-500/[0.04] border-green-500/[0.1]" },
+            { icon: TrendingUp, label: "Net +/-", value: null, fmt: "", color: "text-green-400", bg: "bg-white/[0.03] border-white/[0.08]" },
           ].map((stat, i) => (
             <motion.div key={stat.label} initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 + i * 0.04 }}
               className={`p-3 rounded-xl border ${stat.bg}`}>
@@ -1445,7 +1607,9 @@ function DesktopAnalyticsScreen() {
                 <stat.icon className={`w-3 h-3 ${stat.color}`} />
                 <span className={`text-[9px] font-semibold ${stat.color}`}>{stat.label}</span>
               </div>
-              <p className={`text-[14px] font-bold font-mono ${stat.color}`}>{stat.value}</p>
+              <p className={`text-[14px] font-bold font-mono ${stat.color}`}>
+                {stat.value !== null ? `$${stat.value.toLocaleString("en-US", { minimumFractionDigits: stat.fmt === "$2" ? 2 : 0, maximumFractionDigits: stat.fmt === "$2" ? 2 : 0 })}` : "+85%"}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -1463,7 +1627,7 @@ function DesktopAnalyticsScreen() {
                 <div key={bar.day} className="flex-1 flex flex-col items-center gap-1">
                   <motion.div className="w-full rounded-t-md"
                     style={{ background: i === 4 ? "hsl(280 70% 55%)" : "hsl(280 70% 55% / 0.25)" }}
-                    initial={{ height: 0 }} animate={{ height: `${bar.h}%` }} transition={{ delay: 0.25 + i * 0.04, duration: 0.4 }} />
+                    initial={{ height: 0 }} animate={{ height: `${bar.h}%` }} transition={{ delay: 0.25 + i * 0.05, duration: 0.6, ease: "easeOut" }} />
                   <span className="text-[8px] text-white/30 font-medium">{bar.day}</span>
                 </div>
               ))}
@@ -1475,28 +1639,24 @@ function DesktopAnalyticsScreen() {
               <svg viewBox="0 0 60 60" className="w-16 h-16 flex-shrink-0">
                 <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(280 70% 55%)" strokeWidth="7"
                   strokeDasharray="62.8 94.2" transform="rotate(-90 30 30)"
-                  initial={{ strokeDashoffset: 157 }} animate={{ strokeDashoffset: 0 }} transition={{ delay: 0.25, duration: 0.8 }} />
+                  initial={{ strokeDashoffset: 157 }} animate={{ strokeDashoffset: 0 }} transition={{ delay: 0.25, duration: 1 }} />
                 <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(38 92% 50%)" strokeWidth="7"
                   strokeDasharray="43.9 113.1" strokeDashoffset="-62.8" transform="rotate(-90 30 30)"
-                  initial={{ strokeDashoffset: 94.2 }} animate={{ strokeDashoffset: -62.8 }} transition={{ delay: 0.45, duration: 0.7 }} />
+                  initial={{ strokeDashoffset: 94.2 }} animate={{ strokeDashoffset: -62.8 }} transition={{ delay: 0.5, duration: 0.8 }} />
                 <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(200 70% 50%)" strokeWidth="7"
                   strokeDasharray="15.7 141.3" strokeDashoffset="-106.7" transform="rotate(-90 30 30)"
-                  initial={{ strokeDashoffset: 50.3 }} animate={{ strokeDashoffset: -106.7 }} transition={{ delay: 0.6, duration: 0.5 }} />
-                <motion.circle cx="30" cy="30" r="25" fill="none" stroke="hsl(142 71% 45%)" strokeWidth="7"
-                  strokeDasharray="12.6 144.4" strokeDashoffset="-122.4" transform="rotate(-90 30 30)"
-                  initial={{ strokeDashoffset: 34.6 }} animate={{ strokeDashoffset: -122.4 }} transition={{ delay: 0.75, duration: 0.4 }} />
+                  initial={{ strokeDashoffset: 50.3 }} animate={{ strokeDashoffset: -106.7 }} transition={{ delay: 0.7, duration: 0.6 }} />
               </svg>
               <div className="space-y-2 flex-1">
                 {[
                   { label: "Transfers", pct: "40%", color: "bg-purple-500" },
                   { label: "Bills", pct: "28%", color: "bg-amber-500" },
                   { label: "Withdrawals", pct: "10%", color: "bg-blue-500" },
-                  { label: "Shopping", pct: "8%", color: "bg-green-500" },
                 ].map((cat) => (
                   <div key={cat.label} className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${cat.color}`} />
-                    <span className="text-[9px] text-white/60 flex-1 font-medium">{cat.label}</span>
-                    <span className="text-[9px] text-white/80 font-semibold">{cat.pct}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${cat.color}`} />
+                    <span className="text-[9px] text-white/50 flex-1">{cat.label}</span>
+                    <span className="text-[9px] text-white/70 font-mono font-semibold">{cat.pct}</span>
                   </div>
                 ))}
               </div>
@@ -1509,6 +1669,7 @@ function DesktopAnalyticsScreen() {
 }
 
 function DesktopCryptoWalletScreen() {
+  const portfolioValue = useCountUp(8234.56, 1400, 200);
   return (
     <div className="p-5 space-y-3.5">
       <Stagger>
@@ -1518,7 +1679,7 @@ function DesktopCryptoWalletScreen() {
             <p className="text-[16px] font-bold text-white tracking-tight">Crypto Wallet</p>
           </div>
           <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/15">
-            <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
+            <motion.div className="w-1 h-1 rounded-full bg-green-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
             <span className="text-[8px] font-semibold text-green-400">Live</span>
           </div>
         </div>
@@ -1527,75 +1688,60 @@ function DesktopCryptoWalletScreen() {
       <Stagger delay={0.08}>
         <div className="grid gap-3" style={{ gridTemplateColumns: "2fr 3fr" }}>
           <div className="rounded-xl p-4 border border-white/[0.08] bg-gradient-to-br from-amber-500/[0.03] to-white/[0.02] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-amber-500/[0.05] to-transparent pointer-events-none rounded-full -translate-y-4 translate-x-4" />
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-amber-500/[0.05] to-transparent pointer-events-none rounded-full -translate-y-4 translate-x-4" />
             <div className="relative">
-              <p className="text-[9px] text-white/40 font-medium mb-1">Portfolio Value</p>
-              <motion.p className="text-[20px] font-bold text-white font-mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>$8,234.56</motion.p>
-              <p className="text-[9px] text-white/30 font-mono mb-3">USD: $12,406.32</p>
-
-              <svg viewBox="0 0 80 80" className="w-[72px] h-[72px] mx-auto">
-                <motion.circle cx="40" cy="40" r="32" fill="none" stroke="hsl(38 80% 50%)" strokeWidth="9"
-                  strokeDasharray="139.9 61.3" transform="rotate(-90 40 40)"
-                  initial={{ strokeDashoffset: 201.1 }} animate={{ strokeDashoffset: 0 }} transition={{ delay: 0.25, duration: 0.8 }} />
-                <motion.circle cx="40" cy="40" r="32" fill="none" stroke="hsl(217 91% 60%)" strokeWidth="9"
-                  strokeDasharray="45.9 155.3" strokeDashoffset="-139.9" transform="rotate(-90 40 40)"
-                  initial={{ strokeDashoffset: 61.3 }} animate={{ strokeDashoffset: -139.9 }} transition={{ delay: 0.4, duration: 0.7 }} />
-                <motion.circle cx="40" cy="40" r="32" fill="none" stroke="hsl(142 71% 45%)" strokeWidth="9"
-                  strokeDasharray="15.1 186.1" strokeDashoffset="-185.8" transform="rotate(-90 40 40)"
-                  initial={{ strokeDashoffset: 15.3 }} animate={{ strokeDashoffset: -185.8 }} transition={{ delay: 0.55, duration: 0.5 }} />
-                <text x="40" y="39" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" fontFamily="monospace">$8,234</text>
-                <text x="40" y="49" textAnchor="middle" fill="white" fontSize="6" opacity="0.35">Total</text>
-              </svg>
-
-              <div className="grid grid-cols-4 gap-1.5 mt-3">
+              <p className="text-[10px] text-white/50 font-medium mb-1">Portfolio Value</p>
+              <p className="text-[22px] font-bold text-white font-mono tracking-tight">
+                ${portfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-[9px] text-white/30 font-mono mt-0.5">USD Balance: $12,406.32</p>
+              <div className="grid grid-cols-2 gap-2 mt-3">
                 {[
                   { icon: ArrowDownLeft, label: "Buy", color: "bg-green-500/10 text-green-400 border-green-500/15" },
                   { icon: ArrowUpRight, label: "Sell", color: "bg-red-500/10 text-red-400 border-red-500/15" },
                   { icon: ArrowRightLeft, label: "Swap", color: "bg-blue-500/10 text-blue-400 border-blue-500/15" },
                   { icon: Send, label: "Send", color: "bg-amber-500/10 text-amber-400 border-amber-500/15" },
                 ].map((a, i) => (
-                  <motion.div key={a.label} initial={{ y: 5, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.35 + i * 0.04 }}
-                    className={`flex flex-col items-center gap-0.5 py-2 rounded-xl border ${a.color}`}>
-                    <a.icon className="w-3 h-3" />
-                    <span className="text-[7px] font-bold uppercase tracking-wider">{a.label}</span>
+                  <motion.div key={a.label} initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25 + i * 0.04 }}
+                    className={`flex flex-col items-center gap-1 py-2 rounded-xl border ${a.color}`}>
+                    <a.icon className="w-3.5 h-3.5" />
+                    <span className="text-[8px] font-bold uppercase tracking-wider">{a.label}</span>
                   </motion.div>
                 ))}
               </div>
             </div>
           </div>
-
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden">
-            <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/[0.06]">
-              <p className="text-[9px] text-white/40 font-semibold">Holdings</p>
+          <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] text-white/50 font-semibold">Holdings</p>
               <PieChart className="w-3 h-3 text-white/20" />
             </div>
-            <div className="grid grid-cols-5 gap-2 px-3.5 py-2 border-b border-white/[0.06] text-[8px] text-white/25 font-semibold">
-              <span>Asset</span><span>Amount</span><span>Value</span><span>Share</span><span>24h</span>
-            </div>
             {[
-              { code: "BTC", name: "Bitcoin", amount: "0.084521", value: "$5,734.12", pct: "69.6%", change: "+5.2%", pos: true },
-              { code: "ETH", name: "Ethereum", amount: "0.543200", value: "$1,878.32", pct: "22.8%", change: "+3.1%", pos: true },
-              { code: "SOL", name: "Solana", amount: "4.350000", value: "$620.62", pct: "7.5%", change: "+8.4%", pos: true },
+              { code: "BTC", name: "Bitcoin", amount: "0.084521", value: 5734.12, pct: "69.6%", change: "+5.2%" },
+              { code: "ETH", name: "Ethereum", amount: "0.543200", value: 1878.32, pct: "22.8%", change: "+3.1%" },
+              { code: "SOL", name: "Solana", amount: "4.350000", value: 620.62, pct: "7.5%", change: "+8.4%" },
             ].map((h, i) => (
-              <motion.div key={h.code} initial={{ x: -6, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.25 + i * 0.06 }}
-                className="grid grid-cols-5 gap-2 px-3.5 py-2.5 border-b border-white/[0.03] last:border-0 items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
-                    <span className="text-[7px] font-bold text-white/60">{h.code.slice(0, 2)}</span>
+              <motion.div key={h.code} initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 + i * 0.08 }}
+                className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/[0.06] flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-white/60">{h.code.slice(0, 2)}</span>
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-white">{h.name}</p>
-                    <p className="text-[7px] text-white/30">{h.code}</p>
+                    <p className="text-[11px] font-semibold text-white">{h.name}</p>
+                    <p className="text-[8px] text-white/30 font-mono">{h.amount} {h.code}</p>
                   </div>
                 </div>
-                <span className="text-[9px] text-white/50 font-mono">{h.amount}</span>
-                <span className="text-[10px] text-white font-mono font-semibold">{h.value}</span>
-                <span className="text-[9px] text-white/40">{h.pct}</span>
-                <div className="flex items-center gap-1.5">
-                  <svg viewBox="0 0 28 10" className="w-6 h-2.5">
-                    <path d="M0,8 Q7,4 14,3 T28,1" fill="none" stroke="#22c55e" strokeWidth="1.2" strokeLinecap="round" />
+                <div className="flex items-center gap-2">
+                  <svg viewBox="0 0 30 10" className="w-7 h-3">
+                    <motion.path d="M0,8 Q7,4 15,3 T30,1" fill="none" stroke="#22c55e" strokeWidth="1.2" strokeLinecap="round"
+                      initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.4 + i * 0.08, duration: 0.7 }} />
                   </svg>
-                  <span className={`text-[9px] font-semibold ${h.pos ? "text-green-400" : "text-red-400"}`}>{h.change}</span>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-white font-mono">${h.value.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+                    <motion.p className="text-[8px] text-green-400 font-semibold"
+                      animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}>{h.change}</motion.p>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -1633,35 +1779,23 @@ const SIDEBAR_ITEMS = [
 function DesktopSidebar({ activeScreenId }: { activeScreenId: string }) {
   return (
     <div className="w-[52px] border-r border-white/[0.06] bg-[hsl(240,8%,5%)] flex flex-col py-3 px-1 flex-shrink-0 items-center">
-      {/* Logo */}
       <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-white/10 to-white/[0.04] flex items-center justify-center mb-4 border border-white/[0.08]">
         <span className="text-[7px] font-bold text-white/80 tracking-tighter">Ξ╳</span>
       </div>
-
-      {/* Nav items — icon-only rail */}
       <div className="space-y-1 flex-1">
         {SIDEBAR_ITEMS.map((item) => {
           const isActive = item.id === activeScreenId;
           return (
-            <div
-              key={item.id}
+            <div key={item.id}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all relative ${
-                isActive
-                  ? "bg-white/10 text-white"
-                  : "text-white/25 hover:text-white/40 hover:bg-white/[0.04]"
-              }`}
-              title={item.label}
-            >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-3 rounded-r-full bg-white" />
-              )}
+                isActive ? "bg-white/10 text-white" : "text-white/25 hover:text-white/40 hover:bg-white/[0.04]"
+              }`} title={item.label}>
+              {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-3 rounded-r-full bg-white" />}
               <item.icon className="w-3.5 h-3.5" />
             </div>
           );
         })}
       </div>
-
-      {/* User avatar */}
       <div className="mt-2 pt-2 border-t border-white/[0.06]">
         <div className="w-7 h-7 rounded-full bg-green-500/15 border border-green-500/20 flex items-center justify-center">
           <span className="text-[7px] font-bold text-green-400">AJ</span>
@@ -1671,8 +1805,40 @@ function DesktopSidebar({ activeScreenId }: { activeScreenId: string }) {
   );
 }
 
+/* ─── Floating context label ─── */
+function FloatingLabel({ text, position }: { text: string; position: string }) {
+  return (
+    <motion.div
+      className={`absolute z-30 pointer-events-none ${position}`}
+      initial={{ opacity: 0, scale: 0.8, y: 5 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: -5 }}
+      transition={{ delay: 0.8, duration: 0.4 }}
+    >
+      <div className="px-2 py-1 rounded-lg text-[8px] font-semibold text-white/80 whitespace-nowrap"
+        style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        {text}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Screen reflection / light sweep ─── */
+function ScreenReflection() {
+  return (
+    <motion.div
+      className="absolute inset-0 pointer-events-none z-20 rounded-[2.2rem]"
+      style={{
+        background: "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.06) 50%, transparent 55%)",
+      }}
+      animate={{ x: ["-150%", "250%"] }}
+      transition={{ duration: 3, repeat: Infinity, repeatDelay: 5, ease: "easeInOut" }}
+    />
+  );
+}
+
 /* ═══════════════════════════════════════════
-   Main Showcase — Phone + Laptop Cycle
+   Main Showcase — Cinematic Demo
    ═══════════════════════════════════════════ */
 export function AppShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1683,6 +1849,9 @@ export function AppShowcase() {
   const progressRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [progress, setProgress] = useState(0);
+
+  // "Now Playing" typewriter
+  const nowPlayingText = useTypewriter(SCREENS[activeIndex].hint, 40, 200);
 
   const goTo = useCallback((index: number) => {
     setIsTransitioning(true);
@@ -1721,20 +1890,28 @@ export function AppShowcase() {
       const pct = Math.min((elapsed / DURATION) * 100, 100);
       progressRef.current = pct;
       setProgress(pct);
-
-      if (pct >= 100) {
-        next();
-      }
+      if (pct >= 100) next();
     }, 40);
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isPaused, isTransitioning, next]);
 
   const ActiveScreen = SCREEN_COMPONENTS[SCREENS[activeIndex].id];
   const ActiveDesktopScreen = DESKTOP_SCREEN_COMPONENTS[SCREENS[activeIndex].id];
   const currentColor = SCREENS[activeIndex].color;
+
+  // Floating label configs per screen
+  const floatingLabels: Record<string, { text: string; position: string }> = {
+    dashboard: { text: "Real-time balance", position: "top-16 left-6" },
+    markets: { text: "Live prices", position: "top-16 right-6" },
+    cards: { text: "Metal card", position: "top-28 left-6" },
+    savings: { text: "6% APY vault", position: "top-16 right-6" },
+    send: { text: "Instant transfer", position: "top-16 left-6" },
+    analytics: { text: "Smart insights", position: "top-16 right-6" },
+    wallet: { text: "Multi-asset portfolio", position: "top-16 left-6" },
+  };
+
+  const currentLabel = floatingLabels[SCREENS[activeIndex].id];
 
   return (
     <div
@@ -1744,12 +1921,11 @@ export function AppShowcase() {
     >
       <AnimatePresence mode="wait">
         {deviceMode === "phone" ? (
-          /* ═══ Phone Frame ═══ */
           <motion.div
             key="phone-device"
             initial={{ opacity: 0, scale: 0.85, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.7, y: 30 }}
+            exit={{ opacity: 0, scale: 0.7, y: 30, rotateY: -15 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <motion.div
@@ -1758,34 +1934,33 @@ export function AppShowcase() {
               className="relative will-change-transform"
               style={{ transform: "translateZ(0)", perspective: "1200px" }}
             >
-              {/* Multi-layered glow */}
-              <div
-                className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none transition-all duration-700"
+              {/* Breathing glow */}
+              <motion.div
+                className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none"
                 style={{ backgroundColor: currentColor + "12" }}
+                animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
-              <div
-                className="absolute -inset-8 rounded-full blur-[60px] pointer-events-none transition-all duration-700"
-                style={{ backgroundColor: currentColor + "08" }}
-              />
+              <div className="absolute -inset-8 rounded-full blur-[60px] pointer-events-none transition-all duration-700"
+                style={{ backgroundColor: currentColor + "08" }} />
 
-              {/* Phone body */}
               <motion.div
                 className="relative w-[260px] sm:w-[300px] lg:w-[340px] xl:w-[380px] rounded-[2.8rem] border-[6px] border-[hsl(240,6%,20%)] bg-[hsl(240,10%,6%)] shadow-2xl shadow-black/60 overflow-hidden group/phone cursor-pointer"
                 onClick={() => navigate("/auth")}
-                whileHover={{
-                  rotateY: -3,
-                  rotateX: 2,
-                  scale: 1.02,
-                  transition: { duration: 0.4, ease: "easeOut" },
-                }}
+                whileHover={{ rotateY: -3, rotateX: 2, scale: 1.02, transition: { duration: 0.4, ease: "easeOut" } }}
                 style={{ transformStyle: "preserve-3d" }}
               >
+                {/* Screen reflection */}
+                <ScreenReflection />
+
                 {/* Edge reflection */}
                 <div className="absolute inset-0 rounded-[2.2rem] pointer-events-none z-30"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%)",
-                  }}
-                />
+                  style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.03) 100%)" }} />
+
+                {/* Floating label */}
+                <AnimatePresence mode="wait">
+                  <FloatingLabel key={SCREENS[activeIndex].id + "-label"} text={currentLabel.text} position={currentLabel.position} />
+                </AnimatePresence>
 
                 {/* Status bar */}
                 <div className="relative h-8 flex items-center justify-between px-6 pt-1 bg-[hsl(240,10%,6%)]">
@@ -1806,12 +1981,8 @@ export function AppShowcase() {
 
                 {/* Screen content */}
                 <div className="h-[460px] sm:h-[520px] lg:h-[580px] xl:h-[660px] overflow-y-auto scrollbar-none relative">
-                  <div
-                    className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
-                    style={{
-                      backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)`,
-                    }}
-                  />
+                  <div className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
+                    style={{ backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)` }} />
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={SCREENS[activeIndex].id}
@@ -1831,36 +2002,17 @@ export function AppShowcase() {
                     const Icon = screen.icon;
                     const isActive = i === activeIndex || (activeIndex >= 5 && i === 0);
                     return (
-                      <button
-                        key={screen.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          goTo(i);
-                        }}
-                        className="flex flex-col items-center gap-[2px] py-1 px-1.5 transition-all"
-                      >
-                        <motion.div
-                          animate={isActive ? { scale: [1, 1.15, 1] } : {}}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <Icon
-                            className="w-[14px] h-[14px] transition-colors duration-300"
-                            style={{ color: isActive ? screen.color : "rgba(255,255,255,0.25)" }}
-                          />
+                      <button key={screen.id} onClick={(e) => { e.stopPropagation(); goTo(i); }}
+                        className="flex flex-col items-center gap-[2px] py-1 px-1.5 transition-all">
+                        <motion.div animate={isActive ? { scale: [1, 1.15, 1] } : {}} transition={{ duration: 0.3 }}>
+                          <Icon className="w-[14px] h-[14px] transition-colors duration-300"
+                            style={{ color: isActive ? screen.color : "rgba(255,255,255,0.25)" }} />
                         </motion.div>
-                        <span
-                          className="text-[6px] font-medium transition-colors duration-300"
-                          style={{ color: isActive ? screen.color : "rgba(255,255,255,0.2)" }}
-                        >
-                          {screen.label}
-                        </span>
+                        <span className="text-[6px] font-medium transition-colors duration-300"
+                          style={{ color: isActive ? screen.color : "rgba(255,255,255,0.2)" }}>{screen.label}</span>
                         {isActive && (
-                          <motion.div
-                            layoutId="navDotPhone"
-                            className="w-0.5 h-0.5 rounded-full"
-                            style={{ backgroundColor: screen.color }}
-                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                          />
+                          <motion.div layoutId="navDotPhone" className="w-0.5 h-0.5 rounded-full"
+                            style={{ backgroundColor: screen.color }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />
                         )}
                       </button>
                     );
@@ -1872,12 +2024,9 @@ export function AppShowcase() {
                   <div className="w-[100px] h-[4px] rounded-full bg-white/15" />
                 </div>
 
-                {/* Hover CTA overlay */}
+                {/* Hover CTA */}
                 <div className="absolute inset-0 rounded-[2.2rem] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/phone:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/phone:pointer-events-auto">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow"
-                  >
+                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow">
                     <ArrowRight className="w-6 h-6 text-accent-foreground" />
                   </motion.div>
                   <p className="text-white text-base font-bold tracking-tight">Try it live</p>
@@ -1890,8 +2039,8 @@ export function AppShowcase() {
           /* ═══ Laptop Frame ═══ */
           <motion.div
             key="laptop-device"
-            initial={{ opacity: 0, scale: 0.8, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.8, y: 30, rotateY: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0, rotateY: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 20 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -1901,45 +2050,29 @@ export function AppShowcase() {
               className="relative will-change-transform"
               style={{ transform: "translateZ(0)", perspective: "1200px" }}
             >
-              {/* Glow */}
-              <div
-                className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none transition-all duration-700"
+              {/* Breathing glow */}
+              <motion.div
+                className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none"
                 style={{ backgroundColor: currentColor + "10" }}
-              />
-              <div
-                className="absolute -inset-10 rounded-full blur-[70px] pointer-events-none transition-all duration-700"
-                style={{ backgroundColor: currentColor + "06" }}
+                animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.05, 0.95] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
 
               <motion.div
                 className="relative cursor-pointer group/laptop"
                 onClick={() => navigate("/auth")}
-                whileHover={{
-                  rotateY: -2,
-                  rotateX: 1,
-                  scale: 1.01,
-                  transition: { duration: 0.4, ease: "easeOut" },
-                }}
+                whileHover={{ rotateY: -2, rotateX: 1, scale: 1.01, transition: { duration: 0.4, ease: "easeOut" } }}
                 style={{ transformStyle: "preserve-3d" }}
               >
-                {/* Laptop screen */}
-                <div
-                  className="relative w-[340px] sm:w-[480px] md:w-[560px] lg:w-[640px] xl:w-[720px] rounded-t-xl border-[4px] border-b-0 overflow-hidden"
-                  style={{
-                    borderColor: "hsl(240, 6%, 18%)",
-                    background: "hsl(240, 10%, 6%)",
-                  }}
-                >
-                  {/* Camera notch / top bezel */}
+                <div className="relative w-[340px] sm:w-[480px] md:w-[560px] lg:w-[640px] xl:w-[720px] rounded-t-xl border-[4px] border-b-0 overflow-hidden"
+                  style={{ borderColor: "hsl(240, 6%, 18%)", background: "hsl(240, 10%, 6%)" }}>
                   <div className="h-5 bg-[hsl(240,6%,14%)] flex items-center justify-center relative">
                     <div className="w-2 h-2 rounded-full bg-[hsl(240,6%,22%)] border border-[hsl(240,6%,28%)]" />
-                    {/* Traffic lights */}
                     <div className="absolute left-3 flex items-center gap-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-red-500/60" />
                       <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/60" />
                       <div className="w-1.5 h-1.5 rounded-full bg-green-500/60" />
                     </div>
-                    {/* URL bar hint */}
                     <div className="absolute right-3 flex items-center gap-1">
                       <div className="w-16 h-2 rounded bg-white/[0.06] flex items-center justify-center">
                         <span className="text-[5px] text-white/20 font-mono">exosky.app</span>
@@ -1947,20 +2080,11 @@ export function AppShowcase() {
                     </div>
                   </div>
 
-                  {/* Desktop layout: sidebar + content */}
                   <div className="flex h-[280px] sm:h-[340px] md:h-[380px] lg:h-[420px] xl:h-[460px]">
-                    {/* Sidebar */}
                     <DesktopSidebar activeScreenId={SCREENS[activeIndex].id} />
-
-                    {/* Main content */}
                     <div className="flex-1 overflow-y-auto scrollbar-none relative">
-                      {/* Color wash */}
-                      <div
-                        className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
-                        style={{
-                          backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)`,
-                        }}
-                      />
+                      <div className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
+                        style={{ backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)` }} />
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={SCREENS[activeIndex].id + "-desktop"}
@@ -1976,39 +2100,22 @@ export function AppShowcase() {
                   </div>
                 </div>
 
-                {/* Laptop hinge */}
-                <div
-                  className="w-full h-[3px] rounded-b-sm"
-                  style={{ background: "linear-gradient(to bottom, hsl(240,6%,20%), hsl(240,6%,14%))" }}
-                />
+                <div className="w-full h-[3px] rounded-b-sm" style={{ background: "linear-gradient(to bottom, hsl(240,6%,20%), hsl(240,6%,14%))" }} />
 
-                {/* Keyboard base */}
                 <div className="relative flex justify-center">
-                  <div
-                    className="h-3 sm:h-4 rounded-b-lg"
-                    style={{
-                      width: "108%",
-                      marginLeft: "-4%",
-                      background: "linear-gradient(to bottom, hsl(240,6%,16%), hsl(240,6%,12%))",
-                      borderLeft: "1px solid hsl(240,6%,20%)",
-                      borderRight: "1px solid hsl(240,6%,20%)",
-                      borderBottom: "1px solid hsl(240,6%,20%)",
-                    }}
-                  >
-                    {/* Trackpad */}
+                  <div className="h-3 sm:h-4 rounded-b-lg" style={{
+                    width: "108%", marginLeft: "-4%",
+                    background: "linear-gradient(to bottom, hsl(240,6%,16%), hsl(240,6%,12%))",
+                    borderLeft: "1px solid hsl(240,6%,20%)", borderRight: "1px solid hsl(240,6%,20%)", borderBottom: "1px solid hsl(240,6%,20%)",
+                  }}>
                     <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-12 sm:w-16 h-1.5 sm:h-2 rounded-sm border border-white/[0.06] bg-white/[0.02]" />
                   </div>
                 </div>
 
-                {/* Shadow */}
                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[90%] h-4 bg-black/30 blur-xl rounded-full" />
 
-                {/* Hover CTA */}
                 <div className="absolute inset-0 rounded-xl bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 opacity-0 group-hover/laptop:opacity-100 transition-opacity duration-300 z-20 pointer-events-none group-hover/laptop:pointer-events-auto">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow"
-                  >
+                  <motion.div whileHover={{ scale: 1.1 }} className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shadow-glow">
                     <ArrowRight className="w-6 h-6 text-accent-foreground" />
                   </motion.div>
                   <p className="text-white text-base font-bold tracking-tight">Try it live</p>
@@ -2022,59 +2129,46 @@ export function AppShowcase() {
 
       {/* ─── Device mode indicator ─── */}
       <div className="flex items-center gap-3 mt-6">
-        <button
-          onClick={() => { setDeviceMode("phone"); goTo(0); }}
+        <button onClick={() => { setDeviceMode("phone"); goTo(0); }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-            deviceMode === "phone"
-              ? "bg-accent/20 text-accent"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Smartphone className="w-3.5 h-3.5" />
-          Mobile
+            deviceMode === "phone" ? "bg-accent/20 text-accent" : "text-muted-foreground hover:text-foreground"
+          }`}>
+          <Smartphone className="w-3.5 h-3.5" />Mobile
         </button>
-        <button
-          onClick={() => { setDeviceMode("laptop"); goTo(0); }}
+        <button onClick={() => { setDeviceMode("laptop"); goTo(0); }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-            deviceMode === "laptop"
-              ? "bg-accent/20 text-accent"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Monitor className="w-3.5 h-3.5" />
-          Desktop
+            deviceMode === "laptop" ? "bg-accent/20 text-accent" : "text-muted-foreground hover:text-foreground"
+          }`}>
+          <Monitor className="w-3.5 h-3.5" />Desktop
         </button>
       </div>
 
       {/* ─── Film-style progress timeline ─── */}
       <div className="flex items-center gap-1 mt-4 w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[340px] xl:max-w-[380px]">
         {SCREENS.map((screen, i) => (
-          <button
-            key={screen.id}
-            onClick={() => goTo(i)}
+          <button key={screen.id} onClick={() => goTo(i)}
             className="flex-1 h-1 rounded-full overflow-hidden relative cursor-pointer group/seg"
             style={{ backgroundColor: "hsl(var(--border) / 0.4)" }}
-            title={screen.label}
-          >
+            title={screen.label}>
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full"
               style={{
-                backgroundColor: i < activeIndex
-                  ? SCREENS[i].color
-                  : i === activeIndex
-                    ? currentColor
-                    : "transparent",
+                backgroundColor: i < activeIndex ? SCREENS[i].color : i === activeIndex ? currentColor : "transparent",
                 width: i < activeIndex ? "100%" : i === activeIndex ? `${progress}%` : "0%",
               }}
             />
+            {/* Glow on active segment */}
+            {i === activeIndex && (
+              <motion.div className="absolute inset-y-0 left-0 rounded-full blur-[2px]"
+                style={{ backgroundColor: currentColor + "60", width: `${progress}%` }} />
+            )}
             <div className="absolute inset-0 rounded-full opacity-0 group-hover/seg:opacity-100 transition-opacity"
-              style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }}
-            />
+              style={{ backgroundColor: "hsl(var(--foreground) / 0.1)" }} />
           </button>
         ))}
       </div>
 
-      {/* Label */}
+      {/* "Now Playing" label with typewriter */}
       <AnimatePresence mode="wait">
         <motion.div
           key={SCREENS[activeIndex].label + deviceMode}
@@ -2087,7 +2181,12 @@ export function AppShowcase() {
           {(() => {
             const Icon = SCREENS[activeIndex].icon;
             return (
-              <Icon className="w-3.5 h-3.5" style={{ color: currentColor }} />
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Icon className="w-3.5 h-3.5" style={{ color: currentColor }} />
+              </motion.div>
             );
           })()}
           <span className="text-sm font-semibold text-muted-foreground">
@@ -2100,6 +2199,32 @@ export function AppShowcase() {
             {deviceMode === "phone" ? "Mobile" : "Desktop"}
           </span>
         </motion.div>
+      </AnimatePresence>
+
+      {/* Feature hint text */}
+      <motion.p
+        key={SCREENS[activeIndex].id + "-hint"}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-[11px] text-muted-foreground/40 font-mono mt-1"
+      >
+        {nowPlayingText}<motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.6, repeat: Infinity }} className="text-muted-foreground/30">|</motion.span>
+      </motion.p>
+
+      {/* Paused indicator */}
+      <AnimatePresence>
+        {isPaused && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] text-muted-foreground/50 font-medium"
+            style={{ background: "hsl(var(--muted) / 0.5)" }}
+          >
+            <div className="w-1.5 h-1.5 rounded-sm bg-muted-foreground/40" />
+            Paused
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
