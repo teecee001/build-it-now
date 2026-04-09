@@ -882,7 +882,7 @@ export default function LandingPage() {
                   { icon: Mail, href: "mailto:support@exosky.app", label: "mail" },
                 ].map(({ icon: Icon, href, label }) => (
                   <motion.a
-                    key={href}
+                    key={label}
                     href={href}
                     whileHover={{ scale: 1.1, y: -2 }}
                     className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-accent/10 transition-colors"
