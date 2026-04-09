@@ -877,13 +877,15 @@ export default function LandingPage() {
               </p>
               <div className="flex items-center gap-3 mt-5">
                 {[
-                  { icon: Twitter, href: "#", label: "twitter" },
-                  { icon: Github, href: "#", label: "github" },
+                  { icon: Twitter, href: "https://x.com/exoskyapp", label: "twitter" },
+                  { icon: Github, href: "https://github.com/exosky-app", label: "github" },
                   { icon: Mail, href: "mailto:support@exosky.app", label: "mail" },
                 ].map(({ icon: Icon, href, label }) => (
                   <motion.a
                     key={label}
                     href={href}
+                    target={href.startsWith("mailto") ? undefined : "_blank"}
+                    rel={href.startsWith("mailto") ? undefined : "noopener noreferrer"}
                     whileHover={{ scale: 1.1, y: -2 }}
                     className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-accent/10 transition-colors"
                   >
