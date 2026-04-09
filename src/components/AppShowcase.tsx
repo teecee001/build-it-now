@@ -1837,6 +1837,159 @@ function ScreenReflection() {
   );
 }
 
+/* ─── Fake cursor for laptop mode ─── */
+const CURSOR_PATHS: Record<string, Array<{ x: string; y: string; click?: boolean }>> = {
+  dashboard: [
+    { x: "25%", y: "30%" },
+    { x: "50%", y: "42%", click: true },
+    { x: "75%", y: "55%" },
+    { x: "35%", y: "70%", click: true },
+  ],
+  markets: [
+    { x: "40%", y: "20%" },
+    { x: "55%", y: "35%", click: true },
+    { x: "70%", y: "50%" },
+    { x: "45%", y: "65%", click: true },
+    { x: "60%", y: "78%" },
+  ],
+  cards: [
+    { x: "30%", y: "35%" },
+    { x: "35%", y: "55%", click: true },
+    { x: "70%", y: "40%" },
+    { x: "65%", y: "60%", click: true },
+  ],
+  savings: [
+    { x: "35%", y: "30%" },
+    { x: "55%", y: "50%", click: true },
+    { x: "70%", y: "35%" },
+    { x: "50%", y: "70%", click: true },
+  ],
+  send: [
+    { x: "30%", y: "40%", click: true },
+    { x: "60%", y: "30%" },
+    { x: "65%", y: "50%", click: true },
+    { x: "60%", y: "75%", click: true },
+  ],
+  analytics: [
+    { x: "45%", y: "25%" },
+    { x: "40%", y: "50%", click: true },
+    { x: "70%", y: "40%" },
+    { x: "55%", y: "65%", click: true },
+  ],
+  wallet: [
+    { x: "30%", y: "35%" },
+    { x: "45%", y: "50%", click: true },
+    { x: "70%", y: "45%" },
+    { x: "65%", y: "65%", click: true },
+  ],
+};
+
+function FakeCursor({ screenId }: { screenId: string }) {
+  const path = CURSOR_PATHS[screenId] || CURSOR_PATHS.dashboard;
+  const [step, setStep] = useState(0);
+  const [clicking, setClicking] = useState(false);
+
+  useEffect(() => {
+    setStep(0);
+    setClicking(false);
+  }, [screenId]);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let current = 0;
+
+    const advance = () => {
+      if (current >= path.length - 1) return;
+      const delay = 900 + Math.random() * 400;
+      const t = setTimeout(() => {
+        current++;
+        setStep(current);
+        if (path[current]?.click) {
+          setClicking(true);
+          const t2 = setTimeout(() => setClicking(false), 200);
+          timers.push(t2);
+        }
+        advance();
+      }, delay);
+      timers.push(t);
+    };
+
+    const initial = setTimeout(() => advance(), 600);
+    timers.push(initial);
+    return () => timers.forEach(clearTimeout);
+  }, [screenId, path]);
+
+  const pos = path[step];
+
+  return (
+    <motion.div
+      className="absolute z-40 pointer-events-none"
+      animate={{ left: pos.x, top: pos.y }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {/* Cursor arrow SVG */}
+      <motion.svg
+        width="16" height="20" viewBox="0 0 16 20" fill="none"
+        animate={{ scale: clicking ? 0.85 : 1 }}
+        transition={{ duration: 0.1 }}
+      >
+        <path d="M1 1L1 15L5.5 11L9.5 18L12 17L8 10L14 10L1 1Z" fill="white" stroke="black" strokeWidth="1" strokeLinejoin="round" />
+      </motion.svg>
+      {/* Click ripple */}
+      <AnimatePresence>
+        {clicking && (
+          <motion.div
+            className="absolute top-0 left-0 w-6 h-6 -ml-2 -mt-1 rounded-full border border-white/30"
+            initial={{ scale: 0.3, opacity: 0.8 }}
+            animate={{ scale: 2, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+/* ─── Per-screen transition variants ─── */
+const SCREEN_TRANSITIONS: Record<string, { initial: Record<string, number>; animate: Record<string, number>; exit: Record<string, number> }> = {
+  dashboard: {
+    initial: { opacity: 0, scale: 0.92, y: 30 },
+    animate: { opacity: 1, scale: 1, y: 0 },
+    exit: { opacity: 0, scale: 1.05, y: -20 },
+  },
+  send: {
+    initial: { opacity: 0, x: 80, scale: 0.95 },
+    animate: { opacity: 1, x: 0, scale: 1 },
+    exit: { opacity: 0, x: -80, scale: 0.95 },
+  },
+  markets: {
+    initial: { opacity: 0, y: 60, rotateX: 8 },
+    animate: { opacity: 1, y: 0, rotateX: 0 },
+    exit: { opacity: 0, y: -40, rotateX: -5 },
+  },
+  cards: {
+    initial: { opacity: 0, scale: 0.8, rotateY: 15 },
+    animate: { opacity: 1, scale: 1, rotateY: 0 },
+    exit: { opacity: 0, scale: 0.9, rotateY: -10 },
+  },
+  savings: {
+    initial: { opacity: 0, y: 50, scale: 0.9 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: -30, scale: 1.05 },
+  },
+  analytics: {
+    initial: { opacity: 0, x: -60, rotateY: -10 },
+    animate: { opacity: 1, x: 0, rotateY: 0 },
+    exit: { opacity: 0, x: 60, rotateY: 5 },
+  },
+  wallet: {
+    initial: { opacity: 0, scale: 0.85, y: 40 },
+    animate: { opacity: 1, scale: 1, y: 0 },
+    exit: { opacity: 0, scale: 1.1, y: -30 },
+  },
+};
+
 /* ═══════════════════════════════════════════
    Main Showcase — Cinematic Demo
    ═══════════════════════════════════════════ */
@@ -1986,10 +2139,11 @@ export function AppShowcase() {
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={SCREENS[activeIndex].id}
-                      initial={{ opacity: 0, y: 60 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -60 }}
-                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                      initial={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 60 }}
+                      animate={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 }}
+                      exit={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -60 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ transformStyle: "preserve-3d" }}
                     >
                       <ActiveScreen />
                     </motion.div>
@@ -2085,13 +2239,16 @@ export function AppShowcase() {
                     <div className="flex-1 overflow-y-auto scrollbar-none relative">
                       <div className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
                         style={{ backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)` }} />
+                      {/* Fake cursor */}
+                      <FakeCursor screenId={SCREENS[activeIndex].id} />
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={SCREENS[activeIndex].id + "-desktop"}
-                          initial={{ opacity: 0, y: 40 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -40 }}
-                          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                          initial={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 40 }}
+                          animate={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 }}
+                          exit={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -40 }}
+                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ transformStyle: "preserve-3d" }}
                         >
                           <ActiveDesktopScreen />
                         </motion.div>
