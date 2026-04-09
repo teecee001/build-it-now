@@ -884,6 +884,8 @@ export default function LandingPage() {
                   <motion.a
                     key={label}
                     href={href}
+                    target={href.startsWith("mailto") ? undefined : "_blank"}
+                    rel={href.startsWith("mailto") ? undefined : "noopener noreferrer"}
                     whileHover={{ scale: 1.1, y: -2 }}
                     className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-accent/10 transition-colors"
                   >
