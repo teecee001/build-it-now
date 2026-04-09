@@ -2239,13 +2239,16 @@ export function AppShowcase() {
                     <div className="flex-1 overflow-y-auto scrollbar-none relative">
                       <div className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
                         style={{ backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)` }} />
+                      {/* Fake cursor */}
+                      <FakeCursor screenId={SCREENS[activeIndex].id} />
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={SCREENS[activeIndex].id + "-desktop"}
-                          initial={{ opacity: 0, y: 40 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -40 }}
-                          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                          initial={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 40 }}
+                          animate={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 }}
+                          exit={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -40 }}
+                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ transformStyle: "preserve-3d" }}
                         >
                           <ActiveDesktopScreen />
                         </motion.div>
