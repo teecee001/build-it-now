@@ -1952,7 +1952,7 @@ function FakeCursor({ screenId }: { screenId: string }) {
 }
 
 /* ─── Per-screen transition variants ─── */
-const SCREEN_TRANSITIONS: Record<string, { initial: object; animate: object; exit: object }> = {
+const SCREEN_TRANSITIONS: Record<string, { initial: Record<string, number>; animate: Record<string, number>; exit: Record<string, number> }> = {
   dashboard: {
     initial: { opacity: 0, scale: 0.92, y: 30 },
     animate: { opacity: 1, scale: 1, y: 0 },
