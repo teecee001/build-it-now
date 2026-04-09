@@ -877,8 +877,8 @@ export default function LandingPage() {
               </p>
               <div className="flex items-center gap-3 mt-5">
                 {[
-                  { icon: Twitter, href: "#", label: "twitter" },
-                  { icon: Github, href: "#", label: "github" },
+                  { icon: Twitter, href: "https://x.com/exoskyapp", label: "twitter" },
+                  { icon: Github, href: "https://github.com/exosky-app", label: "github" },
                   { icon: Mail, href: "mailto:support@exosky.app", label: "mail" },
                 ].map(({ icon: Icon, href, label }) => (
                   <motion.a
