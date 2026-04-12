@@ -1750,7 +1750,7 @@ const SIDEBAR_ITEMS = [
   { icon: Send, label: "Send", id: "send" },
   { icon: Coins, label: "Crypto", id: "wallet" },
   { icon: BarChart3, label: "Analytics", id: "analytics" },
-  { icon: Bot, label: "AI", id: "analytics" },
+  
 ];
 
 function DesktopSidebar({ activeScreenId }: { activeScreenId: string }) {
