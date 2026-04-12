@@ -1766,14 +1766,13 @@ const DESKTOP_SCREEN_COMPONENTS: Record<string, React.FC> = {
 /* ─── Desktop sidebar for laptop frame ─── */
 const SIDEBAR_ITEMS = [
   { icon: Wallet, label: "Account", id: "dashboard" },
-  { icon: Coins, label: "Crypto", id: "wallet" },
-  { icon: Briefcase, label: "Stocks", id: "stocks" },
-  { icon: Send, label: "Send", id: "send" },
   { icon: TrendingUp, label: "Markets", id: "markets" },
-  { icon: PiggyBank, label: "Savings", id: "savings" },
   { icon: CreditCard, label: "Cards", id: "cards" },
+  { icon: PiggyBank, label: "Savings", id: "savings" },
+  { icon: Send, label: "Send", id: "send" },
+  { icon: Coins, label: "Crypto", id: "wallet" },
   { icon: BarChart3, label: "Analytics", id: "analytics" },
-  { icon: Bot, label: "AI Advisor", id: "advisor" },
+  { icon: Bot, label: "AI", id: "analytics" },
 ];
 
 function DesktopSidebar({ activeScreenId }: { activeScreenId: string }) {
