@@ -2227,7 +2227,7 @@ export function AppShowcase() {
                       <div className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
                         style={{ backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)` }} />
                       {/* Fake cursor */}
-                      <FakeCursor screenId={SCREENS[activeIndex].id} />
+                      {!prefersReducedMotion && <FakeCursor screenId={SCREENS[activeIndex].id} />}
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={SCREENS[activeIndex].id + "-desktop"}
