@@ -2089,7 +2089,7 @@ export function AppShowcase() {
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {/* Screen reflection */}
-                <ScreenReflection />
+                {!prefersReducedMotion && <ScreenReflection />}
 
                 {/* Edge reflection */}
                 <div className="absolute inset-0 rounded-[2.2rem] pointer-events-none z-30"
@@ -2184,18 +2184,20 @@ export function AppShowcase() {
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
             <motion.div
-              animate={{ y: [0, -4, 0] }}
+              animate={prefersReducedMotion ? {} : { y: [0, -4, 0] }}
               transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
               className="relative will-change-transform"
               style={{ transform: "translateZ(0)", perspective: "1200px" }}
             >
               {/* Breathing glow */}
-              <motion.div
-                className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none"
-                style={{ backgroundColor: currentColor + "10" }}
-                animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.05, 0.95] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              />
+              {!prefersReducedMotion && (
+                <motion.div
+                  className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none"
+                  style={{ backgroundColor: currentColor + "10" }}
+                  animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.05, 0.95] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
 
               <motion.div
                 className="relative cursor-pointer group/laptop"
