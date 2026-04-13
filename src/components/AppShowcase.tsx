@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   Wallet, TrendingUp, CreditCard, PiggyBank, Globe,
@@ -1979,6 +1979,7 @@ export function AppShowcase() {
   const progressRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [progress, setProgress] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
 
   // "Now Playing" typewriter
   const nowPlayingText = useTypewriter(SCREENS[activeIndex].hint, 40, 200);
@@ -2043,6 +2044,11 @@ export function AppShowcase() {
 
   const currentLabel = floatingLabels[SCREENS[activeIndex].id];
 
+  // Reduced motion: simplified transitions
+  const rmTransition = prefersReducedMotion ? { duration: 0 } : undefined;
+  const rmInitial = prefersReducedMotion ? { opacity: 0 } : undefined;
+  const rmAnimate = prefersReducedMotion ? { opacity: 1 } : undefined;
+
   return (
     <div
       className="relative flex flex-col items-center"
@@ -2059,18 +2065,20 @@ export function AppShowcase() {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <motion.div
-              animate={{ y: [0, -6, 0] }}
+              animate={prefersReducedMotion ? {} : { y: [0, -6, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               className="relative will-change-transform"
               style={{ transform: "translateZ(0)", perspective: "1200px" }}
             >
               {/* Breathing glow */}
-              <motion.div
-                className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none"
-                style={{ backgroundColor: currentColor + "12" }}
-                animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              />
+              {!prefersReducedMotion && (
+                <motion.div
+                  className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none"
+                  style={{ backgroundColor: currentColor + "12" }}
+                  animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
               <div className="absolute -inset-8 rounded-full blur-[60px] pointer-events-none transition-all duration-700"
                 style={{ backgroundColor: currentColor + "08" }} />
 
@@ -2081,7 +2089,7 @@ export function AppShowcase() {
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {/* Screen reflection */}
-                <ScreenReflection />
+                {!prefersReducedMotion && <ScreenReflection />}
 
                 {/* Edge reflection */}
                 <div className="absolute inset-0 rounded-[2.2rem] pointer-events-none z-30"
@@ -2116,11 +2124,11 @@ export function AppShowcase() {
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={SCREENS[activeIndex].id}
-                      initial={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 60 }}
-                      animate={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 }}
-                      exit={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -60 }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                      style={{ transformStyle: "preserve-3d" }}
+                      initial={prefersReducedMotion ? { opacity: 0 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 60 })}
+                      animate={prefersReducedMotion ? { opacity: 1 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 })}
+                      exit={prefersReducedMotion ? { opacity: 0 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -60 })}
+                      transition={prefersReducedMotion ? { duration: 0.15 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                      style={prefersReducedMotion ? {} : { transformStyle: "preserve-3d" }}
                     >
                       <ActiveScreen />
                     </motion.div>
@@ -2176,18 +2184,20 @@ export function AppShowcase() {
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
             <motion.div
-              animate={{ y: [0, -4, 0] }}
+              animate={prefersReducedMotion ? {} : { y: [0, -4, 0] }}
               transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
               className="relative will-change-transform"
               style={{ transform: "translateZ(0)", perspective: "1200px" }}
             >
               {/* Breathing glow */}
-              <motion.div
-                className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none"
-                style={{ backgroundColor: currentColor + "10" }}
-                animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.05, 0.95] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              />
+              {!prefersReducedMotion && (
+                <motion.div
+                  className="absolute -inset-20 rounded-full blur-[120px] pointer-events-none"
+                  style={{ backgroundColor: currentColor + "10" }}
+                  animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.05, 0.95] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
 
               <motion.div
                 className="relative cursor-pointer group/laptop"
@@ -2217,15 +2227,15 @@ export function AppShowcase() {
                       <div className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-500 opacity-[0.03]"
                         style={{ backgroundImage: `radial-gradient(ellipse at 50% 0%, ${currentColor}, transparent 70%)` }} />
                       {/* Fake cursor */}
-                      <FakeCursor screenId={SCREENS[activeIndex].id} />
+                      {!prefersReducedMotion && <FakeCursor screenId={SCREENS[activeIndex].id} />}
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={SCREENS[activeIndex].id + "-desktop"}
-                          initial={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 40 }}
-                          animate={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 }}
-                          exit={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -40 }}
-                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                          style={{ transformStyle: "preserve-3d" }}
+                          initial={prefersReducedMotion ? { opacity: 0 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 40 })}
+                          animate={prefersReducedMotion ? { opacity: 1 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 })}
+                          exit={prefersReducedMotion ? { opacity: 0 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -40 })}
+                          transition={prefersReducedMotion ? { duration: 0.15 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                          style={prefersReducedMotion ? {} : { transformStyle: "preserve-3d" }}
                         >
                           <ActiveDesktopScreen />
                         </motion.div>
