@@ -2231,11 +2231,11 @@ export function AppShowcase() {
                       <AnimatePresence mode="wait">
                         <motion.div
                           key={SCREENS[activeIndex].id + "-desktop"}
-                          initial={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 40 }}
-                          animate={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 }}
-                          exit={SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -40 }}
-                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                          style={{ transformStyle: "preserve-3d" }}
+                          initial={prefersReducedMotion ? { opacity: 0 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.initial || { opacity: 0, y: 40 })}
+                          animate={prefersReducedMotion ? { opacity: 1 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.animate || { opacity: 1, y: 0 })}
+                          exit={prefersReducedMotion ? { opacity: 0 } : (SCREEN_TRANSITIONS[SCREENS[activeIndex].id]?.exit || { opacity: 0, y: -40 })}
+                          transition={prefersReducedMotion ? { duration: 0.15 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                          style={prefersReducedMotion ? {} : { transformStyle: "preserve-3d" }}
                         >
                           <ActiveDesktopScreen />
                         </motion.div>
