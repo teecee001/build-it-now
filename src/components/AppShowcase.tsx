@@ -2065,18 +2065,20 @@ export function AppShowcase() {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <motion.div
-              animate={{ y: [0, -6, 0] }}
+              animate={prefersReducedMotion ? {} : { y: [0, -6, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               className="relative will-change-transform"
               style={{ transform: "translateZ(0)", perspective: "1200px" }}
             >
               {/* Breathing glow */}
-              <motion.div
-                className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none"
-                style={{ backgroundColor: currentColor + "12" }}
-                animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              />
+              {!prefersReducedMotion && (
+                <motion.div
+                  className="absolute -inset-16 rounded-full blur-[100px] pointer-events-none"
+                  style={{ backgroundColor: currentColor + "12" }}
+                  animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
               <div className="absolute -inset-8 rounded-full blur-[60px] pointer-events-none transition-all duration-700"
                 style={{ backgroundColor: currentColor + "08" }} />
 
