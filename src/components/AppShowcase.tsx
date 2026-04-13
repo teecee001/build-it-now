@@ -1979,6 +1979,7 @@ export function AppShowcase() {
   const progressRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [progress, setProgress] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
 
   // "Now Playing" typewriter
   const nowPlayingText = useTypewriter(SCREENS[activeIndex].hint, 40, 200);
@@ -2042,6 +2043,11 @@ export function AppShowcase() {
   };
 
   const currentLabel = floatingLabels[SCREENS[activeIndex].id];
+
+  // Reduced motion: simplified transitions
+  const rmTransition = prefersReducedMotion ? { duration: 0 } : undefined;
+  const rmInitial = prefersReducedMotion ? { opacity: 0 } : undefined;
+  const rmAnimate = prefersReducedMotion ? { opacity: 1 } : undefined;
 
   return (
     <div
