@@ -1896,7 +1896,7 @@ function FakeCursor({ screenId }: { screenId: string }) {
     return () => timers.forEach(clearTimeout);
   }, [screenId, path]);
 
-  const pos = path[step];
+  const pos = path[step] ?? path[0] ?? { x: 0, y: 0 };
 
   return (
     <motion.div
