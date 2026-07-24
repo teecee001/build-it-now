@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function Auth() {
   const { user, isLoading: authLoading, signIn, signUp, signInWithGoogle } = useAuth();
+  const [searchParams] = useSearchParams();
+  // Validate `next` as a same-origin relative path before using it (OAuth consent flow).
+  const rawNext = searchParams.get("next");
+  const nextPath =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+  const postAuthTarget = nextPath ?? "/dashboard";
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +33,7 @@ export default function Auth() {
     );
   }
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to={postAuthTarget} replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
