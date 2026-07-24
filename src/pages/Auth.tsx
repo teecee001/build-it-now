@@ -133,7 +133,12 @@ export default function Auth() {
             variant="outline"
             className="w-full mb-4 h-11"
             onClick={async () => {
-              const { error } = await signInWithGoogle();
+              // If we're mid-OAuth-consent, come back to /auth carrying the ?next=
+              // so post-sign-in redirect lands on the consent page.
+              const redirectUri = nextPath
+                ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
+                : window.location.origin;
+              const { error } = await signInWithGoogle(redirectUri);
               if (error) toast.error(error.message);
             }}
           >
