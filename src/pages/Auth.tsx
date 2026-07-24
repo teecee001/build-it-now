@@ -51,7 +51,10 @@ export default function Auth() {
         return;
       }
 
-      const { error } = await signUp(email, password, fullName);
+      const emailRedirectTo = nextPath
+        ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
+        : window.location.origin;
+      const { error } = await signUp(email, password, fullName, emailRedirectTo);
       if (error) {
         toast.error(error.message);
       } else {
