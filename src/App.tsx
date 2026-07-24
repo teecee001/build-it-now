@@ -35,6 +35,7 @@ import RecurringPayments from "./pages/RecurringPayments";
 import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
 import StocksPage from "./pages/StocksPage";
 import AdminWaitlist from "./pages/AdminWaitlist";
+import OAuthConsent from "./pages/OAuthConsent";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -75,6 +76,8 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<LandingPage />} />
+            {/* OAuth consent (used by external MCP clients) */}
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* Public legal pages */}
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
