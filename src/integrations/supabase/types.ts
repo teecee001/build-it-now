@@ -560,6 +560,27 @@ export type Database = {
         }
         Relationships: []
       }
+      transfer_idempotency: {
+        Row: {
+          created_at: string
+          key: string
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_geo_verification: {
         Row: {
           block_reason: string | null
@@ -776,6 +797,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      transfer_funds: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_idempotency_key?: string
+          p_to_handle: string
+        }
+        Returns: string
       }
     }
     Enums: {
