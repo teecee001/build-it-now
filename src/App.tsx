@@ -42,9 +42,8 @@ import { useState } from "react";
 
 const queryClient = new QueryClient();
 
-// TEMPORARY: auth bypass so the app is accessible while the backend is down.
-// Set back to false to re-enable authentication.
-const BYPASS_AUTH = true;
+// Authentication is enforced.
+const BYPASS_AUTH = false;
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
