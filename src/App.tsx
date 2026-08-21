@@ -42,10 +42,16 @@ import { useState } from "react";
 
 const queryClient = new QueryClient();
 
+// TEMPORARY: auth bypass so the app is accessible while the backend is down.
+// Set back to false to re-enable authentication.
+const BYPASS_AUTH = true;
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const { isCheckingGeo, hasCompletedGeoSetup } = useGeoVerification();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  if (BYPASS_AUTH) return <>{children}</>;
 
   if (isLoading || isCheckingGeo) {
     return (
@@ -56,6 +62,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
+
 
   // Show country onboarding if user hasn't set up their country yet
   if (!hasCompletedGeoSetup && !onboardingComplete) {
