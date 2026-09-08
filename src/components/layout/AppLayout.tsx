@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BetaFeedback } from "@/components/BetaFeedback";
 import { 
-  LayoutDashboard, Wallet, Send, TrendingUp, Bot, LogOut, X,
+  LayoutDashboard, Wallet, Send, TrendingUp, Target, Bot, LogOut, X,
   Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase,
   FileText, Lock, Scale
 } from "lucide-react";
@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { path: "/card", icon: CreditCard, label: "Card" },
   { path: "/bills", icon: Receipt, label: "Bills" },
   { path: "/markets", icon: TrendingUp, label: "Markets" },
+  { path: "/forecasts", icon: Target, label: "Forecasts" },
   { path: "/referrals", icon: Users, label: "Refer & Earn" },
   { path: "/advisor", icon: Bot, label: "AI Advisor" },
   { path: "/premium", icon: Crown, label: "Pro" },

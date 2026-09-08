@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import WalletPage from "./pages/WalletPage";
 import SendMoney from "./pages/SendMoney";
 import Markets from "./pages/Markets";
+import Forecasts from "./pages/Forecasts";
 import AIAdvisor from "./pages/AIAdvisor";
 import Rewards from "./pages/Rewards";
 import Activity from "./pages/Activity";
@@ -108,6 +109,7 @@ const App = () => (
               <Route path="/card" element={<CardPage />} />
               <Route path="/bills" element={<BillPay />} />
               <Route path="/markets" element={<Markets />} />
+              <Route path="/forecasts" element={<Forecasts />} />
               <Route path="/advisor" element={<AIAdvisor />} />
               <Route path="/savings" element={<Savings />} />
               <Route path="/referrals" element={<Referrals />} />
