@@ -84,6 +84,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<LandingPage />} />
             {/* OAuth consent (used by external MCP clients) */}
+            <Route path="/oauth/consent" element={<OAuthConsent />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* Public legal pages */}
             <Route path="/terms" element={<TermsOfService />} />

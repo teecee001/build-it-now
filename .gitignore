@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Env (keep .env.example). .env is still tracked for the Vercel Vite build.
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
