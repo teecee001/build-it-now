@@ -30,6 +30,12 @@ serve(async (req) => {
     const body = await req.json();
     const { operation } = body;
 
+    const asPositiveNumber = (value: unknown, label: string) => {
+      const n = typeof value === "number" ? value : Number(value);
+      if (!Number.isFinite(n) || n <= 0) throw new Error(`Invalid ${label}`);
+      return n;
+    };
+
     switch (operation) {
       case "send": {
         const { wallet_id, amount, currency, recipient, description } = body;
