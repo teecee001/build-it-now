@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 import {
   dailyVol, probAbove, probTouch, toCents, toSpark,
   addDays, fmtDate, daysToMonthEnd, daysToQuarterEnd,
