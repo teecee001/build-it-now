@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 
 export type VerificationMethod = "face" | "fingerprint" | "ai-challenge" | "password";
 export type VerificationStep = "idle" | "loading" | "challenge" | "verifying" | "verified" | "failed";
@@ -88,13 +88,13 @@ export function useSecureVerification(): VerificationState {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-identity`,
+        `${SUPABASE_URL}/functions/v1/verify-identity`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            apikey: SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({ action: "generate" }),
         }
