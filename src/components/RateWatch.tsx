@@ -143,6 +143,45 @@ export function RateWatch({ currency }: RateWatchProps) {
 
         </div>
       </Card>
+
+      <Dialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Set a rate alert</DialogTitle>
+            <DialogDescription>
+              We'll notify you when USD/{toCurrency} moves past your target. Current rate {market.spot.toFixed(4)}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              {(["above", "below"] as const).map((d) => (
+                <Button
+                  key={d}
+                  type="button"
+                  variant={direction === d ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1 capitalize"
+                  onClick={() => setDirection(d)}
+                >
+                  {d}
+                </Button>
+              ))}
+            </div>
+            <Input
+              type="number"
+              step="0.0001"
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              placeholder="Target rate"
+              className="font-mono"
+            />
+            <Button className="w-full" onClick={saveAlert} disabled={createAlert.isPending}>
+              {createAlert.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save alert"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </motion.div>
   );
 }
