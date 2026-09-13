@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 import {
   dailyVol, probAbove, probTouch, toCents, toSpark,
   addDays, fmtDate, daysToMonthEnd, daysToQuarterEnd,
@@ -23,54 +25,26 @@ export interface ForecastMarket {
 }
 
 // ── Data sources ─────────────────────────────────────────────
-// FX: Frankfurter (European Central Bank reference rates, free, no key)
+// Fetched through the `forecast-data` edge function, which proxies:
+// FX: Frankfurter (European Central Bank reference rates)
 // Crypto & gold: CoinGecko public API (PAXG tracks the spot gold ounce)
 
 const FX_TARGETS = ["EUR", "GBP", "BRL", "JPY", "INR"] as const;
 
-interface FxSeries { rates: Record<string, number[]>; latest: Record<string, number> }
-
-async function fetchFxSeries(): Promise<FxSeries> {
-  const start = new Date();
-  start.setUTCDate(start.getUTCDate() - 120);
-  const from = start.toISOString().slice(0, 10);
-  const res = await fetch(
-    `https://api.frankfurter.app/${from}..?from=USD&to=${FX_TARGETS.join(",")}`
-  );
-  if (!res.ok) throw new Error("Failed to load FX history");
-  const data = await res.json();
-  const dates = Object.keys(data.rates).sort();
-  const rates: Record<string, number[]> = {};
-  const latest: Record<string, number> = {};
-  for (const code of FX_TARGETS) {
-    rates[code] = dates.map((d) => data.rates[d][code]).filter((v: number) => typeof v === "number");
-    latest[code] = rates[code][rates[code].length - 1];
-  }
-  return { rates, latest };
-}
-
 interface CoinSeries { prices: number[]; spot: number; volume: number }
 
-async function fetchCoin(id: string): Promise<CoinSeries> {
-  const res = await fetch(
-    `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=90&interval=daily`
-  );
-  if (!res.ok) throw new Error(`Failed to load ${id} history`);
-  const data = await res.json();
-  const prices: number[] = (data.prices ?? []).map((p: [number, number]) => p[1]);
-  const volumes: number[] = (data.total_volumes ?? []).map((p: [number, number]) => p[1]);
-  return {
-    prices,
-    spot: prices[prices.length - 1] ?? 0,
-    volume: volumes[volumes.length - 1] ?? 0,
-  };
+interface MarketData {
+  fx: Record<string, number[]> | null;
+  crypto: Record<string, CoinSeries>;
 }
 
-async function fetchCrypto(): Promise<Record<string, CoinSeries>> {
-  const ids = ["bitcoin", "ethereum", "pax-gold"];
-  const results = await Promise.all(ids.map(fetchCoin));
-  return Object.fromEntries(ids.map((id, i) => [id, results[i]]));
+async function fetchMarketData(): Promise<MarketData> {
+  const { data, error } = await supabase.functions.invoke("forecast-data");
+  if (error) throw error;
+  if (!data || (data as any).error) throw new Error((data as any)?.error ?? "No market data");
+  return { fx: (data as any).fx ?? null, crypto: (data as any).crypto ?? {} };
 }
+
 
 // ── Market construction ──────────────────────────────────────
 
@@ -178,37 +152,30 @@ function crypto(coins: Record<string, CoinSeries>): ForecastMarket[] {
 }
 
 export function useForecastMarkets() {
-  const fxQuery = useQuery({
-    queryKey: ["forecast-fx"],
-    queryFn: fetchFxSeries,
-    staleTime: 10 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
-    retry: 2,
-  });
-
-  const cryptoQuery = useQuery({
-    queryKey: ["forecast-crypto"],
-    queryFn: fetchCrypto,
+  const query = useQuery({
+    queryKey: ["forecast-market-data"],
+    queryFn: fetchMarketData,
     staleTime: 60 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
     retry: 2,
   });
 
   const markets: ForecastMarket[] = [];
-  if (fxQuery.data) {
+  if (query.data?.fx) {
     for (const code of FX_TARGETS) {
-      const series = fxQuery.data.rates[code];
-      if (series?.length > 5) markets.push(...fx(code, series));
+      const series = query.data.fx[code];
+      if (series && series.length > 5) markets.push(...fx(code, series));
     }
   }
-  if (cryptoQuery.data) markets.push(...crypto(cryptoQuery.data));
+  if (query.data?.crypto) markets.push(...crypto(query.data.crypto));
 
   return {
     markets,
-    isLoading: fxQuery.isLoading || cryptoQuery.isLoading,
-    isError: fxQuery.isError && cryptoQuery.isError,
-    isFetching: fxQuery.isFetching || cryptoQuery.isFetching,
-    lastUpdated: new Date(Math.max(fxQuery.dataUpdatedAt || 0, cryptoQuery.dataUpdatedAt || 0)),
-    refetch: () => { fxQuery.refetch(); cryptoQuery.refetch(); },
+    isLoading: query.isLoading,
+    isError: query.isError || (!!query.data && markets.length === 0),
+    isFetching: query.isFetching,
+    lastUpdated: new Date(query.dataUpdatedAt || Date.now()),
+    refetch: () => { query.refetch(); },
   };
+
 }
