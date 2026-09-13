@@ -137,9 +137,10 @@ export function RateWatch({ currency }: RateWatchProps) {
           <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => navigate("/forecasts")}>
             Open Forecasts <ArrowUpRight className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" className="flex-1" onClick={() => navigate("/wallet")}>
-            Set a rate alert
+          <Button variant="ghost" size="sm" className="flex-1 gap-1.5" onClick={openAlert}>
+            <BellRing className="w-3.5 h-3.5" /> Set a rate alert
           </Button>
+
         </div>
       </Card>
     </motion.div>
