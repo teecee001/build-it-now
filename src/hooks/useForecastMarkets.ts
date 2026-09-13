@@ -150,37 +150,30 @@ function crypto(coins: Record<string, CoinSeries>): ForecastMarket[] {
 }
 
 export function useForecastMarkets() {
-  const fxQuery = useQuery({
-    queryKey: ["forecast-fx"],
-    queryFn: fetchFxSeries,
-    staleTime: 10 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
-    retry: 2,
-  });
-
-  const cryptoQuery = useQuery({
-    queryKey: ["forecast-crypto"],
-    queryFn: fetchCrypto,
+  const query = useQuery({
+    queryKey: ["forecast-market-data"],
+    queryFn: fetchMarketData,
     staleTime: 60 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
     retry: 2,
   });
 
   const markets: ForecastMarket[] = [];
-  if (fxQuery.data) {
+  if (query.data?.fx) {
     for (const code of FX_TARGETS) {
-      const series = fxQuery.data.rates[code];
-      if (series?.length > 5) markets.push(...fx(code, series));
+      const series = query.data.fx[code];
+      if (series && series.length > 5) markets.push(...fx(code, series));
     }
   }
-  if (cryptoQuery.data) markets.push(...crypto(cryptoQuery.data));
+  if (query.data?.crypto) markets.push(...crypto(query.data.crypto));
 
   return {
     markets,
-    isLoading: fxQuery.isLoading || cryptoQuery.isLoading,
-    isError: fxQuery.isError && cryptoQuery.isError,
-    isFetching: fxQuery.isFetching || cryptoQuery.isFetching,
-    lastUpdated: new Date(Math.max(fxQuery.dataUpdatedAt || 0, cryptoQuery.dataUpdatedAt || 0)),
-    refetch: () => { fxQuery.refetch(); cryptoQuery.refetch(); },
+    isLoading: query.isLoading,
+    isError: query.isError || (!!query.data && markets.length === 0),
+    isFetching: query.isFetching,
+    lastUpdated: new Date(query.dataUpdatedAt || Date.now()),
+    refetch: () => { query.refetch(); },
   };
+
 }
