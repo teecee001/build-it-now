@@ -127,7 +127,10 @@ function SendMoneyContent() {
         </motion.div>
       )}
 
+      <RateWatch currency={activeCurrency} />
+
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+
         <Card className="p-6 bg-card border-border shadow-card space-y-5">
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground font-medium">Recipient</label>
