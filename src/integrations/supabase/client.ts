@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Locked to the owned Supabase project. Lovable Cloud env must not override this.
+const SUPABASE_URL = "https://vxcxwmhesgpncbkhwsej.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ceCUc9fqMwACxBU43yg43Q_nmKqkbmt";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

@@ -41,7 +41,7 @@ export default function AIAdvisor() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer sb_publishable_ceCUc9fqMwACxBU43yg43Q_nmKqkbmt`,
         },
         body: JSON.stringify({ messages: newMessages }),
       } as RequestInit;
@@ -49,7 +49,7 @@ export default function AIAdvisor() {
       let resp = await fetch("/api/ai-advisor", payload);
       if (!resp.ok) {
         resp = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-advisor`,
+          `https://vxcxwmhesgpncbkhwsej.supabase.co/functions/v1/ai-advisor`,
           payload,
         );
       }
