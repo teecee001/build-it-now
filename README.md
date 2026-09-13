@@ -22,9 +22,23 @@ npm run dev
 
 ## Environment
 
-Set the same `VITE_SUPABASE_*` values in Vercel → Project → Settings → Environment Variables, then redeploy.
+### Vercel (frontend)
 
-In the Supabase project, add these Auth redirect URLs:
+Set `VITE_SUPABASE_*` in Project → Settings → Environment Variables.
+
+To enable the AI advisor, also set **one** of:
+
+- `XAI_API_KEY` (preferred — uses grok-4.3)
+- `OPENAI_API_KEY`
+- `LOVABLE_API_KEY`
+
+### Supabase (edge functions)
+
+Dashboard → Project Settings → Edge Functions → Secrets. Add the same AI key (`XAI_API_KEY` preferred), plus:
+
+- `STRIPE_SECRET_KEY` (already required for Pro checkout)
+
+Auth → URL configuration, add:
 
 - `https://exosky-beta.vercel.app/**`
 - `http://localhost:8080/**`
@@ -33,4 +47,5 @@ Enable the Google provider if you want Continue with Google.
 
 ## Edge functions
 
-See `supabase/functions/` (Stripe checkout, wallet ops, AI advisor).
+`supabase/functions/` hosts Stripe checkout, wallet ops, identity, and the AI advisor.
+The live site also calls `/api/ai-advisor` on Vercel so the advisor can ship without a separate Supabase function deploy.

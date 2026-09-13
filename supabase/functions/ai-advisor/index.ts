@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ADVISOR_SYSTEM, chatCompletions, getAiConfig } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,33 +11,17 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const cfg = getAiConfig();
+    if (!cfg) {
+      return new Response(JSON.stringify({ error: "AI service not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are Ξ╳oSky's AI Financial Advisor — a world-class financial analyst and crypto expert. You provide:
-- Deep market analysis with data-driven insights
-- Portfolio optimization strategies
-- Risk assessment and management advice
-- Crypto and DeFi explanations
-- Macro-economic trend analysis
-
-You speak with authority but always caveat that this is not financial advice. Use markdown formatting for clarity. Be concise but thorough. Use bullet points and headers. When discussing specific assets, mention current market conditions. You have a sharp, professional tone — think Bloomberg meets a helpful mentor.`
-          },
-          ...messages,
-        ],
-        stream: true,
-      }),
+    const response = await chatCompletions(cfg, {
+      messages: [{ role: "system", content: ADVISOR_SYSTEM }, ...(messages ?? [])],
+      stream: true,
     });
 
     if (!response.ok) {

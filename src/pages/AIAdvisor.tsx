@@ -37,17 +37,22 @@ export default function AIAdvisor() {
     let assistantContent = "";
 
     try {
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-advisor`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ messages: newMessages }),
-        }
-      );
+      const payload = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: newMessages }),
+      } as RequestInit;
+
+      let resp = await fetch("/api/ai-advisor", payload);
+      if (!resp.ok) {
+        resp = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-advisor`,
+          payload,
+        );
+      }
 
       if (resp.status === 429) {
         setMessages((p) => [...p, { role: "assistant", content: "Rate limit reached. Please try again in a moment." }]);
@@ -109,7 +114,7 @@ export default function AIAdvisor() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight">AI Financial Advisor</h1>
-            <p className="text-xs text-muted-foreground">Powered by Lovable AI · Not financial advice</p>
+            <p className="text-xs text-muted-foreground">Powered by Grok · Not financial advice</p>
           </div>
         </div>
       </motion.div>

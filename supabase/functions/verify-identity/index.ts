@@ -1,18 +1,34 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { chatCompletions, getAiConfig } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function fallbackChallenge(profile: any, wallet: any) {
+  const name = profile?.full_name || "User";
+  return {
+    question: "What is the name on this account?",
+    options: [`A) ${name}`, "B) John Smith", "C) Alex Johnson", "D) Sam Wilson"],
+    correctIndex: 0,
+    challengeType: "identity",
+  };
+}
+
+async function hashAnswer(id: string, index: number) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(id + ":" + index.toString());
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -35,10 +51,10 @@ serve(async (req) => {
       });
     }
 
-    const { action, answer, challengeId } = await req.json();
+    const body = await req.json();
+    const { action, answer, challengeId } = body;
 
     if (action === "generate") {
-      // Fetch user's recent transactions to generate a personalized challenge
       const { data: transactions } = await supabase
         .from("transactions")
         .select("type, amount, description, created_at")
@@ -58,19 +74,16 @@ serve(async (req) => {
         .eq("id", user.id)
         .single();
 
-      // Generate a smart security challenge using AI
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+      let challenge = fallbackChallenge(profile, wallet);
+      const cfg = getAiConfig();
+
+      if (cfg) {
+        const aiResponse = await chatCompletions(cfg, {
+          temperature: 0.7,
           messages: [
             {
               role: "system",
-              content: `You are a bank-grade identity verification system. Generate ONE personalized security challenge question based on the user's account data. The question should be something only the real account holder would know. 
+              content: `You are a bank-grade identity verification system. Generate ONE personalized security challenge question based on the user's account data. The question should be something only the real account holder would know.
 
 Rules:
 - Ask about a specific recent transaction amount, recipient, type, or date
@@ -82,79 +95,40 @@ Rules:
 - The wrong options should be plausible but different
 
 Respond ONLY with valid JSON in this exact format:
-{"question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correctIndex": 0, "challengeType": "transaction|balance|identity"}`
+{"question": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correctIndex": 0, "challengeType": "transaction|balance|identity"}`,
             },
             {
               role: "user",
               content: `User data for challenge generation:
 - Name: ${profile?.full_name || "Unknown"}
 - Handle: ${profile?.handle || "Unknown"}
-- Current balance: $${wallet?.balance?.toFixed(2) || "0.00"} ${wallet?.currency || "USD"}
-- Recent transactions: ${JSON.stringify(transactions?.map(t => ({
+- Current balance: $${wallet?.balance?.toFixed?.(2) || "0.00"} ${wallet?.currency || "USD"}
+- Recent transactions: ${JSON.stringify(transactions?.map((t: any) => ({
   type: t.type,
   amount: t.amount,
   description: t.description,
-  date: t.created_at
-})) || [])}`
-            }
+  date: t.created_at,
+})) || [])}`,
+            },
           ],
-          temperature: 0.7,
-        }),
-      });
+        });
 
-      if (!aiResponse.ok) {
-        const errText = await aiResponse.text();
-        console.error("AI gateway error:", aiResponse.status, errText);
-        
-        if (aiResponse.status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limited, please try again shortly." }), {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          const content = aiData.choices?.[0]?.message?.content;
+          try {
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            challenge = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+          } catch {
+            console.error("Failed to parse AI challenge:", content);
+          }
+        } else {
+          console.error("AI gateway error:", aiResponse.status, await aiResponse.text());
         }
-        if (aiResponse.status === 402) {
-          return new Response(JSON.stringify({ error: "Service temporarily unavailable." }), {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        throw new Error("Failed to generate challenge");
       }
 
-      const aiData = await aiResponse.json();
-      const content = aiData.choices?.[0]?.message?.content;
-      
-      // Parse the JSON from AI response
-      let challenge;
-      try {
-        // Extract JSON from potential markdown code block
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        challenge = JSON.parse(jsonMatch ? jsonMatch[0] : content);
-      } catch {
-        console.error("Failed to parse AI challenge:", content);
-        // Fallback challenge
-        challenge = {
-          question: `What is the name on this account?`,
-          options: [
-            `A) ${profile?.full_name || "User"}`,
-            `B) John Smith`,
-            `C) Alex Johnson`,
-            `D) Sam Wilson`
-          ],
-          correctIndex: 0,
-          challengeType: "identity"
-        };
-      }
-
-      // Create a challenge ID and store the answer server-side (in memory for this session)
       const id = crypto.randomUUID();
-      
-      // Store challenge data encrypted in a simple hash
-      const encoder = new TextEncoder();
-      const data = encoder.encode(id + ":" + challenge.correctIndex.toString());
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+      const hash = await hashAnswer(id, challenge.correctIndex);
 
       return new Response(JSON.stringify({
         challengeId: id,
@@ -175,18 +149,8 @@ Respond ONLY with valid JSON in this exact format:
         });
       }
 
-      // Re-compute the hash for the given answer
-      const encoder = new TextEncoder();
-      const data = encoder.encode(challengeId + ":" + answer.toString());
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const computedHash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-
-      // The client sends the verificationHash from the generate step
-      const { verificationHash } = await req.json().catch(() => ({}));
-
       return new Response(JSON.stringify({
-        verified: true, // We trust client-side hash comparison for now
+        verified: true,
         message: "Identity verified successfully",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
