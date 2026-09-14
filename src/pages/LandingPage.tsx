@@ -372,7 +372,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── How It Works ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         {/* Subtle divider gradient */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
@@ -426,7 +426,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Features Grid ─── */}
-      <section id="features" className="px-6 py-20 relative">
+      <section id="features" className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-6xl mx-auto">
@@ -470,7 +470,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Welcome Bonus CTA ─── */}
-      <section className="px-6 py-20">
+      <section className="px-6 py-24">
         <RevealSection className="max-w-4xl mx-auto">
           <div className="relative rounded-3xl overflow-hidden border border-accent/20 p-8 sm:p-12">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-blue-500/5" />
@@ -522,7 +522,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── APY Section ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-4xl mx-auto text-center">
@@ -567,7 +567,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Comparison Table ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-3xl mx-auto">
@@ -648,7 +648,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Private Beta Access ─── */}
-      <section className="px-6 py-28 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-3xl mx-auto">
@@ -765,7 +765,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FAQ ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-2xl mx-auto">
@@ -804,7 +804,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Trust Section ─── */}
-      <section className="px-6 py-16">
+      <section className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
           <RevealSection>
             <motion.div
@@ -833,7 +833,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Final CTA ─── */}
-      <section className="px-6 py-20 pb-32 relative">
+      <section className="px-6 py-24 pb-28 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
         {/* Background glow */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
