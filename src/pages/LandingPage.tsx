@@ -165,6 +165,7 @@ const FAQS = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const prefersReducedMotion = useReducedMotion();
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
