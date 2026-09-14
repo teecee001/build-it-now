@@ -112,6 +112,22 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
+  h1, h2, h3 {
+    @apply font-display tracking-tight;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
