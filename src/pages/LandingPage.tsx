@@ -382,7 +382,7 @@ export default function LandingPage() {
               <Smartphone className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground">How It Works</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Up and running in{" "}
               <span className="text-accent">minutes</span>
             </h2>
@@ -431,7 +431,7 @@ export default function LandingPage() {
 
         <div className="max-w-6xl mx-auto">
           <RevealSection className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Everything you need.{" "}
               <span className="text-muted-foreground">Nothing you don't.</span>
             </h2>
@@ -482,7 +482,7 @@ export default function LandingPage() {
                   <Gift className="w-3.5 h-3.5 text-accent" />
                   <span className="text-xs font-semibold text-accent">Limited Time Offer</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+                <h2 className="text-display-lg">
                   Get <span className="text-accent">$25 free</span> when
                   <br className="hidden sm:block" /> you sign up today
                 </h2>
@@ -492,7 +492,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   onClick={() => navigate("/auth")}
-                  className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.25)] hover:shadow-[0_0_60px_hsl(142_71%_45%/0.35)] transition-shadow"
+                  className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-accent hover:shadow-accent-strong transition-shadow"
                 >
                   Claim Your $25 <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -531,7 +531,7 @@ export default function LandingPage() {
               <PiggyBank className="w-3.5 h-3.5 text-warning" />
               <span className="text-xs font-semibold text-warning">High-Yield Savings</span>
             </div>
-            <h2 className="text-4xl sm:text-6xl font-black tracking-tight">
+            <h2 className="text-display-xl">
               Earn <span className="text-warning">6% APY</span>
             </h2>
             <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
@@ -576,7 +576,7 @@ export default function LandingPage() {
               <BarChart3 className="w-3.5 h-3.5 text-accent" />
               <span className="text-xs font-semibold text-accent">Side by Side</span>
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Ξ╳oSky vs. Traditional Banks
             </h2>
             <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
@@ -639,7 +639,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               onClick={() => navigate("/auth")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl hover:shadow-[0_0_30px_hsl(142_71%_45%/0.25)] transition-shadow"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl hover:shadow-accent transition-shadow"
             >
               Switch to Ξ╳oSky <ArrowRight className="w-4 h-4" />
             </Button>
@@ -677,7 +677,7 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
-                  className="text-3xl sm:text-5xl font-black tracking-tight leading-tight"
+                  className="text-display-lg"
                 >
                   Ξ╳oSky is currently in
                   <br />
@@ -731,7 +731,7 @@ export default function LandingPage() {
                   <Button
                     type="submit"
                     size="lg"
-                    className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_50px_hsl(142_71%_45%/0.2)] hover:shadow-[0_0_70px_hsl(142_71%_45%/0.3)] transition-shadow shrink-0 px-6"
+                    className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-accent hover:shadow-accent-strong transition-shadow shrink-0 px-6"
                   >
                     Request Access <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -774,7 +774,7 @@ export default function LandingPage() {
               <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground">FAQ</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Got questions?
             </h2>
             <p className="text-muted-foreground mt-3">
@@ -840,7 +840,7 @@ export default function LandingPage() {
 
         <div className="max-w-2xl mx-auto text-center relative">
           <RevealSection>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Ready to take control
               <br />
               of your money?
@@ -851,7 +851,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               onClick={() => navigate("/auth")}
-              className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 h-14 px-10 text-base font-semibold gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.3)] hover:shadow-[0_0_60px_hsl(142_71%_45%/0.4)] hover:scale-105 transition-all"
+              className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 h-14 px-10 text-base font-semibold gap-2 rounded-xl shadow-accent hover:shadow-accent-strong hover:-translate-y-0.5 transition-all"
             >
               Create Your Free Account <ArrowRight className="w-5 h-5" />
             </Button>
