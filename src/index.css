@@ -94,6 +94,12 @@
     --shadow-glow: 0 0 60px hsl(142 71% 45% / 0.15);
     --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3), 0 4px 12px hsl(0 0% 0% / 0.2);
   }
+
+  :root,
+  .dark {
+    --shadow-accent: 0 0 30px hsl(var(--accent) / 0.25);
+    --shadow-accent-strong: 0 0 50px hsl(var(--accent) / 0.35);
+  }
 }
 
 @layer base {
