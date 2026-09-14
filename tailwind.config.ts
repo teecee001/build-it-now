@@ -15,7 +15,13 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+      },
+      fontSize: {
+        'display-xl': ['clamp(2.75rem, 5.5vw, 4.25rem)', { lineHeight: '1.03', letterSpacing: '-0.035em', fontWeight: '700' }],
+        'display-lg': ['clamp(2rem, 3.6vw, 3rem)', { lineHeight: '1.08', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'display-md': ['clamp(1.5rem, 2.4vw, 2rem)', { lineHeight: '1.15', letterSpacing: '-0.025em', fontWeight: '600' }],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -69,6 +75,8 @@ export default {
       boxShadow: {
         'glow': 'var(--shadow-glow)',
         'card': 'var(--shadow-card)',
+        'accent': 'var(--shadow-accent)',
+        'accent-strong': 'var(--shadow-accent-strong)',
       },
       borderRadius: {
         lg: "var(--radius)",

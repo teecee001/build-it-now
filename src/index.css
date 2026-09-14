@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @layer base {
   :root {
@@ -94,6 +94,12 @@
     --shadow-glow: 0 0 60px hsl(142 71% 45% / 0.15);
     --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3), 0 4px 12px hsl(0 0% 0% / 0.2);
   }
+
+  :root,
+  .dark {
+    --shadow-accent: 0 0 30px hsl(var(--accent) / 0.25);
+    --shadow-accent-strong: 0 0 50px hsl(var(--accent) / 0.35);
+  }
 }
 
 @layer base {
@@ -105,6 +111,22 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  h1, h2, h3 {
+    @apply font-display tracking-tight;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
 
   /* Custom scrollbar */
   ::-webkit-scrollbar {

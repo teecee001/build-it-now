@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useInView, useReducedMotion } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -165,6 +165,7 @@ const FAQS = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const prefersReducedMotion = useReducedMotion();
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -244,21 +245,21 @@ export default function LandingPage() {
       {/* ─── Hero ─── */}
       <motion.section
         ref={heroRef}
-        style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
-        className="relative pt-28 sm:pt-32 pb-20 px-6 will-change-transform"
+        style={prefersReducedMotion ? undefined : { opacity: heroOpacity, scale: heroScale, y: heroY }}
+        className="relative pt-24 sm:pt-28 pb-14 px-6 will-change-transform"
       >
         {/* Ambient glow */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[400px] sm:w-[600px] h-[300px] sm:h-[400px] bg-accent/8 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none" />
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[400px] sm:w-[620px] h-[280px] sm:h-[380px] bg-accent/[0.07] rounded-full blur-[100px] sm:blur-[130px] pointer-events-none" />
 
-        <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row lg:items-start gap-10 lg:gap-14">
           {/* Left: Text */}
-          <div className="flex-1 text-center lg:text-left">
+          <div className="flex-1 text-center lg:text-left lg:pt-6">
             <motion.div
               custom={0}
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-8"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-6"
             >
               <Gift className="w-3.5 h-3.5 text-accent" />
               <span className="text-xs font-semibold text-accent">Get $25 when you sign up — No deposit required</span>
@@ -269,7 +270,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05]"
+              className="text-display-xl"
             >
               The future of
               <br />
@@ -283,7 +284,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+              className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
               Banking, savings, crypto, stocks, cards, and global payments —
               all in one beautifully simple app. Now in beta — built for the borderless generation.
@@ -294,12 +295,12 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
+              className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
             >
               <Button
                 size="lg"
                 onClick={() => navigate("/auth")}
-                className="bg-accent text-accent-foreground hover:bg-accent/90 h-13 px-8 text-base font-semibold gap-2 rounded-xl shadow-[0_0_30px_hsl(142_71%_45%/0.3)] hover:shadow-[0_0_50px_hsl(142_71%_45%/0.4)] transition-shadow"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 px-7 text-sm font-semibold gap-2 rounded-xl shadow-accent hover:shadow-accent-strong hover:-translate-y-0.5 transition-all"
               >
                 Create Free Account <ArrowRight className="w-4 h-4" />
               </Button>
@@ -309,7 +310,7 @@ export default function LandingPage() {
                 onClick={() => {
                   document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="h-13 px-8 text-base rounded-xl border-border/60 hover:border-accent/30 transition-colors"
+                className="h-12 px-7 text-sm rounded-xl border-border/60 hover:border-accent/30 hover:-translate-y-0.5 transition-all"
               >
                 See What's Inside
               </Button>
@@ -321,7 +322,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="mt-8 flex items-center justify-center lg:justify-start gap-5 flex-wrap"
+              className="mt-7 flex items-center justify-center lg:justify-start gap-5 flex-wrap"
             >
               {[
                 "Bank-grade encryption",
@@ -348,32 +349,30 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* ─── Stats Bar ─── */}
-      <section className="px-6 pb-16">
-        <RevealSection className="max-w-4xl mx-auto">
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-2xl overflow-hidden border border-border bg-border"
-          >
-            {STATS.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={staggerItem}
-                className="bg-card p-6 text-center group"
-              >
-                <p className="text-2xl sm:text-3xl font-black tracking-tight text-accent group-hover:scale-110 transition-transform">{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </RevealSection>
+      {/* ─── Proof Bar ─── */}
+      <section className="border-y border-border/60 bg-card/30">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border/60"
+        >
+          {STATS.map((stat) => (
+            <motion.div
+              key={stat.label}
+              variants={staggerItem}
+              className="px-6 py-7 text-center"
+            >
+              <p className="text-display-md text-accent">{stat.value}</p>
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-1.5 font-medium">{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </section>
 
       {/* ─── How It Works ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         {/* Subtle divider gradient */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
@@ -383,7 +382,7 @@ export default function LandingPage() {
               <Smartphone className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground">How It Works</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Up and running in{" "}
               <span className="text-accent">minutes</span>
             </h2>
@@ -427,12 +426,12 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Features Grid ─── */}
-      <section id="features" className="px-6 py-20 relative">
+      <section id="features" className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-6xl mx-auto">
           <RevealSection className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Everything you need.{" "}
               <span className="text-muted-foreground">Nothing you don't.</span>
             </h2>
@@ -471,7 +470,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Welcome Bonus CTA ─── */}
-      <section className="px-6 py-20">
+      <section className="px-6 py-24">
         <RevealSection className="max-w-4xl mx-auto">
           <div className="relative rounded-3xl overflow-hidden border border-accent/20 p-8 sm:p-12">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-blue-500/5" />
@@ -483,7 +482,7 @@ export default function LandingPage() {
                   <Gift className="w-3.5 h-3.5 text-accent" />
                   <span className="text-xs font-semibold text-accent">Limited Time Offer</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+                <h2 className="text-display-lg">
                   Get <span className="text-accent">$25 free</span> when
                   <br className="hidden sm:block" /> you sign up today
                 </h2>
@@ -493,7 +492,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   onClick={() => navigate("/auth")}
-                  className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.25)] hover:shadow-[0_0_60px_hsl(142_71%_45%/0.35)] transition-shadow"
+                  className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-accent hover:shadow-accent-strong transition-shadow"
                 >
                   Claim Your $25 <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -523,7 +522,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── APY Section ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-4xl mx-auto text-center">
@@ -532,7 +531,7 @@ export default function LandingPage() {
               <PiggyBank className="w-3.5 h-3.5 text-warning" />
               <span className="text-xs font-semibold text-warning">High-Yield Savings</span>
             </div>
-            <h2 className="text-4xl sm:text-6xl font-black tracking-tight">
+            <h2 className="text-display-xl">
               Earn <span className="text-warning">6% APY</span>
             </h2>
             <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
@@ -568,7 +567,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Comparison Table ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-3xl mx-auto">
@@ -577,7 +576,7 @@ export default function LandingPage() {
               <BarChart3 className="w-3.5 h-3.5 text-accent" />
               <span className="text-xs font-semibold text-accent">Side by Side</span>
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Ξ╳oSky vs. Traditional Banks
             </h2>
             <p className="text-muted-foreground mt-4 text-lg max-w-xl mx-auto">
@@ -640,7 +639,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               onClick={() => navigate("/auth")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl hover:shadow-[0_0_30px_hsl(142_71%_45%/0.25)] transition-shadow"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl hover:shadow-accent transition-shadow"
             >
               Switch to Ξ╳oSky <ArrowRight className="w-4 h-4" />
             </Button>
@@ -649,7 +648,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Private Beta Access ─── */}
-      <section className="px-6 py-28 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-3xl mx-auto">
@@ -678,7 +677,7 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
-                  className="text-3xl sm:text-5xl font-black tracking-tight leading-tight"
+                  className="text-display-lg"
                 >
                   Ξ╳oSky is currently in
                   <br />
@@ -732,7 +731,7 @@ export default function LandingPage() {
                   <Button
                     type="submit"
                     size="lg"
-                    className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-[0_0_50px_hsl(142_71%_45%/0.2)] hover:shadow-[0_0_70px_hsl(142_71%_45%/0.3)] transition-shadow shrink-0 px-6"
+                    className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl shadow-accent hover:shadow-accent-strong transition-shadow shrink-0 px-6"
                   >
                     Request Access <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -766,7 +765,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FAQ ─── */}
-      <section className="px-6 py-20 relative">
+      <section className="px-6 py-24 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
 
         <div className="max-w-2xl mx-auto">
@@ -775,7 +774,7 @@ export default function LandingPage() {
               <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground">FAQ</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Got questions?
             </h2>
             <p className="text-muted-foreground mt-3">
@@ -805,7 +804,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Trust Section ─── */}
-      <section className="px-6 py-16">
+      <section className="px-6 py-24">
         <div className="max-w-4xl mx-auto">
           <RevealSection>
             <motion.div
@@ -834,14 +833,14 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Final CTA ─── */}
-      <section className="px-6 py-20 pb-32 relative">
+      <section className="px-6 py-24 pb-28 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-border to-transparent" />
         {/* Background glow */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-2xl mx-auto text-center relative">
           <RevealSection>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+            <h2 className="text-display-lg">
               Ready to take control
               <br />
               of your money?
@@ -852,7 +851,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               onClick={() => navigate("/auth")}
-              className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 h-14 px-10 text-base font-semibold gap-2 rounded-xl shadow-[0_0_40px_hsl(142_71%_45%/0.3)] hover:shadow-[0_0_60px_hsl(142_71%_45%/0.4)] hover:scale-105 transition-all"
+              className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 h-14 px-10 text-base font-semibold gap-2 rounded-xl shadow-accent hover:shadow-accent-strong hover:-translate-y-0.5 transition-all"
             >
               Create Your Free Account <ArrowRight className="w-5 h-5" />
             </Button>
