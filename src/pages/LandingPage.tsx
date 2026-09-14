@@ -245,21 +245,21 @@ export default function LandingPage() {
       {/* ─── Hero ─── */}
       <motion.section
         ref={heroRef}
-        style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
-        className="relative pt-28 sm:pt-32 pb-20 px-6 will-change-transform"
+        style={prefersReducedMotion ? undefined : { opacity: heroOpacity, scale: heroScale, y: heroY }}
+        className="relative pt-24 sm:pt-28 pb-14 px-6 will-change-transform"
       >
         {/* Ambient glow */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[400px] sm:w-[600px] h-[300px] sm:h-[400px] bg-accent/8 rounded-full blur-[100px] sm:blur-[120px] pointer-events-none" />
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[400px] sm:w-[620px] h-[280px] sm:h-[380px] bg-accent/[0.07] rounded-full blur-[100px] sm:blur-[130px] pointer-events-none" />
 
-        <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+        <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row lg:items-start gap-10 lg:gap-14">
           {/* Left: Text */}
-          <div className="flex-1 text-center lg:text-left">
+          <div className="flex-1 text-center lg:text-left lg:pt-6">
             <motion.div
               custom={0}
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-8"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/20 bg-accent/5 mb-6"
             >
               <Gift className="w-3.5 h-3.5 text-accent" />
               <span className="text-xs font-semibold text-accent">Get $25 when you sign up — No deposit required</span>
@@ -270,7 +270,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05]"
+              className="text-display-xl"
             >
               The future of
               <br />
@@ -284,7 +284,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+              className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
               Banking, savings, crypto, stocks, cards, and global payments —
               all in one beautifully simple app. Now in beta — built for the borderless generation.
@@ -295,12 +295,12 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
+              className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
             >
               <Button
                 size="lg"
                 onClick={() => navigate("/auth")}
-                className="bg-accent text-accent-foreground hover:bg-accent/90 h-13 px-8 text-base font-semibold gap-2 rounded-xl shadow-[0_0_30px_hsl(142_71%_45%/0.3)] hover:shadow-[0_0_50px_hsl(142_71%_45%/0.4)] transition-shadow"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 h-12 px-7 text-sm font-semibold gap-2 rounded-xl shadow-accent hover:shadow-accent-strong hover:-translate-y-0.5 transition-all"
               >
                 Create Free Account <ArrowRight className="w-4 h-4" />
               </Button>
@@ -310,7 +310,7 @@ export default function LandingPage() {
                 onClick={() => {
                   document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="h-13 px-8 text-base rounded-xl border-border/60 hover:border-accent/30 transition-colors"
+                className="h-12 px-7 text-sm rounded-xl border-border/60 hover:border-accent/30 hover:-translate-y-0.5 transition-all"
               >
                 See What's Inside
               </Button>
@@ -322,7 +322,7 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="mt-8 flex items-center justify-center lg:justify-start gap-5 flex-wrap"
+              className="mt-7 flex items-center justify-center lg:justify-start gap-5 flex-wrap"
             >
               {[
                 "Bank-grade encryption",
@@ -349,28 +349,26 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* ─── Stats Bar ─── */}
-      <section className="px-6 pb-16">
-        <RevealSection className="max-w-4xl mx-auto">
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-2xl overflow-hidden border border-border bg-border"
-          >
-            {STATS.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={staggerItem}
-                className="bg-card p-6 text-center group"
-              >
-                <p className="text-2xl sm:text-3xl font-black tracking-tight text-accent group-hover:scale-110 transition-transform">{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-1 font-medium">{stat.label}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </RevealSection>
+      {/* ─── Proof Bar ─── */}
+      <section className="border-y border-border/60 bg-card/30">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border/60"
+        >
+          {STATS.map((stat) => (
+            <motion.div
+              key={stat.label}
+              variants={staggerItem}
+              className="px-6 py-7 text-center"
+            >
+              <p className="text-display-md text-accent">{stat.value}</p>
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-1.5 font-medium">{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </section>
 
       {/* ─── How It Works ─── */}
