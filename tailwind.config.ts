@@ -75,6 +75,8 @@ export default {
       boxShadow: {
         'glow': 'var(--shadow-glow)',
         'card': 'var(--shadow-card)',
+        'accent': 'var(--shadow-accent)',
+        'accent-strong': 'var(--shadow-accent-strong)',
       },
       borderRadius: {
         lg: "var(--radius)",
