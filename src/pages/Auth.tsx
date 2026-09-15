@@ -41,12 +41,19 @@ export default function Auth() {
 
     if (isSignUp) {
       // Check waitlist approval before allowing signup
-      const { data: isApproved } = await supabase.rpc("check_waitlist_approved", {
-        check_email: email.trim().toLowerCase(),
+      const normalizedEmail = email.trim().toLowerCase();
+      const { data: isApproved, error: waitlistError } = await supabase.rpc("check_waitlist_approved", {
+        check_email: normalizedEmail,
       });
 
+      if (waitlistError) {
+        toast.error("Could not verify waitlist status. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
       if (!isApproved) {
-        toast.error("Your email hasn't been approved yet. Please join the waitlist from our homepage if you haven't already.");
+        toast.error("This email is on the waitlist but hasn't been approved yet. You'll get access once an admin approves you.");
         setIsSubmitting(false);
         return;
       }

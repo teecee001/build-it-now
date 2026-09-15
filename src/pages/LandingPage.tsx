@@ -703,10 +703,10 @@ export default function LandingPage() {
                     e.preventDefault();
                     const form = e.target as HTMLFormElement;
                     const emailInput = form.elements.namedItem("waitlist-email") as HTMLInputElement;
-                    const email = emailInput.value.trim();
+                    const email = emailInput.value.trim().toLowerCase();
                     if (!email) return;
 
-                    const { error } = await supabase.from("waitlist").insert({ email });
+                    const { error } = await supabase.from("waitlist").insert({ email, is_approved: false });
                     if (error) {
                       if (error.code === "23505") {
                         toast.info("You're already on the waitlist!");
