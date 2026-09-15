@@ -72,8 +72,11 @@ export default function Auth() {
     } else {
       const { error } = await signIn(email, password);
       if (error) {
-        if (error.message === "Invalid login credentials") {
-          toast.error("Invalid email or password. If you just signed up, please check your email to confirm your account first.");
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("email not confirmed")) {
+          toast.error("This account exists but the email is not confirmed yet. Use Sign Up on this same email, then confirm the user in Supabase → Authentication → Users.");
+        } else if (msg.includes("invalid login")) {
+          toast.error("Wrong email or password. Use Sign In (not Sign Up). If you signed up twice, the first password is the one that works.");
         } else {
           toast.error(error.message);
         }
