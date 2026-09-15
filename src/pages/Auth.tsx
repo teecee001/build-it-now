@@ -24,6 +24,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState(false);
 
   if (authLoading) {
     return (
@@ -61,11 +62,12 @@ export default function Auth() {
       const emailRedirectTo = nextPath
         ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
         : window.location.origin;
-      const { error } = await signUp(email, password, fullName, emailRedirectTo);
+      const { error } = await signUp(normalizedEmail, password, fullName, emailRedirectTo);
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Check your email to confirm your account");
+        setPendingConfirm(true);
+        toast.success("Account created. Confirm it from the Auth users page if the email doesn't arrive.");
       }
     } else {
       const { error } = await signIn(email, password);
@@ -79,6 +81,53 @@ export default function Auth() {
     }
     setIsSubmitting(false);
   };
+
+  const handleResendConfirm = async () => {
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim().toLowerCase(),
+    });
+    if (error) toast.error(error.message);
+    else toast.success("Confirmation email resent. Check spam too.");
+    setIsSubmitting(false);
+  };
+
+  if (pendingConfirm) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md text-center"
+        >
+          <div className="inline-flex items-center justify-center mb-6">
+            <ExoLogo size="lg" variant="mark" />
+          </div>
+          <Card className="p-8 bg-card border-border">
+            <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-5">
+              <ShieldCheck className="w-7 h-7 text-accent" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Confirm your email</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              We sent a confirmation link to <span className="text-foreground font-medium">{email}</span>.
+              Built-in mail can be slow or land in spam. You can also confirm the user in Supabase → Authentication → Users.
+            </p>
+            <Button className="w-full" onClick={handleResendConfirm} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resend confirmation email"}
+            </Button>
+            <Button
+              variant="outline"
+              className="mt-3 w-full"
+              onClick={() => { setPendingConfirm(false); setIsSignUp(false); }}
+            >
+              Back to Sign In
+            </Button>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
   // Pending approval state
   if (pendingApproval) {
