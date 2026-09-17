@@ -39,14 +39,17 @@ export default function AdminWaitlist() {
       setIsAdmin(false);
       return;
     }
-    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => {
+    (async () => {
+      await supabase.rpc("claim_founder_admin");
+      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
       setIsAdmin(!!data);
-    });
+    })();
   }, [user, authLoading]);
 
   const fetchEntries = async () => {
     setLoading(true);
     const { data, error } = await supabase.rpc("get_waitlist_admin");
+    if (error) toast.error(error.message || "Could not load waitlist");
     if (!error && data) setEntries(data as WaitlistEntry[]);
     setLoading(false);
   };
@@ -73,10 +76,7 @@ export default function AdminWaitlist() {
 
   const handleApprove = async (id: string, email: string) => {
     setActionLoading(id);
-    const { error } = await supabase
-      .from("waitlist")
-      .update({ is_approved: true } as any)
-      .eq("id", id);
+    const { error } = await supabase.rpc("set_waitlist_approval", { p_id: id, p_approved: true });
     if (error) {
       toast.error("Failed to approve");
     } else {
@@ -88,10 +88,7 @@ export default function AdminWaitlist() {
 
   const handleRevoke = async (id: string, email: string) => {
     setActionLoading(id);
-    const { error } = await supabase
-      .from("waitlist")
-      .update({ is_approved: false } as any)
-      .eq("id", id);
+    const { error } = await supabase.rpc("set_waitlist_approval", { p_id: id, p_approved: false });
     if (error) {
       toast.error("Failed to revoke");
     } else {
@@ -103,7 +100,7 @@ export default function AdminWaitlist() {
 
   const handleDelete = async (id: string, email: string) => {
     setActionLoading(id);
-    const { error } = await supabase.from("waitlist").delete().eq("id", id);
+    const { error } = await supabase.rpc("delete_waitlist_entry", { p_id: id });
     if (error) {
       toast.error("Failed to remove");
     } else {

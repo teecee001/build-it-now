@@ -781,6 +781,19 @@ export type Database = {
         Args: { check_email: string }
         Returns: boolean
       }
+      join_waitlist: {
+        Args: { p_email: string }
+        Returns: Json
+      }
+      claim_founder_admin: { Args: never; Returns: boolean }
+      set_waitlist_approval: {
+        Args: { p_id: string; p_approved: boolean }
+        Returns: boolean
+      }
+      delete_waitlist_entry: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
       get_waitlist_admin: {
         Args: never
         Returns: {

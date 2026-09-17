@@ -10,6 +10,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -37,6 +38,7 @@ export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const isAdmin = useIsAdmin();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
@@ -73,6 +75,20 @@ export function AppLayout() {
               </button>
             );
           })}
+          {isAdmin && (
+            <button
+              onClick={() => navigate("/admin")}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all mt-1",
+                location.pathname === "/admin"
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              )}
+            >
+              <Shield className="w-4 h-4" />
+              Waitlist Admin
+            </button>
+          )}
         </nav>
 
         {/* Legal Links */}
@@ -149,6 +165,15 @@ export function AppLayout() {
                 </button>
               );
             })}
+            {isAdmin && (
+              <button
+                onClick={() => { navigate("/admin"); setMobileOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                <Shield className="w-4 h-4" />
+                Waitlist Admin
+              </button>
+            )}
             <div className="border-t border-border pt-2 mt-2 space-y-0.5">
               <button onClick={() => { navigate("/terms"); setMobileOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground">
                 <FileText className="w-3.5 h-3.5" />

@@ -706,13 +706,11 @@ export default function LandingPage() {
                     const email = emailInput.value.trim().toLowerCase();
                     if (!email) return;
 
-                    const { error } = await supabase.from("waitlist").insert({ email, is_approved: false });
-                    if (error) {
-                      if (error.code === "23505") {
-                        toast.info("You're already on the waitlist!");
-                      } else {
-                        toast.error("Something went wrong. Please try again.");
-                      }
+                    const { data, error } = await supabase.rpc("join_waitlist", { p_email: email });
+                    if (error || (data && (data as { ok?: boolean }).ok === false)) {
+                      toast.error("Could not join the waitlist. Please try again.");
+                    } else if ((data as { duplicate?: boolean })?.duplicate) {
+                      toast.info("You're already on the waitlist!");
                     } else {
                       toast.success("You're on the list! We'll be in touch soon.");
                       emailInput.value = "";

@@ -54,7 +54,8 @@ export default function Auth() {
       }
 
       if (!isApproved) {
-        toast.error("This email is on the waitlist but hasn't been approved yet. You'll get access once an admin approves you.");
+        await supabase.rpc("join_waitlist", { p_email: normalizedEmail });
+        setPendingApproval(true);
         setIsSubmitting(false);
         return;
       }
