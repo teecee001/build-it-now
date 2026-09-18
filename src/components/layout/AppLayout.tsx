@@ -86,7 +86,7 @@ export function AppLayout() {
               )}
             >
               <Shield className="w-4 h-4" />
-              Waitlist Admin
+              Admin
             </button>
           )}
         </nav>
@@ -171,7 +171,7 @@ export function AppLayout() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground"
               >
                 <Shield className="w-4 h-4" />
-                Waitlist Admin
+                Admin
               </button>
             )}
             <div className="border-t border-border pt-2 mt-2 space-y-0.5">

@@ -35,7 +35,7 @@ import QRPayments from "./pages/QRPayments";
 import RecurringPayments from "./pages/RecurringPayments";
 import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
 import StocksPage from "./pages/StocksPage";
-import AdminWaitlist from "./pages/AdminWaitlist";
+import Admin from "./pages/Admin";
 import OAuthConsent from "./pages/OAuthConsent";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -90,7 +90,7 @@ const App = () => (
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclosures" element={<ComplianceDisclosures />} />
-            <Route path="/admin" element={<AdminWaitlist />} />
+            <Route path="/admin" element={<Admin />} />
             {/* Protected routes */}
             <Route
               element={

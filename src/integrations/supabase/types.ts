@@ -794,6 +794,24 @@ export type Database = {
         Args: { p_id: string }
         Returns: boolean
       }
+      admin_overview: { Args: never; Returns: Json }
+      admin_list_users: { Args: never; Returns: Json }
+      admin_list_transactions: { Args: never; Returns: Json }
+      admin_list_feedback: { Args: never; Returns: Json }
+      admin_waitlist_add: {
+        Args: { p_email: string; p_approved?: boolean }
+        Returns: Json
+      }
+      admin_waitlist_approve_all: { Args: never; Returns: number }
+      admin_user_confirm: { Args: { p_user_id: string }; Returns: boolean }
+      admin_user_ban: {
+        Args: { p_user_id: string; p_banned: boolean }
+        Returns: boolean
+      }
+      admin_user_set_role: {
+        Args: { p_user_id: string; p_admin: boolean }
+        Returns: boolean
+      }
       get_waitlist_admin: {
         Args: never
         Returns: {
