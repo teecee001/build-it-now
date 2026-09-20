@@ -25,9 +25,8 @@ export interface ForecastMarket {
 }
 
 // ── Data sources ─────────────────────────────────────────────
-// Fetched through the `forecast-data` edge function, which proxies:
-// FX: Frankfurter (European Central Bank reference rates)
-// Crypto & gold: CoinGecko public API (PAXG tracks the spot gold ounce)
+// FX: Frankfurter (ECB). Crypto & gold: CoinGecko. Tries the forecast-data
+// edge function first; if it is not deployed, fetches those APIs directly.
 
 const FX_TARGETS = ["EUR", "GBP", "BRL", "JPY", "INR"] as const;
 
@@ -38,12 +37,64 @@ interface MarketData {
   crypto: Record<string, CoinSeries>;
 }
 
-async function fetchMarketData(): Promise<MarketData> {
-  const { data, error } = await supabase.functions.invoke("forecast-data");
-  if (error) throw error;
-  if (!data || (data as any).error) throw new Error((data as any)?.error ?? "No market data");
-  return { fx: (data as any).fx ?? null, crypto: (data as any).crypto ?? {} };
+async function fetchFxDirect(): Promise<Record<string, number[]> | null> {
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() - 120);
+  const from = start.toISOString().slice(0, 10);
+  const res = await fetch(
+    `https://api.frankfurter.dev/v1/${from}..?from=USD&to=${FX_TARGETS.join(",")}`
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const dates = Object.keys(data.rates ?? {}).sort();
+  const rates: Record<string, number[]> = {};
+  for (const code of FX_TARGETS) {
+    rates[code] = dates
+      .map((d: string) => data.rates[d]?.[code])
+      .filter((v: unknown) => typeof v === "number") as number[];
+  }
+  return rates;
 }
+
+async function fetchCoinDirect(id: string): Promise<CoinSeries | null> {
+  const res = await fetch(
+    `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=90&interval=daily`
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const prices: number[] = (data.prices ?? []).map((p: [number, number]) => p[1]);
+  const volumes: number[] = (data.total_volumes ?? []).map((p: [number, number]) => p[1]);
+  if (!prices.length) return null;
+  return { prices, spot: prices[prices.length - 1] ?? 0, volume: volumes[volumes.length - 1] ?? 0 };
+}
+
+async function fetchMarketDataDirect(): Promise<MarketData> {
+  const [fx, btc, eth, gold] = await Promise.all([
+    fetchFxDirect(),
+    fetchCoinDirect("bitcoin"),
+    fetchCoinDirect("ethereum"),
+    fetchCoinDirect("pax-gold"),
+  ]);
+  const crypto: Record<string, CoinSeries> = {};
+  if (btc) crypto.bitcoin = btc;
+  if (eth) crypto.ethereum = eth;
+  if (gold) crypto["pax-gold"] = gold;
+  if (!fx && !Object.keys(crypto).length) throw new Error("No market data");
+  return { fx, crypto };
+}
+
+async function fetchMarketData(): Promise<MarketData> {
+  try {
+    const { data, error } = await supabase.functions.invoke("forecast-data");
+    if (!error && data && !(data as { error?: string }).error) {
+      return { fx: (data as MarketData).fx ?? null, crypto: (data as MarketData).crypto ?? {} };
+    }
+  } catch {
+    // Edge function is not deployed on the new project — use public APIs.
+  }
+  return fetchMarketDataDirect();
+}
+
 
 
 // ── Market construction ──────────────────────────────────────
