@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 import {
   dailyVol, probAbove, probTouch, toCents, toSpark,
@@ -38,37 +37,45 @@ interface MarketData {
 }
 
 async function fetchFxDirect(): Promise<Record<string, number[]> | null> {
-  const start = new Date();
-  start.setUTCDate(start.getUTCDate() - 120);
-  const from = start.toISOString().slice(0, 10);
-  const res = await fetch(
-    `https://api.frankfurter.dev/v1/${from}..?from=USD&to=${FX_TARGETS.join(",")}`
-  );
-  if (!res.ok) return null;
-  const data = await res.json();
-  const dates = Object.keys(data.rates ?? {}).sort();
-  const rates: Record<string, number[]> = {};
-  for (const code of FX_TARGETS) {
-    rates[code] = dates
-      .map((d: string) => data.rates[d]?.[code])
-      .filter((v: unknown) => typeof v === "number") as number[];
+  try {
+    const start = new Date();
+    start.setUTCDate(start.getUTCDate() - 120);
+    const from = start.toISOString().slice(0, 10);
+    const res = await fetch(
+      `https://api.frankfurter.dev/v1/${from}..?from=USD&to=${FX_TARGETS.join(",")}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const dates = Object.keys(data.rates ?? {}).sort();
+    const rates: Record<string, number[]> = {};
+    for (const code of FX_TARGETS) {
+      rates[code] = dates
+        .map((d: string) => data.rates[d]?.[code])
+        .filter((v: unknown) => typeof v === "number") as number[];
+    }
+    return Object.values(rates).some((s) => s.length > 5) ? rates : null;
+  } catch {
+    return null;
   }
-  return rates;
 }
 
 async function fetchCoinDirect(id: string): Promise<CoinSeries | null> {
-  const res = await fetch(
-    `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=90&interval=daily`
-  );
-  if (!res.ok) return null;
-  const data = await res.json();
-  const prices: number[] = (data.prices ?? []).map((p: [number, number]) => p[1]);
-  const volumes: number[] = (data.total_volumes ?? []).map((p: [number, number]) => p[1]);
-  if (!prices.length) return null;
-  return { prices, spot: prices[prices.length - 1] ?? 0, volume: volumes[volumes.length - 1] ?? 0 };
+  try {
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=90&interval=daily`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const prices: number[] = (data.prices ?? []).map((p: [number, number]) => p[1]);
+    const volumes: number[] = (data.total_volumes ?? []).map((p: [number, number]) => p[1]);
+    if (prices.length < 5) return null;
+    return { prices, spot: prices[prices.length - 1] ?? 0, volume: volumes[volumes.length - 1] ?? 0 };
+  } catch {
+    return null;
+  }
 }
 
-async function fetchMarketDataDirect(): Promise<MarketData> {
+async function fetchMarketData(): Promise<MarketData> {
   const [fx, btc, eth, gold] = await Promise.all([
     fetchFxDirect(),
     fetchCoinDirect("bitcoin"),
@@ -81,18 +88,6 @@ async function fetchMarketDataDirect(): Promise<MarketData> {
   if (gold) crypto["pax-gold"] = gold;
   if (!fx && !Object.keys(crypto).length) throw new Error("No market data");
   return { fx, crypto };
-}
-
-async function fetchMarketData(): Promise<MarketData> {
-  try {
-    const { data, error } = await supabase.functions.invoke("forecast-data");
-    if (!error && data && !(data as { error?: string }).error) {
-      return { fx: (data as MarketData).fx ?? null, crypto: (data as MarketData).crypto ?? {} };
-    }
-  } catch {
-    // Edge function is not deployed on the new project — use public APIs.
-  }
-  return fetchMarketDataDirect();
 }
 
 
@@ -204,11 +199,11 @@ function crypto(coins: Record<string, CoinSeries>): ForecastMarket[] {
 
 export function useForecastMarkets() {
   const query = useQuery({
-    queryKey: ["forecast-market-data"],
+    queryKey: ["forecast-market-data-v2"],
     queryFn: fetchMarketData,
     staleTime: 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
-    retry: 2,
+    retry: 1,
   });
 
   const markets: ForecastMarket[] = [];
