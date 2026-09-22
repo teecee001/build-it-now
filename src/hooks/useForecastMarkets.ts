@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   dailyVol, probAbove, probTouch, toCents, toSpark,
@@ -162,6 +163,17 @@ async function fetchMacro(): Promise<MacroRow | null> {
 }
 
 async function fetchMarketData(): Promise<MarketData> {
+  try {
+    const { data, error } = await supabase.functions.invoke("forecast-data");
+    const payload = data as (MarketData & { error?: string; code?: string }) | null;
+    if (!error && payload && payload.code !== "NOT_FOUND" && !payload.error) {
+      const coins = Array.isArray(payload.coins) ? payload.coins : [];
+      const fx = payload.fx && Object.values(payload.fx).some((s) => s.length > 5) ? payload.fx : null;
+      if (fx || coins.length) return { fx, coins, macro: payload.macro ?? null };
+    }
+  } catch {
+    // Function not deployed yet — fall through to public APIs.
+  }
   const [fx, coins, macro] = await Promise.all([fetchFx(), fetchCoins(), fetchMacro()]);
   if (!fx && !coins.length) throw new Error("No market data");
   return { fx, coins, macro };

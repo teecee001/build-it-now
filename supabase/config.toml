@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.wallet-operation]
 verify_jwt = false
+
+[functions.forecast-data]
+verify_jwt = false
+
+[functions.geo-verify]
+verify_jwt = false
