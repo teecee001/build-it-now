@@ -53,16 +53,6 @@ const COIN_META: Record<string, { ticker: string; step: number; category: "crypt
   "tether-gold": { ticker: "XAUT", step: 50, category: "commodities" },
 };
 
-const CITIES = [
-  { id: "lagos", name: "Lagos", lat: 6.5244, lon: 3.3792 },
-  { id: "london", name: "London", lat: 51.5074, lon: -0.1278 },
-  { id: "nyc", name: "New York", lat: 40.7128, lon: -74.006 },
-  { id: "tokyo", name: "Tokyo", lat: 35.6762, lon: 139.6503 },
-  { id: "dubai", name: "Dubai", lat: 25.2048, lon: 55.2708 },
-  { id: "singapore", name: "Singapore", lat: 1.3521, lon: 103.8198 },
-  { id: "sao-paulo", name: "São Paulo", lat: -23.5505, lon: -46.6333 },
-  { id: "nairobi", name: "Nairobi", lat: -1.2921, lon: 36.8219 },
-];
 
 interface CoinRow {
   id: string;
@@ -73,13 +63,6 @@ interface CoinRow {
   change7d: number;
 }
 
-interface WeatherRow {
-  id: string;
-  name: string;
-  tomorrow: number;
-  weekend: number;
-  spark: number[];
-}
 
 interface MacroRow {
   fng: number[];
@@ -90,7 +73,6 @@ interface MacroRow {
 interface MarketData {
   fx: Record<string, number[]> | null;
   coins: CoinRow[];
-  weather: WeatherRow[];
   macro: MacroRow | null;
 }
 
@@ -154,23 +136,6 @@ async function fetchCoins(): Promise<CoinRow[]> {
   }
 }
 
-async function fetchWeatherCity(city: (typeof CITIES)[number]): Promise<WeatherRow | null> {
-  try {
-    const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&daily=precipitation_probability_max&forecast_days=7&timezone=auto`
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const p: number[] = data?.daily?.precipitation_probability_max ?? [];
-    if (!p.length) return null;
-    const tomorrow = p[1] ?? p[0] ?? 0;
-    const weekend = Math.max(p[5] ?? 0, p[6] ?? 0);
-    return { id: city.id, name: city.name, tomorrow, weekend, spark: p.map((n) => Math.max(0, Math.min(100, n))) };
-  } catch {
-    return null;
-  }
-}
-
 async function fetchMacro(): Promise<MacroRow | null> {
   try {
     const [fngRes, globRes] = await Promise.all([
@@ -197,15 +162,9 @@ async function fetchMacro(): Promise<MacroRow | null> {
 }
 
 async function fetchMarketData(): Promise<MarketData> {
-  const [fx, coins, weatherSettled, macro] = await Promise.all([
-    fetchFx(),
-    fetchCoins(),
-    Promise.all(CITIES.map(fetchWeatherCity)),
-    fetchMacro(),
-  ]);
-  const weather = weatherSettled.filter((w): w is WeatherRow => !!w);
-  if (!fx && !coins.length && !weather.length) throw new Error("No market data");
-  return { fx, coins, weather, macro };
+  const [fx, coins, macro] = await Promise.all([fetchFx(), fetchCoins(), fetchMacro()]);
+  if (!fx && !coins.length) throw new Error("No market data");
+  return { fx, coins, macro };
 }
 
 function fxMarkets(code: string, series: number[]): ForecastMarket[] {
@@ -295,35 +254,13 @@ function coinMarkets(c: CoinRow): ForecastMarket[] {
 
 function eventMarkets(data: MarketData): ForecastMarket[] {
   const out: ForecastMarket[] = [];
-  const d1 = addDays(1);
   const d7 = addDays(7);
-
-  for (const w of data.weather) {
-    out.push({
-      id: `wx-${w.id}-tmr`,
-      category: "events",
-      question: `Will it rain in ${w.name} tomorrow?`,
-      detail: `YES if Open-Meteo records precipitation tomorrow. Model rain chance ${Math.round(w.tomorrow)}%.`,
-      yesPrice: toCents(w.tomorrow / 100),
-      spot: w.tomorrow, spotLabel: `${Math.round(w.tomorrow)}% rain`,
-      unit: "%", source: "Open-Meteo",
-      resolvesAt: fmtDate(d1), resolvesInDays: 1, spark: w.spark,
-      hot: w.id === "lagos" || w.id === "nyc",
-    });
-    out.push({
-      id: `wx-${w.id}-wknd`,
-      category: "events",
-      question: `Will it rain in ${w.name} this weekend?`,
-      detail: `YES if Sat or Sun has rain. Peak weekend probability ${Math.round(w.weekend)}%.`,
-      yesPrice: toCents(w.weekend / 100),
-      spot: w.weekend, spotLabel: `${Math.round(w.weekend)}% rain`,
-      unit: "%", source: "Open-Meteo",
-      resolvesAt: fmtDate(addDays(7)), resolvesInDays: 7, spark: w.spark,
-    });
-  }
 
   const btc = data.coins.find((c) => c.id === "bitcoin");
   const eth = data.coins.find((c) => c.id === "ethereum");
+  const gold = data.coins.find((c) => c.id === "pax-gold");
+  const sol = data.coins.find((c) => c.id === "solana");
+
   if (btc && eth && btc.prices.length && eth.prices.length) {
     const n = Math.min(btc.prices.length, eth.prices.length);
     const ratio = btc.prices.slice(-n).map((p, i) => p / eth.prices[eth.prices.length - n + i]);
@@ -339,18 +276,55 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       unit: "BTC/ETH", source: "CoinGecko",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(ratio), hot: true,
     });
+  }
+
+  if (btc) {
+    const dump = btc.spot * 0.95;
     out.push({
-      id: "btc-eth-both-up",
+      id: "btc-dump-5",
       category: "events",
-      question: "Will BTC and ETH both finish the week higher?",
-      detail: `Joint 7-day up-week. BTC 7d ${btc.change7d.toFixed(1)}%, ETH ${eth.change7d.toFixed(1)}%.`,
-      yesPrice: toCents(
-        probAbove(btc.spot, btc.spot, dailyVol(btc.prices), 7) *
-        probAbove(eth.spot, eth.spot, dailyVol(eth.prices), 7)
-      ),
-      spot: btc.spot, spotLabel: `BTC $${fmtPx(btc.spot)}`,
+      question: "Will BTC drop 5% at any point this week?",
+      detail: `YES if BTC trades at or below $${fmtPx(dump)} in the next 7 days. Spot $${fmtPx(btc.spot)}.`,
+      yesPrice: toCents(probTouch(btc.spot, dump, dailyVol(btc.prices), 7)),
+      volume: btc.volume, spot: btc.spot, spotLabel: `$${fmtPx(btc.spot)}`,
       unit: "USD", source: "CoinGecko",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(btc.prices),
+    });
+  }
+
+  if (btc && gold && btc.prices.length && gold.prices.length) {
+    const n = Math.min(btc.prices.length, gold.prices.length);
+    const bRel = btc.prices.slice(-n);
+    const gRel = gold.prices.slice(-n);
+    const bRet = bRel[bRel.length - 1] / bRel[0];
+    const gRet = gRel[gRel.length - 1] / gRel[0];
+    const ratio = bRel.map((p, i) => p / gRel[i]);
+    const rSpot = ratio[ratio.length - 1];
+    out.push({
+      id: "gold-vs-btc-7d",
+      category: "events",
+      question: "Will gold beat Bitcoin this week?",
+      detail: `YES if gold's 7-day return beats BTC's. Last 7d: gold ${((gRet - 1) * 100).toFixed(1)}% vs BTC ${((bRet - 1) * 100).toFixed(1)}%.`,
+      yesPrice: toCents(probAbove(1 / rSpot, (1 / rSpot) * 1.01, dailyVol(ratio), 7)),
+      spot: rSpot, spotLabel: `${rSpot.toFixed(4)} BTC/oz`,
+      unit: "BTC/oz", source: "CoinGecko",
+      resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(ratio),
+    });
+  }
+
+  if (eth && sol && eth.prices.length && sol.prices.length) {
+    const n = Math.min(eth.prices.length, sol.prices.length);
+    const ratio = sol.prices.slice(-n).map((p, i) => p / eth.prices[eth.prices.length - n + i]);
+    const rSpot = ratio[ratio.length - 1];
+    out.push({
+      id: "sol-eth-7d",
+      category: "events",
+      question: "Will SOL outperform ETH over the next 7 days?",
+      detail: `YES if SOL/ETH finishes above ${rSpot.toFixed(4)}.`,
+      yesPrice: toCents(probAbove(rSpot, rSpot * 1.01, dailyVol(ratio), 7)),
+      spot: rSpot, spotLabel: `${rSpot.toFixed(4)} SOL/ETH`,
+      unit: "SOL/ETH", source: "CoinGecko",
+      resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(ratio),
     });
   }
 
@@ -384,6 +358,22 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       unit: "index", source: "alternative.me",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(series),
       hot: spot <= 30 || spot >= 70,
+    });
+  }
+
+  const eur = data.fx?.EUR;
+  if (eur && eur.length > 5) {
+    const spot = eur[eur.length - 1];
+    const tgt = spot * 1.01;
+    out.push({
+      id: "usd-eur-event-1pct",
+      category: "events",
+      question: "Will USD gain 1% on the euro this week?",
+      detail: `YES if ECB USD→EUR prints above ${tgt.toFixed(4)}. Spot ${spot.toFixed(4)}.`,
+      yesPrice: toCents(probAbove(spot, tgt, dailyVol(eur), 7)),
+      spot, spotLabel: `${spot.toFixed(4)} USD/EUR`,
+      unit: "USD/EUR", source: "ECB via Frankfurter",
+      resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(eur),
     });
   }
 

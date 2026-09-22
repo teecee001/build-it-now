@@ -185,7 +185,7 @@ export default function Forecasts() {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {counts.all} live markets across FX, crypto, metals, weather, and macro — real data, paper trades.
+            {counts.all} live markets on FX, crypto, metals, and macro events — real feeds, paper trades.
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
@@ -269,7 +269,7 @@ export default function Forecasts() {
 
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search BTC, Lagos rain, EUR, gold…" className="pl-10 h-11 rounded-xl bg-secondary/30" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search BTC, ETH, EUR, gold, dominance…" className="pl-10 h-11 rounded-xl bg-secondary/30" />
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
@@ -301,7 +301,7 @@ export default function Forecasts() {
       <div className="flex items-start gap-2 text-xs text-muted-foreground border-t border-border pt-4">
         <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
         <p>
-          Odds come from live feeds: ECB FX, CoinGecko prices, Open-Meteo rain probabilities, and Fear & Greed.
+          Odds come from live feeds: ECB FX, CoinGecko prices, and Fear & Greed.
           They are information, not investment advice. Positions are paper-only — no real funds move.
         </p>
       </div>
