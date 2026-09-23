@@ -37,6 +37,7 @@ import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
 import StocksPage from "./pages/StocksPage";
 import Admin from "./pages/Admin";
 import OAuthConsent from "./pages/OAuthConsent";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -123,6 +124,7 @@ const App = () => (
               <Route path="/recurring" element={<RecurringPayments />} />
               <Route path="/currencies" element={<MultiCurrencyWallet />} />
               <Route path="/stocks" element={<StocksPage />} />
+              <Route path="/notifications" element={<Notifications />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
