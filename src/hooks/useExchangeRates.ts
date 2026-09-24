@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { EXCHANGE_RATES } from "@/constants/currencies";
 import { COINGECKO_IDS } from "@/constants/cryptoIds";
 
-// Fiat currencies list (non-crypto)
 const FIAT_CODES = Object.keys(EXCHANGE_RATES).filter(
   (code) => !COINGECKO_IDS[code]
 );
@@ -16,45 +15,50 @@ async function fetchFiatRates(): Promise<Record<string, number>> {
   return data.rates as Record<string, number>;
 }
 
-async function fetchCryptoRates(): Promise<Record<string, number>> {
-  // CoinGecko free API: get prices in USD for all cryptos
+type CryptoPayload = {
+  rates: Record<string, number>;
+  changes: Record<string, number>;
+};
+
+async function fetchCryptoRates(): Promise<CryptoPayload> {
   const ids = CRYPTO_CODES.map((c) => COINGECKO_IDS[c]).filter(Boolean).join(",");
   const res = await fetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
+    `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
   );
   if (!res.ok) throw new Error("Failed to fetch crypto rates");
   const data = await res.json();
 
-  // Convert to our format: code -> rate relative to 1 USD
   const rates: Record<string, number> = {};
+  const changes: Record<string, number> = {};
   for (const code of CRYPTO_CODES) {
     const geckoId = COINGECKO_IDS[code];
-    if (geckoId && data[geckoId]?.usd) {
-      // Rate = how many units of crypto per 1 USD
+    if (geckoId && data[geckoId]?.usd != null) {
       rates[code] = 1 / data[geckoId].usd;
+      if (typeof data[geckoId].usd_24h_change === "number") {
+        changes[code] = data[geckoId].usd_24h_change;
+      }
     }
   }
-  return rates;
+  return { rates, changes };
 }
 
 export function useExchangeRates() {
   const fiatQuery = useQuery({
     queryKey: ["fiat-rates"],
     queryFn: fetchFiatRates,
-    staleTime: 5 * 60 * 1000, // 5 min
+    staleTime: 5 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
     retry: 2,
   });
 
   const cryptoQuery = useQuery({
-    queryKey: ["crypto-rates"],
+    queryKey: ["crypto-rates-v2"],
     queryFn: fetchCryptoRates,
-    staleTime: 60 * 1000, // 1 min
+    staleTime: 60 * 1000,
     refetchInterval: 60 * 1000,
     retry: 2,
   });
 
-  // Merge: live rates first, fallback to mock
   const rates: Record<string, number> = { ...EXCHANGE_RATES };
 
   if (fiatQuery.data) {
@@ -65,23 +69,25 @@ export function useExchangeRates() {
     }
   }
 
-  if (cryptoQuery.data) {
+  if (cryptoQuery.data?.rates) {
     for (const code of CRYPTO_CODES) {
-      if (cryptoQuery.data[code] !== undefined) {
-        rates[code] = cryptoQuery.data[code];
+      if (cryptoQuery.data.rates[code] !== undefined) {
+        rates[code] = cryptoQuery.data.rates[code];
       }
     }
   }
 
+  const cryptoChanges: Record<string, number> = cryptoQuery.data?.changes ?? {};
+
   return {
     rates,
+    cryptoChanges,
     isLoading: fiatQuery.isLoading || cryptoQuery.isLoading,
     isLive: !!(fiatQuery.data || cryptoQuery.data),
     lastUpdated: new Date(),
   };
 }
 
-// Hook for crypto chart price history
 export function useCryptoChartData(cryptoCode: string) {
   const geckoId = COINGECKO_IDS[cryptoCode];
 
