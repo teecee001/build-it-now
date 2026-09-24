@@ -20,20 +20,16 @@ export type MarketDataPayload = {
 
 async function fetchClass(cls: string): Promise<MarketDataPayload> {
   const { data, error } = await supabase.functions.invoke("market-data", {
-    method: "GET",
-    // supabase-js invoke uses POST by default; pass class via body for reliability
-    body: {},
+    body: { class: cls },
   });
 
-  // Prefer query-style if gateway supports it; fall back to full payload
-  if (!error && data && typeof data === "object") {
+  if (!error && data && typeof data === "object" && !("error" in data && !(data as MarketDataPayload).crypto)) {
     return data as MarketDataPayload;
   }
 
-  // Direct fetch fallback (works with ?class= when function is deployed publicly)
   const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   if (base) {
-    const res = await fetch(`${base}/functions/v1/market-data?class=${cls}`, {
+    const res = await fetch(`${base}/functions/v1/market-data?class=${encodeURIComponent(cls)}`, {
       headers: {
         apikey: (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ?? "",
         Authorization: `Bearer ${(import.meta.env.VITE_SUPABASE_ANON_KEY as string) ?? ""}`,
@@ -45,7 +41,9 @@ async function fetchClass(cls: string): Promise<MarketDataPayload> {
   throw new Error(error?.message ?? "market-data unavailable");
 }
 
-export function useMarketData(cls: "all" | "crypto" | "forex" | "stocks" | "commodities" | "indices" = "all") {
+export function useMarketData(
+  cls: "all" | "crypto" | "forex" | "stocks" | "commodities" | "indices" = "all",
+) {
   const query = useQuery({
     queryKey: ["market-data", cls],
     queryFn: () => fetchClass(cls),
