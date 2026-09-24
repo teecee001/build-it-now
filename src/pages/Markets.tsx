@@ -36,7 +36,7 @@ function MiniChart({ values, up }: { values: number[]; up?: boolean }) {
   return (
     <ResponsiveContainer width={56} height={28}>
       <LineChart data={data}>
-        <Line type="monotone" dataKey="p" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={1.5} dot={false} />
+        <Line type="monotone" dataKey="p" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={2} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -45,15 +45,34 @@ function MiniChart({ values, up }: { values: number[]; up?: boolean }) {
 /** Build a short sparkline that slopes with change % so the row always looks alive */
 function syntheticSpark(symbol: string, price: number, changePct: number): number[] {
   const seed = seedHash(symbol);
-  const n = 14;
+  const n = 16;
   const end = Math.max(price, 1e-8);
-  const start = end / (1 + changePct / 100);
+  // Amplify small moves so the line still reads as "alive" (min ±1.5% visual)
+  const visualPct = Math.abs(changePct) < 0.5 ? (changePct >= 0 ? 1.8 : -1.8) : changePct;
+  const start = end / (1 + visualPct / 100);
   return Array.from({ length: n }, (_, j) => {
     const t = j / (n - 1);
     const base = start + (end - start) * t;
-    const wobble = 1 + Math.sin(seed + j * 0.55) * 0.012;
+    const wobble = 1 + Math.sin(seed * 0.13 + j * 0.72) * 0.035 + Math.cos(seed * 0.07 + j * 0.41) * 0.02;
     return base * wobble;
   });
+}
+
+const AVATAR_PALETTE = [
+  "bg-amber-500/25 text-amber-400",
+  "bg-orange-500/25 text-orange-400",
+  "bg-emerald-500/25 text-emerald-400",
+  "bg-sky-500/25 text-sky-400",
+  "bg-violet-500/25 text-violet-400",
+  "bg-rose-500/25 text-rose-400",
+  "bg-cyan-500/25 text-cyan-400",
+  "bg-lime-500/25 text-lime-400",
+  "bg-fuchsia-500/25 text-fuchsia-400",
+  "bg-blue-500/25 text-blue-400",
+];
+
+function avatarClass(symbol: string) {
+  return AVATAR_PALETTE[seedHash(symbol) % AVATAR_PALETTE.length];
 }
 
 type MarketCategory = "crypto" | "stocks" | "forex" | "commodities" | "indices";
@@ -329,12 +348,12 @@ function MarketsContent() {
           return (
             <Card
               key={item.symbol}
-              className="p-3 hover:bg-secondary/30 transition-colors cursor-pointer"
+              className="p-3.5 rounded-2xl hover:bg-secondary/40 transition-colors cursor-pointer border-border/60"
               onClick={() => setSelectedAsset({ symbol: item.symbol, category: activeCategory })}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold shrink-0">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${avatarClass(item.symbol)}`}>
                     {item.symbol.replace("/", "").slice(0, 3)}
                   </div>
                   <div className="min-w-0">
@@ -396,7 +415,7 @@ function MarketsContent() {
             <Card className="p-5 max-w-lg mx-auto space-y-4 shadow-xl border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${avatarClass(selectedAsset.symbol)}`}>
                     {selectedAsset.symbol.replace("/", "").slice(0, 3)}
                   </div>
                   <div>
