@@ -9,6 +9,7 @@ import { CurrencyConverter } from "@/components/CurrencyConverter";
 import { ConversionHistory } from "@/components/ConversionHistory";
 import { TradingViewChart } from "@/components/TradingViewChart";
 import { FearGreedSection } from "@/components/FearGreedSection";
+import { AssetLogo } from "@/components/AssetLogo";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
 import { STOCK_LIST, SECTOR_COLORS } from "@/constants/stockList";
 import { COMMODITIES, INDICES, FOREX_PAIRS } from "@/constants/marketAssets";
@@ -56,23 +57,6 @@ function syntheticSpark(symbol: string, price: number, changePct: number): numbe
     const wobble = 1 + Math.sin(seed * 0.13 + j * 0.72) * 0.035 + Math.cos(seed * 0.07 + j * 0.41) * 0.02;
     return base * wobble;
   });
-}
-
-const AVATAR_PALETTE = [
-  "bg-amber-500/25 text-amber-400",
-  "bg-orange-500/25 text-orange-400",
-  "bg-emerald-500/25 text-emerald-400",
-  "bg-sky-500/25 text-sky-400",
-  "bg-violet-500/25 text-violet-400",
-  "bg-rose-500/25 text-rose-400",
-  "bg-cyan-500/25 text-cyan-400",
-  "bg-lime-500/25 text-lime-400",
-  "bg-fuchsia-500/25 text-fuchsia-400",
-  "bg-blue-500/25 text-blue-400",
-];
-
-function avatarClass(symbol: string) {
-  return AVATAR_PALETTE[seedHash(symbol) % AVATAR_PALETTE.length];
 }
 
 type MarketCategory = "crypto" | "stocks" | "forex" | "commodities" | "indices";
@@ -353,9 +337,7 @@ function MarketsContent() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${avatarClass(item.symbol)}`}>
-                    {item.symbol.replace("/", "").slice(0, 3)}
-                  </div>
+                  <AssetLogo symbol={item.symbol} category={activeCategory} size={36} />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{item.name}</p>
                     <div className="flex items-center gap-1.5">
@@ -415,9 +397,7 @@ function MarketsContent() {
             <Card className="p-5 max-w-lg mx-auto space-y-4 shadow-xl border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${avatarClass(selectedAsset.symbol)}`}>
-                    {selectedAsset.symbol.replace("/", "").slice(0, 3)}
-                  </div>
+                  <AssetLogo symbol={selectedAsset.symbol} category={selectedAsset.category} size={40} />
                   <div>
                     <h3 className="font-semibold">{selectedInfo.name}</h3>
                     <div className="flex items-center gap-1.5">
