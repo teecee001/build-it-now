@@ -21,7 +21,6 @@ const STOCK_YAHOO = [
 ];
 const STOCK_DISPLAY: Record<string, string> = { "BRK-B": "BRK.B" };
 
-/** App symbol → Yahoo symbol */
 const COMMODITY_YAHOO: Record<string, string> = {
   GOLD: "GC=F",
   SILVER: "SI=F",
@@ -168,7 +167,6 @@ async function fetchCrypto(): Promise<Record<string, Quote>> {
     const code = CRYPTO_CODE[id];
     if (!code || row.usd == null) continue;
     const change = typeof row.usd_24h_change === "number" ? row.usd_24h_change : 0;
-    // Lightweight synthetic spark from change direction (no extra API cost)
     const n = 14;
     const end = row.usd;
     const start = end / (1 + change / 100);
@@ -179,7 +177,6 @@ async function fetchCrypto(): Promise<Record<string, Quote>> {
 }
 
 async function fetchForex(): Promise<Record<string, Quote>> {
-  // Frankfurter ECB — free, no key
   const res = await fetch("https://api.frankfurter.app/latest?from=USD");
   if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
   const data = await res.json();
@@ -197,7 +194,6 @@ async function fetchForex(): Promise<Record<string, Quote>> {
   if (rates.EUR && rates.JPY) pairs.push({ symbol: "EUR/JPY", price: rates.JPY / rates.EUR });
   if (rates.GBP && rates.JPY) pairs.push({ symbol: "GBP/JPY", price: rates.JPY / rates.GBP });
 
-  // Previous day for change %
   let prevRates: Record<string, number> = {};
   try {
     const d = new Date();
@@ -237,7 +233,15 @@ Deno.serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  const cls = (url.searchParams.get("class") || "all").toLowerCase();
+  let cls = (url.searchParams.get("class") || "all").toLowerCase();
+  if (req.method === "POST") {
+    try {
+      const body = await req.json();
+      if (body?.class) cls = String(body.class).toLowerCase();
+    } catch {
+      /* empty body ok */
+    }
+  }
 
   const cached = cache.get(cls);
   const ttl = TTL[cls] ?? TTL.all;
