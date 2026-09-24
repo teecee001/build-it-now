@@ -19,7 +19,7 @@ const PALETTE = [
   "bg-blue-500/25 text-blue-400",
 ];
 
-/** Official-ish logo URLs + letter fallback (CoinMarketCap-style). */
+/** Company domain → Clearbit logo (stocks). */
 const STOCK_DOMAIN: Record<string, string> = {
   AAPL: "apple.com",
   MSFT: "microsoft.com",
@@ -63,7 +63,34 @@ const STOCK_DOMAIN: Record<string, string> = {
   SQ: "block.xyz",
 };
 
-/** ISO country/region codes for flagcdn (base of pair or both for crosses). */
+/** Index operator / brand domain → official logo via Clearbit. */
+const INDEX_DOMAIN: Record<string, string> = {
+  SPX: "spglobal.com",
+  DJI: "dowjones.com",
+  IXIC: "nasdaq.com",
+  RUT: "lseg.com",
+  FTSE: "lseg.com",
+  DAX: "deutsche-boerse.com",
+  N225: "nikkei.co.jp",
+  HSI: "hsi.com.hk",
+  SSEC: "sse.com.cn",
+  VIX: "cboe.com",
+};
+
+/** Commodity-related brand / council domain → logo. */
+const COMMODITY_DOMAIN: Record<string, string> = {
+  GOLD: "gold.org",
+  SILVER: "silverinstitute.org",
+  OIL: "eia.gov",
+  BRENT: "ice.com",
+  NATGAS: "eia.gov",
+  COPPER: "lme.com",
+  PLAT: "platinuminvestment.com",
+  PALL: "palladium.com",
+  WHEAT: "cbot.com",
+  CORN: "cmegroup.com",
+};
+
 const FOREX_FLAG: Record<string, string> = {
   EUR: "eu",
   GBP: "gb",
@@ -75,48 +102,33 @@ const FOREX_FLAG: Record<string, string> = {
   NZD: "nz",
 };
 
-const COMMODITY_EMOJI: Record<string, string> = {
-  GOLD: "🥇",
-  SILVER: "🥈",
-  OIL: "🛢️",
-  BRENT: "🛢️",
-  NATGAS: "🔥",
-  COPPER: "🟠",
-  PLAT: "⚪",
-  PALL: "🔘",
-  WHEAT: "🌾",
-  CORN: "🌽",
-};
-
-const INDEX_EMOJI: Record<string, string> = {
-  SPX: "📈",
-  DJI: "📊",
-  IXIC: "💻",
-  RUT: "📉",
-  FTSE: "🇬🇧",
-  DAX: "🇩🇪",
-  N225: "🇯🇵",
-  HSI: "🇭🇰",
-  SSEC: "🇨🇳",
-  VIX: "⚡",
-};
-
 type Category = "crypto" | "stocks" | "forex" | "commodities" | "indices";
 
 function cryptoLogoUrl(symbol: string): string {
   const s = symbol.toLowerCase().replace(/[^a-z0-9]/g, "");
-  // spothq cryptocurrency-icons (color, 128px)
   return `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/${s}.png`;
+}
+
+function clearbit(domain: string) {
+  return `https://logo.clearbit.com/${domain}`;
 }
 
 function stockLogoUrl(ticker: string): string | null {
   const domain = STOCK_DOMAIN[ticker] ?? STOCK_DOMAIN[ticker.replace(".", "-")];
-  if (!domain) return null;
-  return `https://logo.clearbit.com/${domain}`;
+  return domain ? clearbit(domain) : null;
+}
+
+function indexLogoUrl(symbol: string): string | null {
+  const domain = INDEX_DOMAIN[symbol];
+  return domain ? clearbit(domain) : null;
+}
+
+function commodityLogoUrl(symbol: string): string | null {
+  const domain = COMMODITY_DOMAIN[symbol];
+  return domain ? clearbit(domain) : null;
 }
 
 function forexFlagUrl(symbol: string): string | null {
-  // Prefer quote currency for USD/xxx, else base
   const [base, quote] = symbol.split("/");
   const code = (quote === "USD" ? base : base === "USD" ? quote : base)?.toUpperCase();
   const iso = code ? FOREX_FLAG[code] : null;
@@ -140,7 +152,6 @@ export function AssetLogo({
   const palette = PALETTE[seedHash(symbol) % PALETTE.length];
 
   let src: string | null = null;
-  let emoji: string | null = null;
 
   if (category === "crypto") {
     src = cryptoLogoUrl(symbol);
@@ -149,29 +160,17 @@ export function AssetLogo({
   } else if (category === "forex") {
     src = forexFlagUrl(symbol);
   } else if (category === "commodities") {
-    emoji = COMMODITY_EMOJI[symbol] ?? "📦";
+    src = commodityLogoUrl(symbol);
   } else if (category === "indices") {
-    emoji = INDEX_EMOJI[symbol] ?? "📊";
+    src = indexLogoUrl(symbol);
   }
 
   const dim = { width: size, height: size };
 
-  if (emoji && !src) {
-    return (
-      <div
-        className={`rounded-full flex items-center justify-center shrink-0 text-base ${palette} ${className}`}
-        style={dim}
-        title={symbol}
-      >
-        <span className="leading-none">{emoji}</span>
-      </div>
-    );
-  }
-
   if (src && !failed) {
     return (
       <div
-        className={`rounded-full overflow-hidden shrink-0 bg-secondary/80 flex items-center justify-center ${className}`}
+        className={`rounded-full overflow-hidden shrink-0 bg-white/95 flex items-center justify-center ${className}`}
         style={dim}
       >
         <img
@@ -179,15 +178,16 @@ export function AssetLogo({
           alt={symbol}
           width={size}
           height={size}
-          className="w-full h-full object-cover"
+          className="w-[85%] h-[85%] object-contain"
           loading="lazy"
+          referrerPolicy="no-referrer"
           onError={() => setFailed(true)}
         />
       </div>
     );
   }
 
-  // Letter fallback
+  // Letter fallback only when logo URL missing or failed
   return (
     <div
       className={`rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${palette} ${className}`}
