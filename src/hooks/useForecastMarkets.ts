@@ -14,6 +14,8 @@ export interface ForecastMarket {
   question: string;
   detail: string;
   yesPrice: number;
+  /** Always model-implied from realized vol — not an exchange order book. */
+  oddsKind: "model";
   volume?: number;
   spot: number;
   spotLabel?: string;
@@ -23,6 +25,8 @@ export interface ForecastMarket {
   resolvesInDays: number;
   spark: number[];
   hot?: boolean;
+  resolveTarget?: number;
+  resolveMode?: "above" | "touch";
 }
 
 const FX_TARGETS = ["EUR", "GBP", "CHF", "JPY", "CAD", "AUD", "BRL", "INR", "MXN", "ZAR", "PLN", "SEK"] as const;
@@ -36,7 +40,7 @@ const FX_NAMES: Record<string, string> = {
 const COIN_IDS = [
   "bitcoin", "ethereum", "solana", "binancecoin", "ripple",
   "dogecoin", "cardano", "chainlink", "litecoin", "polkadot",
-  "pax-gold", "tether-gold",
+  "pax-gold", // single gold book — no XAUT duplicate
 ] as const;
 
 const COIN_META: Record<string, { ticker: string; step: number; category: "crypto" | "commodities" }> = {
@@ -51,9 +55,7 @@ const COIN_META: Record<string, { ticker: string; step: number; category: "crypt
   litecoin: { ticker: "LTC", step: 5, category: "crypto" },
   polkadot: { ticker: "DOT", step: 0.5, category: "crypto" },
   "pax-gold": { ticker: "XAU", step: 50, category: "commodities" },
-  "tether-gold": { ticker: "XAUT", step: 50, category: "commodities" },
 };
-
 
 interface CoinRow {
   id: string;
@@ -63,7 +65,6 @@ interface CoinRow {
   ath: number;
   change7d: number;
 }
-
 
 interface MacroRow {
   fng: number[];
@@ -195,6 +196,7 @@ function fxMarkets(code: string, series: number[]): ForecastMarket[] {
       question: `Will USD buy 0.5% more ${name} within 7 days?`,
       detail: `YES if ECB USD→${code} prints above ${t7.toFixed(4)} by ${fmtDate(d7)}. Spot ${spot.toFixed(4)}.`,
       yesPrice: toCents(probAbove(spot, t7, vol, 7)),
+      oddsKind: "model",
       spot, spotLabel: `${spot.toFixed(4)} USD/${code}`, unit: `USD/${code}`,
       source: "ECB via Frankfurter", resolvesAt: fmtDate(d7), resolvesInDays: 7, spark,
       hot: code === "EUR" || code === "GBP",
@@ -205,6 +207,7 @@ function fxMarkets(code: string, series: number[]): ForecastMarket[] {
       question: `Will USD→${code} touch ${t30.toFixed(4)} within 30 days?`,
       detail: `A 2% USD bid from today's ${spot.toFixed(4)}. YES if the ECB reference trades there before ${fmtDate(d30)}.`,
       yesPrice: toCents(probTouch(spot, t30, vol, 30)),
+      oddsKind: "model",
       spot, spotLabel: `${spot.toFixed(4)} USD/${code}`, unit: `USD/${code}`,
       source: "ECB via Frankfurter", resolvesAt: fmtDate(d30), resolvesInDays: 30, spark,
     },
@@ -231,6 +234,7 @@ function coinMarkets(c: CoinRow): ForecastMarket[] {
       : `Will ${meta.ticker} close above $${fmtPx(target)} by ${fmtDate(monthEnd)}?`,
     detail: `Spot $${fmtPx(c.spot)}. YES if the daily close clears $${fmtPx(target)}.`,
     yesPrice: toCents(probAbove(c.spot, target, vol, monthDays)),
+    oddsKind: "model",
     volume: c.volume, spot: c.spot, spotLabel: `$${fmtPx(c.spot)}`,
     unit: "USD", source: "CoinGecko",
     resolvesAt: fmtDate(monthEnd), resolvesInDays: monthDays, spark,
@@ -243,6 +247,7 @@ function coinMarkets(c: CoinRow): ForecastMarket[] {
     question: `Will ${meta.ticker} rally 5% within 7 days?`,
     detail: `YES if price trades at or above $${fmtPx(t7)} (from $${fmtPx(c.spot)}) in the next week.`,
     yesPrice: toCents(probTouch(c.spot, t7, vol, 7)),
+    oddsKind: "model",
     volume: c.volume, spot: c.spot, spotLabel: `$${fmtPx(c.spot)}`,
     unit: "USD", source: "CoinGecko",
     resolvesAt: fmtDate(addDays(7)), resolvesInDays: 7, spark,
@@ -256,6 +261,7 @@ function coinMarkets(c: CoinRow): ForecastMarket[] {
       question: `Will ${meta.ticker} retouch its ATH of $${fmtPx(c.ath)} in ${athDays} days?`,
       detail: `${((1 - c.spot / c.ath) * 100).toFixed(1)}% below the all-time high.`,
       yesPrice: toCents(probTouch(c.spot, c.ath, vol, athDays)),
+      oddsKind: "model",
       volume: c.volume, spot: c.spot, spotLabel: `$${fmtPx(c.spot)}`,
       unit: "USD", source: "CoinGecko",
       resolvesAt: fmtDate(addDays(athDays)), resolvesInDays: athDays, spark,
@@ -284,6 +290,7 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       question: "Will BTC outperform ETH over the next 7 days?",
       detail: `YES if BTC/ETH finishes above ${rSpot.toFixed(3)} (today's ratio).`,
       yesPrice: toCents(probAbove(rSpot, rSpot * 1.01, rVol, 7)),
+      oddsKind: "model",
       spot: rSpot, spotLabel: `${rSpot.toFixed(3)} BTC/ETH`,
       unit: "BTC/ETH", source: "CoinGecko",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(ratio), hot: true,
@@ -298,6 +305,7 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       question: "Will BTC drop 5% at any point this week?",
       detail: `YES if BTC trades at or below $${fmtPx(dump)} in the next 7 days. Spot $${fmtPx(btc.spot)}.`,
       yesPrice: toCents(probTouch(btc.spot, dump, dailyVol(btc.prices), 7)),
+      oddsKind: "model",
       volume: btc.volume, spot: btc.spot, spotLabel: `$${fmtPx(btc.spot)}`,
       unit: "USD", source: "CoinGecko",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(btc.prices),
@@ -318,6 +326,7 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       question: "Will gold beat Bitcoin this week?",
       detail: `YES if gold's 7-day return beats BTC's. Last 7d: gold ${((gRet - 1) * 100).toFixed(1)}% vs BTC ${((bRet - 1) * 100).toFixed(1)}%.`,
       yesPrice: toCents(probAbove(1 / rSpot, (1 / rSpot) * 1.01, dailyVol(ratio), 7)),
+      oddsKind: "model",
       spot: rSpot, spotLabel: `${rSpot.toFixed(4)} BTC/oz`,
       unit: "BTC/oz", source: "CoinGecko",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(ratio),
@@ -334,6 +343,7 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       question: "Will SOL outperform ETH over the next 7 days?",
       detail: `YES if SOL/ETH finishes above ${rSpot.toFixed(4)}.`,
       yesPrice: toCents(probAbove(rSpot, rSpot * 1.01, dailyVol(ratio), 7)),
+      oddsKind: "model",
       spot: rSpot, spotLabel: `${rSpot.toFixed(4)} SOL/ETH`,
       unit: "SOL/ETH", source: "CoinGecko",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(ratio),
@@ -349,6 +359,7 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       question: `Will Bitcoin dominance rise above ${target.toFixed(1)}% this week?`,
       detail: `BTC is ${dom.toFixed(2)}% of total crypto market cap (CoinGecko global).`,
       yesPrice: toCents(probAbove(dom, target, 0.004, 7)),
+      oddsKind: "model",
       spot: dom, spotLabel: `${dom.toFixed(2)}% dominance`,
       unit: "%", source: "CoinGecko Global",
       resolvesAt: fmtDate(d7), resolvesInDays: 7,
@@ -366,6 +377,7 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       question: "Will Crypto Fear & Greed close the week in Greed (≥60)?",
       detail: `Index is ${spot} today. YES if it prints 60 or higher in 7 days.`,
       yesPrice: toCents(probAbove(Math.max(1, spot), 60, Math.max(vol, 0.05), 7)),
+      oddsKind: "model",
       spot, spotLabel: `${spot} F&G`,
       unit: "index", source: "alternative.me",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(series),
@@ -383,6 +395,7 @@ function eventMarkets(data: MarketData): ForecastMarket[] {
       question: "Will USD gain 1% on the euro this week?",
       detail: `YES if ECB USD→EUR prints above ${tgt.toFixed(4)}. Spot ${spot.toFixed(4)}.`,
       yesPrice: toCents(probAbove(spot, tgt, dailyVol(eur), 7)),
+      oddsKind: "model",
       spot, spotLabel: `${spot.toFixed(4)} USD/EUR`,
       unit: "USD/EUR", source: "ECB via Frankfurter",
       resolvesAt: fmtDate(d7), resolvesInDays: 7, spark: toSpark(eur),
