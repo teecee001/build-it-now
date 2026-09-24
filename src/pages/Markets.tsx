@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { FeatureGate } from "@/components/FeatureGate";
-import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +30,8 @@ export default function Markets() {
 function MarketsContent() {
   const [cat, setCat] = useState<Cat>("crypto");
   const [q, setQ] = useState("");
-  const { rates, loading: ratesLoading } = useExchangeRates();
-  const { prices: stockPrices, sparks, isLive: stocksLive, loading: stocksLoading } = useStockPrices();
+  const { rates } = useExchangeRates();
+  const { quotes, getPrice, getChange, getSpark, isLive: stocksLive, isLoading: stocksLoading } = useStockPrices();
 
   const items = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -41,14 +40,15 @@ function MarketsContent() {
         (c) =>
           !query ||
           c.name.toLowerCase().includes(query) ||
-          c.symbol.toLowerCase().includes(query)
+          c.code.toLowerCase().includes(query)
       ).map((c) => ({
-        id: c.id,
+        id: c.code,
         name: c.name,
-        symbol: c.symbol,
-        price: c.price,
-        change: c.change24h,
-        spark: c.spark,
+        symbol: c.code,
+        // Static list has no live price — show placeholder; real crypto prices live on Wallet/Forecasts
+        price: null as number | null,
+        change: 0,
+        spark: [] as number[],
       }));
     }
     if (cat === "stocks") {
@@ -57,21 +57,22 @@ function MarketsContent() {
         (s) =>
           !query ||
           s.name.toLowerCase().includes(query) ||
-          s.symbol.toLowerCase().includes(query)
+          s.ticker.toLowerCase().includes(query)
       ).map((s) => {
-        const p = stockPrices[s.symbol];
+        const price = getPrice(s.ticker);
+        const change = getChange(s.ticker);
+        const spark = getSpark(s.ticker);
         return {
-          id: s.symbol,
+          id: s.ticker,
           name: s.name,
-          symbol: s.symbol,
-          price: p?.price ?? s.refPrice,
-          change: p?.change ?? 0,
-          spark: sparks[s.symbol] ?? [],
+          symbol: s.ticker,
+          price: price || null,
+          change,
+          spark,
           sector: s.sector,
         };
       });
     }
-    // forex / commodities / indices use exchange rates + static refs
     const list =
       cat === "forex"
         ? [
@@ -108,12 +109,12 @@ function MarketsContent() {
           id: x.id,
           name: x.name,
           symbol: x.symbol,
-          price: rate,
+          price: rate as number,
           change,
           spark: [] as number[],
         };
       });
-  }, [cat, q, rates, stockPrices, sparks, stocksLive]);
+  }, [cat, q, rates, quotes, stocksLive, getPrice, getChange, getSpark]);
 
   return (
     <div className="space-y-4 pb-24">
@@ -124,7 +125,7 @@ function MarketsContent() {
         </Badge>
       </div>
 
-      <FearGreedSection compact={false} />
+      <FearGreedSection show={cat === "crypto"} />
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -168,6 +169,12 @@ function MarketsContent() {
         </Card>
       )}
 
+      {cat === "crypto" && (
+        <p className="text-xs text-muted-foreground px-1">
+          Browse crypto assets. Live prices &amp; trading live on Wallet and Forecasts.
+        </p>
+      )}
+
       <div className="grid gap-2">
         {items.map((item) => (
           <Card key={item.id} className="p-3 hover:bg-muted/30 transition-colors">
@@ -197,17 +204,19 @@ function MarketsContent() {
                       : item.price.toPrecision(4)
                     : "—"}
                 </p>
-                <div className="flex items-center justify-end gap-0.5">
-                  {item.change >= 0 ? (
-                    <TrendingUp className="w-2.5 h-2.5 text-success" />
-                  ) : (
-                    <TrendingDown className="w-2.5 h-2.5 text-destructive" />
-                  )}
-                  <p className={`text-[10px] font-medium ${item.change >= 0 ? "text-success" : "text-destructive"}`}>
-                    {item.change >= 0 ? "+" : ""}
-                    {item.change.toFixed(2)}%
-                  </p>
-                </div>
+                {typeof item.price === "number" && (
+                  <div className="flex items-center justify-end gap-0.5">
+                    {item.change >= 0 ? (
+                      <TrendingUp className="w-2.5 h-2.5 text-success" />
+                    ) : (
+                      <TrendingDown className="w-2.5 h-2.5 text-destructive" />
+                    )}
+                    <p className={`text-[10px] font-medium ${item.change >= 0 ? "text-success" : "text-destructive"}`}>
+                      {item.change >= 0 ? "+" : ""}
+                      {item.change.toFixed(2)}%
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
