@@ -1,45 +1,90 @@
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-// Deterministic mock stock prices based on ticker
-// In a real app, this would connect to a stock API
-function seedFromTicker(ticker: string): number {
-  let hash = 0;
-  for (let i = 0; i < ticker.length; i++) {
-    hash = ((hash << 5) - hash) + ticker.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
+const TICKERS = [
+  "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK.B", "JPM", "V",
+  "UNH", "JNJ", "WMT", "PG", "MA", "HD", "XOM", "CVX", "BAC", "KO",
+  "PEP", "ABBV", "COST", "MRK", "LLY", "AVGO", "TMO", "CRM", "AMD", "NFLX",
+  "DIS", "INTC", "CSCO", "ADBE", "NKE", "PYPL", "T", "VZ", "UBER", "SQ",
+] as const;
 
-const BASE_PRICES: Record<string, number> = {
-  AAPL: 198.50, MSFT: 420.30, GOOGL: 175.80, AMZN: 185.60, NVDA: 875.40,
-  META: 515.20, TSLA: 245.70, "BRK.B": 415.90, JPM: 198.40, V: 282.50,
-  UNH: 525.30, JNJ: 158.60, WMT: 175.20, PG: 168.90, MA: 465.80,
-  HD: 385.40, XOM: 108.50, CVX: 155.30, BAC: 37.80, KO: 62.40,
-  PEP: 172.60, ABBV: 178.40, COST: 745.20, MRK: 128.60, LLY: 785.40,
-  AVGO: 1385.60, TMO: 565.80, CRM: 305.40, AMD: 178.90, NFLX: 625.40,
-  DIS: 112.30, INTC: 42.80, CSCO: 52.40, ADBE: 545.60, NKE: 98.70,
-  PYPL: 68.40, T: 18.50, VZ: 42.30, UBER: 75.80, SQ: 82.40,
+export type LiveQuote = {
+  price: number;
+  changePct: number;
+  spark: number[];
 };
 
-export function useStockPrices() {
-  const prices = useMemo(() => {
-    const result: Record<string, number> = {};
-    for (const [ticker, base] of Object.entries(BASE_PRICES)) {
-      // Add slight variation based on current hour for "live" feel
-      const hourSeed = new Date().getHours();
-      const variation = (Math.sin(seedFromTicker(ticker) + hourSeed * 0.5) * 0.02);
-      result[ticker] = parseFloat((base * (1 + variation)).toFixed(2));
+async function fetchQuotesClient(): Promise<Record<string, LiveQuote>> {
+  // Yahoo chart batch via query1 (may fail CORS in browser — edge is preferred)
+  const out: Record<string, LiveQuote> = {};
+  const batch = TICKERS.slice(0, 12); // keep client fallback light
+  await Promise.all(
+    batch.map(async (t) => {
+      try {
+        const sym = encodeURIComponent(t.replace(".", "-"));
+        const res = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1mo`,
+        );
+        if (!res.ok) return;
+        const j = await res.json();
+        const r = j?.chart?.result?.[0];
+        if (!r) return;
+        const meta = r.meta;
+        const closes: number[] = (r.indicators?.quote?.[0]?.close ?? []).filter(
+          (n: unknown) => typeof n === "number" && Number.isFinite(n),
+        );
+        const price = Number(meta?.regularMarketPrice) || closes[closes.length - 1];
+        const prev = Number(meta?.chartPreviousClose) || closes[closes.length - 2] || price;
+        if (!price) return;
+        out[t] = {
+          price,
+          changePct: prev ? ((price - prev) / prev) * 100 : 0,
+          spark: closes.slice(-14),
+        };
+      } catch {
+        /* ignore */
+      }
+    }),
+  );
+  return out;
+}
+
+async function fetchStockQuotes(): Promise<Record<string, LiveQuote>> {
+  try {
+    const { data, error } = await supabase.functions.invoke("stock-data");
+    if (!error && data?.quotes && Object.keys(data.quotes).length) {
+      return data.quotes as Record<string, LiveQuote>;
     }
-    return result;
-  }, []);
+  } catch {
+    /* fall through */
+  }
+  return fetchQuotesClient();
+}
 
-  const getPrice = (ticker: string) => prices[ticker] ?? 0;
+export function useStockPrices() {
+  const query = useQuery({
+    queryKey: ["live-stock-quotes-v1"],
+    queryFn: fetchStockQuotes,
+    staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
+    retry: 1,
+  });
 
-  const getChange = (ticker: string) => {
-    const seed = seedFromTicker(ticker);
-    return parseFloat(((Math.sin(seed * 1.7 + 0.3) * 5) + 0.3).toFixed(2));
+  const quotes = query.data ?? {};
+  const isLive = Object.keys(quotes).length > 0;
+
+  const getPrice = (ticker: string) => quotes[ticker]?.price ?? 0;
+  const getChange = (ticker: string) => quotes[ticker]?.changePct ?? 0;
+  const getSpark = (ticker: string) => quotes[ticker]?.spark ?? [];
+
+  return {
+    quotes,
+    getPrice,
+    getChange,
+    getSpark,
+    isLive,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    refetch: query.refetch,
   };
-
-  return { prices, getPrice, getChange };
 }
