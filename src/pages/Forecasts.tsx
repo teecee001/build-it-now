@@ -14,6 +14,7 @@ import {
   ArrowUpRight, ArrowDownRight, Info, Wallet, Sparkles,
   CircleDollarSign, Timer, RefreshCw, AlertTriangle, Search, Database,
 } from "lucide-react";
+import { FearGreedGauge } from "@/components/FearGreedGauge";
 
 function fmtUsd(n: number) {
   if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)}B`;
@@ -212,6 +213,8 @@ export default function Forecasts() {
         </Card>
       )}
 
+      <FearGreedGauge variant="compact" />
+
       {headline && (
         <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-5">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -301,7 +304,7 @@ export default function Forecasts() {
       <div className="flex items-start gap-2 text-xs text-muted-foreground border-t border-border pt-4">
         <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
         <p>
-          Odds come from live feeds: ECB FX, CoinGecko prices, and Fear & Greed.
+          Odds come from live feeds: ECB FX, CoinGecko prices, and Fear &amp; Greed.
           They are information, not investment advice. Positions are paper-only — no real funds move.
         </p>
       </div>
