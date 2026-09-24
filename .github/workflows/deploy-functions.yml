@@ -26,6 +26,7 @@ jobs:
             exit 1
           fi
           supabase functions deploy forecast-data --project-ref vxcxwmhesgpncbkhwsej --no-verify-jwt
+          supabase functions deploy stock-data --project-ref vxcxwmhesgpncbkhwsej --no-verify-jwt
           supabase functions deploy geo-verify --project-ref vxcxwmhesgpncbkhwsej --no-verify-jwt
           supabase functions deploy wallet-operation --project-ref vxcxwmhesgpncbkhwsej --no-verify-jwt
           supabase functions deploy ai-advisor --project-ref vxcxwmhesgpncbkhwsej --no-verify-jwt

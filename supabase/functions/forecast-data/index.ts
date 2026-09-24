@@ -8,7 +8,7 @@ const FX_TARGETS = ["EUR", "GBP", "CHF", "JPY", "CAD", "AUD", "BRL", "INR", "MXN
 const COIN_IDS = [
   "bitcoin", "ethereum", "solana", "binancecoin", "ripple",
   "dogecoin", "cardano", "chainlink", "litecoin", "polkadot",
-  "pax-gold", "tether-gold",
+  "pax-gold",
 ];
 
 let cache: { at: number; body: string } | null = null;
