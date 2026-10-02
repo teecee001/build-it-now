@@ -15,11 +15,10 @@ serve(async (req) => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
+    { auth: { persistSession: false } },
   );
 
   try {
-    // Authenticate
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
     const token = authHeader.replace("Bearer ", "");
@@ -30,19 +29,13 @@ serve(async (req) => {
     const body = await req.json();
     const { operation } = body;
 
-    const asPositiveNumber = (value: unknown, label: string) => {
-      const n = typeof value === "number" ? value : Number(value);
-      if (!Number.isFinite(n) || n <= 0) throw new Error(`Invalid ${label}`);
-      return n;
-    };
-
     switch (operation) {
       case "send": {
         const { wallet_id, amount, currency, recipient, description } = body;
         if (!wallet_id || !amount || amount <= 0) throw new Error("Invalid parameters");
 
         const { data: wallet, error: wErr } = await supabase
-          .from("wallets").select("*").eq("id", wallet_id).eq("user_id", userId).single();
+          .from("wallets").select("*").eq("id", wallet_id).eq("user_id", userId).maybeSingle();
         if (wErr || !wallet) throw new Error("Wallet not found");
         if (wallet.balance < amount) throw new Error("Insufficient balance");
 
@@ -61,14 +54,14 @@ serve(async (req) => {
         if (!amount || amount <= 0) throw new Error("Invalid amount");
 
         const { data: wallet, error: wErr } = await supabase
-          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").single();
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
         if (wErr || !wallet) throw new Error("USD wallet not found");
 
         if (direction === "to_savings") {
           if (wallet.balance < amount) throw new Error("Insufficient wallet balance");
           await supabase.from("wallets").update({
             balance: wallet.balance - amount,
-            savings_balance: wallet.savings_balance + amount,
+            savings_balance: (wallet.savings_balance ?? 0) + amount,
           }).eq("id", wallet.id);
           await supabase.from("transactions").insert({
             user_id: userId, type: "deposit", amount: -amount,
@@ -76,10 +69,10 @@ serve(async (req) => {
             metadata: { savings_transfer: true, direction: "to_savings" },
           });
         } else if (direction === "to_wallet") {
-          if (wallet.savings_balance < amount) throw new Error("Insufficient savings balance");
+          if ((wallet.savings_balance ?? 0) < amount) throw new Error("Insufficient savings balance");
           await supabase.from("wallets").update({
             balance: wallet.balance + amount,
-            savings_balance: wallet.savings_balance - amount,
+            savings_balance: (wallet.savings_balance ?? 0) - amount,
           }).eq("id", wallet.id);
           await supabase.from("transactions").insert({
             user_id: userId, type: "deposit", amount,
@@ -97,13 +90,12 @@ serve(async (req) => {
         if (!code || !tradeAmount || tradeAmount <= 0 || !price) throw new Error("Invalid parameters");
 
         const { data: usdWallet, error: wErr } = await supabase
-          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").single();
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
         if (wErr || !usdWallet) throw new Error("No USD wallet");
 
         if (action === "buy") {
           if (usdWallet.balance < tradeAmount) throw new Error("Insufficient USD balance");
           await supabase.from("wallets").update({ balance: usdWallet.balance - tradeAmount }).eq("id", usdWallet.id);
-          // Upsert crypto holding
           await upsertCryptoHolding(supabase, userId, code, crypto_amount, price);
           await supabase.from("transactions").insert({
             user_id: userId, type: "purchase", amount: -tradeAmount, status: "completed",
@@ -131,7 +123,7 @@ serve(async (req) => {
         if (!ticker || !shares || shares <= 0 || !price) throw new Error("Invalid parameters");
 
         const { data: usdWallet, error: wErr } = await supabase
-          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").single();
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
         if (wErr || !usdWallet) throw new Error("No USD wallet");
 
         if (action === "buy") {
@@ -160,35 +152,92 @@ serve(async (req) => {
       }
 
       case "convert": {
-        const { from_currency, to_currency, amount, rate } = body;
-        if (!from_currency || !to_currency || !amount || amount <= 0 || !rate) throw new Error("Invalid parameters");
+        const { from_currency, to_currency } = body;
+        const amount = Number(body.amount);
+        const rate = Number(body.rate);
+
+        if (!from_currency || !to_currency) {
+          throw new Error("Missing from/to currency");
+        }
+        if (!Number.isFinite(amount) || amount <= 0) {
+          throw new Error("Invalid amount");
+        }
+        if (!Number.isFinite(rate) || rate <= 0) {
+          throw new Error("Invalid or missing exchange rate — wait for live rates and try again");
+        }
+        if (from_currency === to_currency) {
+          throw new Error("Currencies must be different");
+        }
 
         const { data: fromWallet, error: fErr } = await supabase
-          .from("wallets").select("*").eq("user_id", userId).eq("currency", from_currency).single();
-        if (fErr || !fromWallet) throw new Error(`No ${from_currency} wallet`);
-        if (fromWallet.balance < amount) throw new Error(`Insufficient ${from_currency} balance`);
+          .from("wallets")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("currency", from_currency)
+          .maybeSingle();
 
-        // Get or create destination wallet
+        if (fErr) throw new Error(`Wallet lookup failed: ${fErr.message}`);
+        if (!fromWallet) throw new Error(`No ${from_currency} wallet`);
+
+        // Float-safe: allow tiny rounding drift
+        if (fromWallet.balance + 1e-8 < amount) {
+          throw new Error(
+            `Insufficient ${from_currency} balance (have ${Number(fromWallet.balance).toFixed(2)}, need ${amount.toFixed(2)})`,
+          );
+        }
+
+        const debit = Math.min(amount, fromWallet.balance);
+
         let { data: toWallet } = await supabase
-          .from("wallets").select("*").eq("user_id", userId).eq("currency", to_currency).single();
+          .from("wallets")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("currency", to_currency)
+          .maybeSingle();
 
         if (!toWallet) {
           const { data: newWallet, error: cErr } = await supabase
-            .from("wallets").insert({ user_id: userId, balance: 0, savings_balance: 0, currency: to_currency })
-            .select().single();
-          if (cErr) throw cErr;
+            .from("wallets")
+            .insert({
+              user_id: userId,
+              balance: 0,
+              savings_balance: 0,
+              currency: to_currency,
+            })
+            .select()
+            .maybeSingle();
+          if (cErr) throw new Error(`Could not create ${to_currency} wallet: ${cErr.message}`);
           toWallet = newWallet;
         }
+        if (!toWallet) throw new Error(`Could not open ${to_currency} wallet`);
 
-        const convertedAmount = amount * rate;
+        const convertedAmount = debit * rate;
 
-        await supabase.from("wallets").update({ balance: fromWallet.balance - amount }).eq("id", fromWallet.id);
-        await supabase.from("wallets").update({ balance: toWallet.balance + convertedAmount }).eq("id", toWallet.id);
+        const { error: u1 } = await supabase
+          .from("wallets")
+          .update({ balance: fromWallet.balance - debit })
+          .eq("id", fromWallet.id);
+        if (u1) throw new Error(`Debit failed: ${u1.message}`);
+
+        const { error: u2 } = await supabase
+          .from("wallets")
+          .update({ balance: (toWallet.balance ?? 0) + convertedAmount })
+          .eq("id", toWallet.id);
+        if (u2) throw new Error(`Credit failed: ${u2.message}`);
 
         await supabase.from("transactions").insert({
-          user_id: userId, type: "conversion", amount: -Math.abs(amount), status: "completed",
-          description: `Converted ${amount.toFixed(2)} ${from_currency} → ${convertedAmount.toFixed(4)} ${to_currency}`,
-          metadata: { from: from_currency, to: to_currency, from_amount: amount, to_amount: convertedAmount, rate },
+          user_id: userId,
+          type: "conversion",
+          amount: -Math.abs(debit),
+          status: "completed",
+          description: `Converted ${debit.toFixed(2)} ${from_currency} → ${convertedAmount.toFixed(4)} ${to_currency}`,
+          metadata: {
+            from: from_currency,
+            to: to_currency,
+            from_amount: debit,
+            to_amount: convertedAmount,
+            rate,
+          },
         });
 
         return ok({ success: true, convertedAmount });
@@ -199,22 +248,29 @@ serve(async (req) => {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({ error: message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-    );
+    return new Response(JSON.stringify({ error: message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400,
+    });
   }
 });
 
 function ok(data: Record<string, unknown>) {
   return new Response(JSON.stringify(data), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
   });
 }
 
-async function upsertCryptoHolding(supabase: any, userId: string, code: string, amountDelta: number, price: number) {
+async function upsertCryptoHolding(
+  supabase: any,
+  userId: string,
+  code: string,
+  amountDelta: number,
+  price: number,
+) {
   const { data: existing } = await supabase
-    .from("crypto_holdings").select("*").eq("user_id", userId).eq("crypto_code", code).single();
+    .from("crypto_holdings").select("*").eq("user_id", userId).eq("crypto_code", code).maybeSingle();
 
   if (existing) {
     const newAmount = existing.amount + amountDelta;
@@ -235,13 +291,19 @@ async function upsertCryptoHolding(supabase: any, userId: string, code: string, 
 
 async function getCryptoHolding(supabase: any, userId: string, code: string): Promise<number> {
   const { data } = await supabase
-    .from("crypto_holdings").select("amount").eq("user_id", userId).eq("crypto_code", code).single();
+    .from("crypto_holdings").select("amount").eq("user_id", userId).eq("crypto_code", code).maybeSingle();
   return data?.amount ?? 0;
 }
 
-async function upsertStockHolding(supabase: any, userId: string, ticker: string, sharesDelta: number, price: number) {
+async function upsertStockHolding(
+  supabase: any,
+  userId: string,
+  ticker: string,
+  sharesDelta: number,
+  price: number,
+) {
   const { data: existing } = await supabase
-    .from("stock_holdings").select("*").eq("user_id", userId).eq("ticker", ticker).single();
+    .from("stock_holdings").select("*").eq("user_id", userId).eq("ticker", ticker).maybeSingle();
 
   if (existing) {
     const newShares = existing.shares + sharesDelta;
@@ -262,6 +324,6 @@ async function upsertStockHolding(supabase: any, userId: string, ticker: string,
 
 async function getStockShares(supabase: any, userId: string, ticker: string): Promise<number> {
   const { data } = await supabase
-    .from("stock_holdings").select("shares").eq("user_id", userId).eq("ticker", ticker).single();
+    .from("stock_holdings").select("shares").eq("user_id", userId).eq("ticker", ticker).maybeSingle();
   return data?.shares ?? 0;
 }
