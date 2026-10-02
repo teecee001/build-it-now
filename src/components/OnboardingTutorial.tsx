@@ -175,17 +175,17 @@ export function OnboardingTutorial() {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4"
+        className="fixed inset-0 z-[100] flex flex-col bg-background"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
         <motion.div
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="w-full max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="w-full h-full flex flex-col overflow-hidden"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+          <div className="flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-border shrink-0 bg-background/80 backdrop-blur-md">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -238,26 +238,30 @@ export function OnboardingTutorial() {
           </div>
 
           <div
-            className="relative shrink-0 flex items-center justify-center py-10"
+            className="relative flex-1 flex items-center justify-center min-h-[40vh]"
             style={{
-              background: `radial-gradient(circle at 50% 80%, hsl(${scene.accent} / 0.2), transparent 70%), hsl(240 10% 6%)`,
+              background: `radial-gradient(circle at 50% 45%, hsl(${scene.accent} / 0.22), transparent 65%), radial-gradient(circle at 80% 20%, hsl(${scene.accent} / 0.08), transparent 40%), hsl(240 10% 5%)`,
             }}
           >
-            <div
-              className="w-20 h-20 rounded-2xl flex items-center justify-center border border-white/10"
-              style={{ backgroundColor: `hsl(${scene.accent} / 0.15)` }}
+            <motion.div
+              key={scene.id}
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl flex items-center justify-center border border-white/10 shadow-2xl"
+              style={{ backgroundColor: `hsl(${scene.accent} / 0.18)` }}
             >
-              <Icon className="w-10 h-10" style={{ color: `hsl(${scene.accent})` }} />
-            </div>
+              <Icon className="w-14 h-14 sm:w-16 sm:h-16" style={{ color: `hsl(${scene.accent})` }} />
+            </motion.div>
           </div>
 
-          <div className="p-5 space-y-3 flex-1 overflow-y-auto">
+          <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-4 shrink-0 bg-card border-t border-border">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: `hsl(${scene.accent})` }}>
                 {scene.subtitle}
               </p>
-              <h2 className="text-xl font-bold mt-0.5">{scene.title}</h2>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{scene.description}</p>
+              <h2 className="text-2xl font-bold mt-1 tracking-tight">{scene.title}</h2>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-md">{scene.description}</p>
               <p className="text-xs text-muted-foreground/80 mt-2 italic">Tip: {scene.tip}</p>
             </div>
 
