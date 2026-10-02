@@ -22,8 +22,26 @@ async function invokeWalletOp(body: Record<string, unknown>) {
     body,
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (error) throw new Error(error.message || "Wallet operation failed");
-  if (data?.error) throw new Error(data.error);
+
+  // Prefer structured error from function body (status 400 still may populate data)
+  if (data && typeof data === "object" && "error" in data && (data as { error?: string }).error) {
+    throw new Error(String((data as { error: string }).error));
+  }
+
+  if (error) {
+    // FunctionsHttpError: try to read JSON body from context
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === "function") {
+      try {
+        const bodyJson = await ctx.json();
+        if (bodyJson?.error) throw new Error(String(bodyJson.error));
+      } catch (e) {
+        if (e instanceof Error && e.message !== error.message) throw e;
+      }
+    }
+    throw new Error(error.message || "Wallet operation failed");
+  }
+
   return data;
 }
 
@@ -49,32 +67,44 @@ export function useWallet() {
     enabled: !!user,
   });
 
-  // Realtime subscription for cross-tab sync
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel('wallet-realtime')
+      .channel("wallet-realtime")
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${user.id}` },
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${user.id}` },
         () => queryClient.invalidateQueries({ queryKey: ["wallet"] })
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id, queryClient]);
 
   const updateBalance = useMutation({
-    mutationFn: async ({ balance, savings_balance }: { balance?: number; savings_balance?: number }) => {
+    mutationFn: async ({
+      balance,
+      savings_balance,
+    }: {
+      balance?: number;
+      savings_balance?: number;
+    }) => {
       if (!user || !wallet) throw new Error("No wallet");
-      // Determine direction from balance changes
       if (savings_balance !== undefined && balance !== undefined) {
         const diff = wallet.savings_balance - (savings_balance ?? wallet.savings_balance);
         if (diff < 0) {
-          // Transfer to savings
-          await invokeWalletOp({ operation: "savings_transfer", direction: "to_savings", amount: Math.abs(diff) });
+          await invokeWalletOp({
+            operation: "savings_transfer",
+            direction: "to_savings",
+            amount: Math.abs(diff),
+          });
         } else if (diff > 0) {
-          // Transfer to wallet
-          await invokeWalletOp({ operation: "savings_transfer", direction: "to_wallet", amount: diff });
+          await invokeWalletOp({
+            operation: "savings_transfer",
+            direction: "to_wallet",
+            amount: diff,
+          });
         }
       }
     },
