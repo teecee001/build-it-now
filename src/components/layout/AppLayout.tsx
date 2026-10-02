@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BetaFeedback } from "@/components/BetaFeedback";
+import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Target, Bot, LogOut, X,
   Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase,
@@ -207,6 +208,8 @@ export function AppLayout() {
       </main>
 
       <BetaFeedback />
+      {/* Interactive welcome tour — auto-plays once per new account */}
+      <OnboardingTutorial />
     </div>
   );
 }
