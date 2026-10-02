@@ -15,6 +15,7 @@ import { STOCK_LIST, SECTOR_COLORS } from "@/constants/stockList";
 import { COMMODITIES, INDICES, FOREX_PAIRS } from "@/constants/marketAssets";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { useStockPrices } from "@/hooks/useStockPrices";
+import { useMarketData } from "@/hooks/useMarketData";
 import { ConversionResult } from "@/types";
 import {
   Search, TrendingUp, TrendingDown, BarChart3, Briefcase, Coins,
@@ -43,12 +44,10 @@ function MiniChart({ values, up }: { values: number[]; up?: boolean }) {
   );
 }
 
-/** Build a short sparkline that slopes with change % so the row always looks alive */
 function syntheticSpark(symbol: string, price: number, changePct: number): number[] {
   const seed = seedHash(symbol);
   const n = 16;
   const end = Math.max(price, 1e-8);
-  // Amplify small moves so the line still reads as "alive" (min ±1.5% visual)
   const visualPct = Math.abs(changePct) < 0.5 ? (changePct >= 0 ? 1.8 : -1.8) : changePct;
   const start = end / (1 + visualPct / 100);
   return Array.from({ length: n }, (_, j) => {
@@ -78,15 +77,11 @@ const CATEGORY_META: Record<MarketCategory, { icon: typeof Coins; label: string;
   indices: { icon: BarChart3, label: "Indices", color: "text-emerald-400" },
 };
 
-/** Live pair price from USD-base fiat rates. rates[code] = units of code per 1 USD. */
 function liveForexPrice(symbol: string, rates: Record<string, number>): number | null {
   const [base, quote] = symbol.split("/");
   if (!base || !quote) return null;
-  // EUR/USD = how many USD per 1 EUR = 1 / rates.EUR
   if (quote === "USD" && rates[base]) return 1 / rates[base];
-  // USD/JPY = rates.JPY
   if (base === "USD" && rates[quote]) return rates[quote];
-  // Cross e.g. EUR/GBP = rates.GBP / rates.EUR
   if (rates[base] && rates[quote]) return rates[quote] / rates[base];
   return null;
 }
@@ -135,16 +130,30 @@ function MarketsContent() {
     };
   }, []);
 
-  const { rates, cryptoChanges, isLive } = useExchangeRates();
+  const { rates, cryptoChanges } = useExchangeRates();
   const {
-    getPrice: getStockPrice,
-    getChange: getStockChange,
-    getSpark: getStockSpark,
-    isLive: stocksLive,
+    getPrice: getStockPriceLegacy,
+    getChange: getStockChangeLegacy,
+    getSpark: getStockSparkLegacy,
+    isLive: stocksLiveLegacy,
   } = useStockPrices();
 
-  const getCryptoPrice = (code: string) => (rates[code] ? 1 / rates[code] : 0);
-  const getCryptoChange = (code: string) => cryptoChanges[code] ?? 0;
+  const md = useMarketData("all");
+
+  const getCryptoPrice = (code: string) => {
+    const q = md.getCrypto(code);
+    if (q?.price) return q.price;
+    return rates[code] ? 1 / rates[code] : 0;
+  };
+  const getCryptoChange = (code: string) => md.getCrypto(code)?.changePct ?? cryptoChanges[code] ?? 0;
+
+  const getStockPrice = (t: string) => md.getStock(t)?.price ?? getStockPriceLegacy(t);
+  const getStockChange = (t: string) => md.getStock(t)?.changePct ?? getStockChangeLegacy(t);
+  const getStockSpark = (t: string) => {
+    const s = md.getStock(t)?.spark;
+    return s && s.length > 1 ? s : getStockSparkLegacy(t);
+  };
+  const stocksLive = md.stocksLive || stocksLiveLegacy;
 
   const items: RowItem[] = useMemo(() => {
     const q = search.toLowerCase();
@@ -157,13 +166,19 @@ function MarketsContent() {
           .map((c) => {
             const price = getCryptoPrice(c.code);
             const change = getCryptoChange(c.code);
+            const sparkLive = md.getCrypto(c.code)?.spark;
             return {
               symbol: c.code,
               name: c.name,
               price,
               change,
               tag: "",
-              spark: price > 0 ? syntheticSpark(c.code, price, change) : [],
+              spark:
+                sparkLive && sparkLive.length > 1
+                  ? sparkLive
+                  : price > 0
+                    ? syntheticSpark(c.code, price, change)
+                    : [],
             };
           })
           .filter((r) => r.price > 0);
@@ -193,43 +208,65 @@ function MarketsContent() {
         return FOREX_PAIRS.filter(
           (f) => f.name.toLowerCase().includes(q) || f.symbol.toLowerCase().includes(q)
         ).map((f) => {
-          const live = liveForexPrice(f.symbol, rates);
+          const mq = md.getForex(f.symbol);
+          const live = mq?.price ?? liveForexPrice(f.symbol, rates);
           const price = live ?? f.price;
-          // Prefer live price; keep static change as direction hint until we store previous
-          const change = f.change;
+          const change = mq?.changePct ?? f.change;
+          const spark =
+            mq?.spark && mq.spark.length > 1
+              ? mq.spark
+              : syntheticSpark(f.symbol, price, change);
           return {
             symbol: f.symbol,
             name: f.name,
             price,
             change,
             tag: live != null ? "Live" : "",
-            spark: syntheticSpark(f.symbol, price, change),
+            spark,
           };
         });
 
       case "commodities":
         return COMMODITIES.filter(
           (c) => c.name.toLowerCase().includes(q) || c.symbol.toLowerCase().includes(q)
-        ).map((c) => ({
-          symbol: c.symbol,
-          name: c.name,
-          price: c.price,
-          change: c.change,
-          tag: "",
-          spark: syntheticSpark(c.symbol, c.price, c.change),
-        }));
+        ).map((c) => {
+          const mq = md.getCommodity(c.symbol);
+          const price = mq?.price ?? c.price;
+          const change = mq?.changePct ?? c.change;
+          const spark =
+            mq?.spark && mq.spark.length > 1
+              ? mq.spark
+              : syntheticSpark(c.symbol, price, change);
+          return {
+            symbol: c.symbol,
+            name: c.name,
+            price,
+            change,
+            tag: mq ? "Live" : "",
+            spark,
+          };
+        });
 
       case "indices":
         return INDICES.filter(
           (i) => i.name.toLowerCase().includes(q) || i.symbol.toLowerCase().includes(q)
-        ).map((i) => ({
-          symbol: i.symbol,
-          name: i.name,
-          price: i.price,
-          change: i.change,
-          tag: "",
-          spark: syntheticSpark(i.symbol, i.price, i.change),
-        }));
+        ).map((i) => {
+          const mq = md.getIndex(i.symbol);
+          const price = mq?.price ?? i.price;
+          const change = mq?.changePct ?? i.change;
+          const spark =
+            mq?.spark && mq.spark.length > 1
+              ? mq.spark
+              : syntheticSpark(i.symbol, price, change);
+          return {
+            symbol: i.symbol,
+            name: i.name,
+            price,
+            change,
+            tag: mq ? "Live" : "",
+            spark,
+          };
+        });
 
       default:
         return [];
@@ -241,6 +278,7 @@ function MarketsContent() {
     cryptoChanges,
     stocksLive,
     tick,
+    md.data,
     getStockPrice,
     getStockChange,
     getStockSpark,
@@ -315,16 +353,17 @@ function MarketsContent() {
           <Briefcase className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
           <p className="text-sm font-medium">Stocks feed coming online</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Live Yahoo prices load via edge function. No mock prices.
+            Live prices load via edge function. No mock prices.
           </p>
         </Card>
       )}
 
-      {(activeCategory === "commodities" || activeCategory === "indices") && (
-        <p className="text-[11px] text-muted-foreground px-1">
-          Reference levels — crypto, FX and stocks use live feeds when available.
-        </p>
-      )}
+      {(activeCategory === "commodities" || activeCategory === "indices") &&
+        !(activeCategory === "commodities" ? md.commoditiesLive : md.indicesLive) && (
+          <p className="text-[11px] text-muted-foreground px-1">
+            Loading live feed… reference levels shown until data arrives.
+          </p>
+        )}
 
       <div className="space-y-1.5">
         {items.map((item) => {
@@ -482,16 +521,8 @@ function MarketsContent() {
       </AnimatePresence>
 
       <div className="pt-2">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Convert Currency</h2>
-          <Badge variant={isLive ? "default" : "secondary"} className="text-[10px]">
-            {isLive ? "● Live Rates" : "Demo"}
-          </Badge>
-        </div>
         <CurrencyConverter onConvert={handleConversion} />
-        <div className="mt-4">
-          <ConversionHistory history={history} />
-        </div>
+        <ConversionHistory history={history} />
       </div>
     </div>
   );
