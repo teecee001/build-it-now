@@ -53,7 +53,6 @@ export default function Auth() {
         return;
       }
 
-      // Soft waitlist record (does not block signup in beta)
       try {
         await supabase.rpc("join_waitlist", { p_email: normalizedEmail });
       } catch {
@@ -74,7 +73,6 @@ export default function Auth() {
           toast.error(error.message);
         }
       } else {
-        // If email confirmation is required, show friendly screen; else user may already be sessioned
         setPendingConfirm(true);
       }
     } else {
@@ -157,9 +155,12 @@ export default function Auth() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
+          <a
+            href="/"
+            className="inline-flex items-center justify-center mb-4 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+          >
             <ExoLogo size="lg" variant="mark" />
-          </div>
+          </a>
           <div className="flex items-center justify-center gap-2">
             <h1 className="text-3xl font-bold tracking-tight">
               <span
@@ -290,6 +291,10 @@ export default function Auth() {
           </p>
 
           <div className="flex items-center justify-center gap-3 mt-6 text-xs text-muted-foreground">
+            <a href="/" className="hover:text-foreground transition-colors">
+              Home
+            </a>
+            <span>·</span>
             <a href="/terms" className="hover:text-foreground transition-colors">
               Terms
             </a>
