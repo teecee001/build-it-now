@@ -4,7 +4,7 @@ import { Navigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, ShieldCheck, Clock } from "lucide-react";
+import { Loader2, Mail, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ExoLogo } from "@/components/ExoLogo";
@@ -13,17 +13,16 @@ import { supabase } from "@/integrations/supabase/client";
 export default function Auth() {
   const { user, isLoading: authLoading, signIn, signUp, signInWithGoogle } = useAuth();
   const [searchParams] = useSearchParams();
-  // Validate `next` as a same-origin relative path before using it (OAuth consent flow).
   const rawNext = searchParams.get("next");
   const nextPath =
     rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
   const postAuthTarget = nextPath ?? "/dashboard";
-  const [isSignUp, setIsSignUp] = useState(false);
+
+  const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pendingApproval, setPendingApproval] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState(false);
 
   if (authLoading) {
@@ -40,44 +39,55 @@ export default function Auth() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (isSignUp) {
-      // Check waitlist approval before allowing signup
-      const normalizedEmail = email.trim().toLowerCase();
-      const { data: isApproved, error: waitlistError } = await supabase.rpc("check_waitlist_approved", {
-        check_email: normalizedEmail,
-      });
+    const normalizedEmail = email.trim().toLowerCase();
 
-      if (waitlistError) {
-        toast.error("Could not verify waitlist status. Please try again.");
+    if (isSignUp) {
+      if (!fullName.trim()) {
+        toast.error("Please enter your name");
+        setIsSubmitting(false);
+        return;
+      }
+      if (password.length < 6) {
+        toast.error("Password must be at least 6 characters");
         setIsSubmitting(false);
         return;
       }
 
-      if (!isApproved) {
+      // Soft waitlist record (does not block signup in beta)
+      try {
         await supabase.rpc("join_waitlist", { p_email: normalizedEmail });
-        setPendingApproval(true);
-        setIsSubmitting(false);
-        return;
+      } catch {
+        /* non-blocking */
       }
 
       const emailRedirectTo = nextPath
         ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
-        : window.location.origin;
-      const { error } = await signUp(normalizedEmail, password, fullName, emailRedirectTo);
+        : `${window.location.origin}/dashboard`;
+
+      const { error } = await signUp(normalizedEmail, password, fullName.trim(), emailRedirectTo);
       if (error) {
-        toast.error(error.message);
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("already registered") || msg.includes("already been registered")) {
+          toast.error("This email already has an account. Sign in instead.");
+          setIsSignUp(false);
+        } else {
+          toast.error(error.message);
+        }
       } else {
+        // If email confirmation is required, show friendly screen; else user may already be sessioned
         setPendingConfirm(true);
-        toast.success("Account created. Confirm it from the Auth users page if the email doesn't arrive.");
       }
     } else {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(normalizedEmail, password);
       if (error) {
         const msg = (error.message || "").toLowerCase();
         if (msg.includes("email not confirmed")) {
-          toast.error("This account exists but the email is not confirmed yet. Use Sign Up on this same email, then confirm the user in Supabase → Authentication → Users.");
+          setPendingConfirm(true);
+          toast.message("Confirm your email to continue", {
+            description: "Check your inbox (and spam) for the link from ExoSky.",
+          });
         } else if (msg.includes("invalid login")) {
-          toast.error("Wrong email or password. Use Sign In (not Sign Up). If you signed up twice, the first password is the one that works.");
+          toast.error("Wrong email or password. Try again or create an account.");
         } else {
           toast.error(error.message);
         }
@@ -93,7 +103,7 @@ export default function Auth() {
       email: email.trim().toLowerCase(),
     });
     if (error) toast.error(error.message);
-    else toast.success("Confirmation email resent. Check spam too.");
+    else toast.success("Confirmation email sent. Check inbox and spam.");
     setIsSubmitting(false);
   };
 
@@ -110,58 +120,26 @@ export default function Auth() {
           </div>
           <Card className="p-8 bg-card border-border">
             <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-5">
-              <ShieldCheck className="w-7 h-7 text-accent" />
+              <Mail className="w-7 h-7 text-accent" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Confirm your email</h2>
-            <p className="text-muted-foreground text-sm mb-6">
-              We sent a confirmation link to <span className="text-foreground font-medium">{email}</span>.
-              Built-in mail can be slow or land in spam. You can also confirm the user in Supabase → Authentication → Users.
+            <h2 className="text-xl font-bold mb-2">Check your email</h2>
+            <p className="text-muted-foreground text-sm mb-2">
+              We sent a confirmation link to{" "}
+              <span className="text-foreground font-medium">{email}</span>.
+            </p>
+            <p className="text-muted-foreground text-xs mb-6">
+              Open the link to activate your demo account. Check spam if you don’t see it.
             </p>
             <Button className="w-full" onClick={handleResendConfirm} disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resend confirmation email"}
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resend email"}
             </Button>
             <Button
               variant="outline"
               className="mt-3 w-full"
-              onClick={() => { setPendingConfirm(false); setIsSignUp(false); }}
-            >
-              Back to Sign In
-            </Button>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Pending approval state
-  if (pendingApproval) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md text-center"
-        >
-          <div className="inline-flex items-center justify-center mb-6">
-            <ExoLogo size="lg" variant="mark" />
-          </div>
-          <Card className="p-8 bg-card border-border">
-            <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-5">
-              <Clock className="w-7 h-7 text-accent" />
-            </div>
-            <h2 className="text-xl font-bold mb-2">You're on the list!</h2>
-            <p className="text-muted-foreground text-sm mb-6">
-              Your email <span className="text-foreground font-medium">{email}</span> is on the waitlist. 
-              We'll send you an email once you've been approved for beta access.
-            </p>
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg p-3">
-              <ShieldCheck className="w-4 h-4 text-accent" />
-              We review applications manually to ensure a great beta experience.
-            </div>
-            <Button
-              variant="outline"
-              className="mt-6 w-full"
-              onClick={() => setPendingApproval(false)}
+              onClick={() => {
+                setPendingConfirm(false);
+                setIsSignUp(false);
+              }}
             >
               Back to Sign In
             </Button>
@@ -178,26 +156,36 @@ export default function Auth() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
             <ExoLogo size="lg" variant="mark" />
           </div>
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight"><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>Ξ╳</span>oSky</h1>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">Beta</span>
+            <h1 className="text-3xl font-bold tracking-tight">
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: "var(--gradient-accent)" }}
+              >
+                Ξ╳
+              </span>
+              oSky
+            </h1>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">
+              Beta
+            </span>
           </div>
-          <p className="text-muted-foreground mt-2">The everything finance app — now in beta</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {isSignUp
+              ? "Create your demo account — paper balances, live markets"
+              : "Welcome back — sign in to continue"}
+          </p>
         </div>
 
         <Card className="p-6 bg-card border-border shadow-card">
-          {/* Google Sign In */}
           <Button
             variant="outline"
             className="w-full mb-4 h-11"
             onClick={async () => {
-              // If we're mid-OAuth-consent, come back to /auth carrying the ?next=
-              // so post-sign-in redirect lands on the consent page.
               const redirectUri = nextPath
                 ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
                 : window.location.origin;
@@ -206,12 +194,24 @@ export default function Auth() {
             }}
           >
             <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
             </svg>
-            {isSignUp ? "Sign up with Google" : "Continue with Google"}
+            Continue with Google
           </Button>
 
           <div className="relative mb-4">
@@ -219,7 +219,7 @@ export default function Auth() {
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
+              <span className="bg-card px-2 text-muted-foreground">or email</span>
             </div>
           </div>
 
@@ -229,6 +229,8 @@ export default function Auth() {
                 placeholder="Full name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                required
+                autoComplete="name"
                 className="h-11 bg-secondary border-border"
               />
             )}
@@ -238,15 +240,17 @@ export default function Auth() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="h-11 bg-secondary border-border"
             />
             <Input
               type="password"
-              placeholder="Password"
+              placeholder={isSignUp ? "Password (min 6 characters)" : "Password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete={isSignUp ? "new-password" : "current-password"}
               className="h-11 bg-secondary border-border"
             />
             <Button
@@ -256,32 +260,47 @@ export default function Auth() {
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isSignUp ? "Create Account" : "Sign In"}
+              ) : isSignUp ? (
+                "Create demo account"
+              ) : (
+                "Sign in"
+              )}
             </Button>
           </form>
 
           {isSignUp && (
-            <p className="text-xs text-muted-foreground text-center mt-3 bg-secondary/50 rounded-lg p-2.5">
-              ⚡ Sign-up requires waitlist approval. <a href="/" className="text-accent hover:underline">Join the waitlist</a> first.
+            <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1.5 bg-secondary/50 rounded-lg p-2.5">
+              <Sparkles className="w-3.5 h-3.5 text-accent shrink-0" />
+              Demo mode — paper balances, no real money
             </p>
           )}
 
           <p className="text-center text-sm text-muted-foreground mt-4">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+            {isSignUp ? "Already have an account?" : "New here?"}{" "}
             <button
-              onClick={() => { setIsSignUp(!isSignUp); setPendingApproval(false); }}
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setPendingConfirm(false);
+              }}
               className="text-foreground font-medium hover:underline"
             >
-              {isSignUp ? "Sign In" : "Sign Up"}
+              {isSignUp ? "Sign in" : "Create account"}
             </button>
           </p>
 
           <div className="flex items-center justify-center gap-3 mt-6 text-xs text-muted-foreground">
-            <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
+            <a href="/terms" className="hover:text-foreground transition-colors">
+              Terms
+            </a>
             <span>·</span>
-            <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
+            <a href="/privacy" className="hover:text-foreground transition-colors">
+              Privacy
+            </a>
             <span>·</span>
-            <a href="/disclosures" className="hover:text-foreground transition-colors">Disclosures</a>
+            <a href="/disclosures" className="hover:text-foreground transition-colors">
+              Disclosures
+            </a>
           </div>
         </Card>
       </motion.div>
