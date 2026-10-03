@@ -47,14 +47,20 @@ const queryClient = new QueryClient();
 // Authentication is enforced.
 const BYPASS_AUTH = false;
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({
+  children,
+  skipOnboarding = false,
+}: {
+  children: React.ReactNode;
+  skipOnboarding?: boolean;
+}) {
   const { user, isLoading } = useAuth();
   const { isCheckingGeo, hasCompletedGeoSetup } = useGeoVerification();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   if (BYPASS_AUTH) return <>{children}</>;
 
-  if (isLoading || isCheckingGeo) {
+  if (isLoading || (!skipOnboarding && isCheckingGeo)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -64,8 +70,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Show country onboarding if user hasn't set up their country yet
-  if (!hasCompletedGeoSetup && !onboardingComplete) {
+  if (!skipOnboarding && !hasCompletedGeoSetup && !onboardingComplete) {
     return <CountryOnboarding onComplete={() => setOnboardingComplete(true)} />;
   }
 
@@ -91,7 +96,15 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclosures" element={<ComplianceDisclosures />} />
             <Route path="/compliance" element={<ComplianceDisclosures />} />
-            <Route path="/admin" element={<Admin />} />
+            {/* Admin: signed-in at the router; role check lives in the page + RPCs */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute skipOnboarding>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
             {/* Protected routes */}
             <Route
               element={
