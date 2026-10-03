@@ -134,7 +134,6 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
       <motion.section
         ref={heroRef}
         style={prefersReducedMotion ? undefined : { opacity: heroOpacity, y: heroY }}
@@ -237,7 +236,6 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* Stats */}
       <section className="border-y border-border/60 bg-card/30">
         <motion.div
           variants={staggerContainer}
@@ -250,7 +248,7 @@ export default function LandingPage() {
             <motion.div
               key={stat.label}
               variants={staggerItem}
-              className="px-4 py-5 sm:py-6 text-center border-border/40 border-r border-b sm:border-b-0 last:border-r-0 sm:[&:nth-child(2)]:border-r even:border-r-0 sm:even:border-r"
+              className="px-4 py-5 sm:py-6 text-center border-border/40"
             >
               <p className="text-2xl sm:text-3xl font-bold text-accent">{stat.value}</p>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1 font-medium">
@@ -261,7 +259,6 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* How it works */}
       <section id="how" className="px-5 py-14 sm:py-16">
         <div className="max-w-4xl mx-auto">
           <RevealSection className="text-center mb-10">
@@ -296,7 +293,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="px-5 py-14 sm:py-16 border-t border-border/50">
         <div className="max-w-6xl mx-auto">
           <RevealSection className="text-center mb-8">
@@ -326,7 +322,7 @@ export default function LandingPage() {
                 <div
                   className={`w-10 h-10 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-3`}
                 >
-                  <feature.icon className="w-4.5 h-4.5 text-accent" />
+                  <feature.icon className="w-4 h-4 text-accent" />
                 </div>
                 <h3 className="text-sm font-bold mb-1">{feature.title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
@@ -336,7 +332,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Compact comparison */}
       <section className="px-5 py-14 sm:py-16 border-t border-border/50">
         <div className="max-w-2xl mx-auto">
           <RevealSection className="text-center mb-8">
@@ -390,7 +385,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className="px-5 py-14 sm:py-16 border-t border-border/50">
         <div className="max-w-2xl mx-auto">
           <RevealSection className="text-center mb-8">
@@ -411,7 +405,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Trust + footer */}
       <section className="px-5 py-10 border-t border-border/50">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-6">
           {TRUST_BADGES.map((badge) => (
