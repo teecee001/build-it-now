@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowRight, Smartphone, ChevronRight, Check, Gift, ArrowUp, X,
+  Twitter, Github, Mail,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -416,22 +417,82 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-border px-5 py-8">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground/60 text-center sm:text-left">
-            © {new Date().getFullYear()} Ξ╳oSky. Demo beta. Not a bank. No real deposits in this
-            version.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
-            <a href="/terms" className="hover:text-foreground transition-colors">
-              Terms
-            </a>
-            <a href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
-            </a>
-            <a href="/disclosures" className="hover:text-foreground transition-colors">
-              Disclosures
-            </a>
+      <footer className="border-t border-border px-5 py-14 sm:py-16">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 mb-12">
+            <div className="col-span-2 sm:col-span-1">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
+                  <span className="text-xs font-black text-accent-foreground tracking-tighter">Ξ╳</span>
+                </div>
+                <span className="text-base font-bold">
+                  <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>
+                    Ξ╳
+                  </span>
+                  oSky
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Wallet, markets, and global send in one app. Demo beta with paper balances and live market data.
+              </p>
+              <div className="flex items-center gap-3 mt-5">
+                {[
+                  { icon: Twitter, href: "https://x.com/exoskytruim", label: "twitter" },
+                  { icon: Github, href: "https://github.com/exosky-app", label: "github" },
+                  { icon: Mail, href: "mailto:support@exosky.app", label: "mail" },
+                ].map(({ icon: Icon, href, label }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target={href.startsWith("mailto") ? undefined : "_blank"}
+                    rel={href.startsWith("mailto") ? undefined : "noopener noreferrer"}
+                    className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-accent/10 transition-colors"
+                    aria-label={label}
+                  >
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Product</h4>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#how" className="hover:text-foreground transition-colors">How it works</a></li>
+                <li><a href="/auth" className="hover:text-foreground transition-colors">Markets</a></li>
+                <li><a href="/auth" className="hover:text-foreground transition-colors">Get started</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Company</h4>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li><a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+                <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
+                <li><a href="/disclosures" className="hover:text-foreground transition-colors">Compliance</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Support</h4>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li><a href="mailto:support@exosky.app" className="hover:text-foreground transition-colors">Contact Us</a></li>
+                <li><a href="/auth" className="hover:text-foreground transition-colors">Create account</a></li>
+                <li><a href="/disclosures" className="hover:text-foreground transition-colors">Disclosures</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-muted-foreground/60 text-center sm:text-left">
+              © {new Date().getFullYear()} Ξ╳oSky. Demo beta. Not a bank. No real deposits in this version.
+            </p>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
+              <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
+              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
+              <a href="/disclosures" className="hover:text-foreground transition-colors">Disclosures</a>
+            </div>
           </div>
         </div>
       </footer>
