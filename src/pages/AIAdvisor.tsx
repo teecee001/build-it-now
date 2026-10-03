@@ -1,20 +1,20 @@
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Bot, User, Loader2, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Bot, Send, Loader2, User, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 
 type Message = { role: "user" | "assistant"; content: string };
 
 const SUGGESTIONS = [
-  "What's the best crypto to invest in right now?",
-  "Explain DeFi yield farming",
-  "Create a diversified portfolio for $10K",
-  "Bitcoin price prediction analysis",
+  "What's happening in crypto markets today?",
+  "How should I think about portfolio risk?",
+  "Explain dollar-cost averaging simply",
+  "What are key factors for long-term investing?",
 ];
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-advisor`;
 
 export default function AIAdvisor() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -28,39 +28,37 @@ export default function AIAdvisor() {
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
+
     const userMsg: Message = { role: "user", content: text.trim() };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
 
     let assistantContent = "";
 
     try {
-      const payload = {
+      const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer sb_publishable_ceCUc9fqMwACxBU43yg43Q_nmKqkbmt`,
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: newMessages }),
-      } as RequestInit;
-
-      let resp = await fetch("/api/ai-advisor", payload);
-      if (!resp.ok) {
-        resp = await fetch(
-          `https://vxcxwmhesgpncbkhwsej.supabase.co/functions/v1/ai-advisor`,
-          payload,
-        );
-      }
+        body: JSON.stringify({ messages: [...messages, userMsg] }),
+      });
 
       if (resp.status === 429) {
-        setMessages((p) => [...p, { role: "assistant", content: "Rate limit reached. Please try again in a moment." }]);
+        setMessages((p) => [
+          ...p,
+          { role: "assistant", content: "Rate limit reached. Please try again in a moment." },
+        ]);
         setIsLoading(false);
         return;
       }
       if (resp.status === 402) {
-        setMessages((p) => [...p, { role: "assistant", content: "AI credits exhausted. Please add credits to continue." }]);
+        setMessages((p) => [
+          ...p,
+          { role: "assistant", content: "AI credits exhausted. Please add credits to continue." },
+        ]);
         setIsLoading(false);
         return;
       }
@@ -69,8 +67,9 @@ export default function AIAdvisor() {
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
+      let streamDone = false;
 
-      while (true) {
+      while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
         textBuffer += decoder.decode(value, { stream: true });
@@ -79,15 +78,23 @@ export default function AIAdvisor() {
         while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
           let line = textBuffer.slice(0, newlineIndex);
           textBuffer = textBuffer.slice(newlineIndex + 1);
+
           if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
           if (!line.startsWith("data: ")) continue;
+
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantContent += content;
+              const newMessages = [...messages, userMsg];
               setMessages(() => [...newMessages, { role: "assistant", content: assistantContent }]);
             }
           } catch {
@@ -96,35 +103,42 @@ export default function AIAdvisor() {
           }
         }
       }
+
+      if (!assistantContent) {
+        setMessages((p) => [...p, { role: "assistant", content: "No response received. Please try again." }]);
+      }
     } catch (e) {
       console.error("AI error:", e);
-      setMessages((p) => [...p, { role: "assistant", content: "Sorry, I couldn't process that request. Please try again." }]);
+      setMessages((p) => [
+        ...p,
+        { role: "assistant", content: "Sorry, I couldn't process that request. Please try again." },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-80px)]">
-      {/* Header */}
+    <div className="p-4 md:p-6 max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center">
             <Bot className="w-5 h-5 text-accent-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">AI Financial Advisor</h1>
-            <p className="text-xs text-muted-foreground">Powered by Grok · Not financial advice</p>
+            <h1 className="text-xl font-bold tracking-tight">Exo</h1>
+            <p className="text-xs text-muted-foreground">Exo Intelligence · Not financial advice</p>
           </div>
         </div>
       </motion.div>
 
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pr-2">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full space-y-6">
             <Sparkles className="w-12 h-12 text-muted-foreground/30" />
-            <p className="text-muted-foreground text-sm text-center">Ask me anything about crypto, markets, or financial strategy</p>
+            <p className="text-muted-foreground text-sm text-center">
+              Ask Exo about markets, budgets, investing, or strategy
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
               {SUGGESTIONS.map((s) => (
                 <button
@@ -153,9 +167,7 @@ export default function AIAdvisor() {
             )}
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                msg.role === "user"
-                  ? "bg-foreground text-background"
-                  : "bg-secondary"
+                msg.role === "user" ? "bg-foreground text-background" : "bg-secondary"
               }`}
             >
               {msg.role === "assistant" ? (
@@ -186,10 +198,9 @@ export default function AIAdvisor() {
         )}
       </div>
 
-      {/* Input */}
       <div className="mt-4 flex gap-2">
         <Input
-          placeholder="Ask about markets, crypto, or finance..."
+          placeholder="Ask Exo..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
