@@ -3,7 +3,7 @@ import {
   Bell, ArrowDownLeft, ArrowUpRight, Gift, CreditCard, Landmark, Repeat, Percent, Info,
 } from "lucide-react";
 import type { Notification } from "@/hooks/useNotifications";
-import { formatAmount, getConversionDisplay, formatTxAmount } from "@/lib/formatTransaction";
+import { formatAmount, getConversionDisplay } from "@/lib/formatTransaction";
 
 const NOTIF_ICONS: Record<string, typeof Info> = {
   deposit: ArrowDownLeft,
@@ -88,26 +88,22 @@ export function NotificationList({
             <button
               type="button"
               onClick={() => onOpen(notif)}
-              className={`w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-secondary/50 transition-colors ${
-                !notif.is_read ? "bg-primary/5" : ""
+              className={`w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-secondary/50 transition-colors ${\n                !notif.is_read ? "bg-primary/5" : ""
               }`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                  isConvert ? "bg-accent/10" : isPositive ? "bg-emerald-500/10" : "bg-secondary"
+                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${\n                  isConvert ? "bg-accent/10" : isPositive ? "bg-emerald-500/10" : "bg-secondary"
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 ${
-                    isConvert ? "text-accent" : isPositive ? "text-emerald-500" : "text-muted-foreground"
+                  className={`w-4 h-4 ${\n                    isConvert ? "text-accent" : isPositive ? "text-emerald-500" : "text-muted-foreground"
                   }`}
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2">
                   <p
-                    className={`text-sm leading-snug ${
-                      !notif.is_read ? "font-semibold text-foreground" : "font-medium text-foreground/80"
+                    className={`text-sm leading-snug ${\n                      !notif.is_read ? "font-semibold text-foreground" : "font-medium text-foreground/80"
                     }`}
                   >
                     {notif.title}
@@ -123,8 +119,7 @@ export function NotificationList({
               </div>
               {amountLabel && (
                 <span
-                  className={`text-xs sm:text-sm font-semibold tabular-nums shrink-0 text-right max-w-[42%] leading-snug ${
-                    isConvert ? "text-foreground" : isPositive ? "text-emerald-500" : "text-foreground"
+                  className={`text-xs sm:text-sm font-semibold tabular-nums shrink-0 text-right max-w-[42%] leading-snug ${\n                    isConvert ? "text-foreground" : isPositive ? "text-emerald-500" : "text-foreground"
                   }`}
                 >
                   {amountLabel}
