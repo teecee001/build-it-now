@@ -15,18 +15,19 @@ The everything finance app — multi-currency wallets, P2P, markets, forecasts, 
 
 ```sh
 npm i
-cp .env.example .env
-# fill VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, VITE_SUPABASE_PROJECT_ID
+cp .env.example .env   # optional; the public Supabase project is also wired in src/integrations/supabase/client.ts
 npm run dev
 ```
 
 ## Environment
 
+Do **not** commit `.env`. Git ignores it.
+
 ### Vercel (frontend)
 
-Set `VITE_SUPABASE_*` in Project → Settings → Environment Variables.
+The public Supabase URL/key live in `src/integrations/supabase/client.ts` (publishable keys are designed to be public; RLS protects data).
 
-To enable the AI advisor, also set **one** of:
+To enable the AI advisor, set **one** of these in Vercel → Project → Settings → Environment Variables (never in git):
 
 - `XAI_API_KEY` (preferred — uses grok-4.3)
 - `OPENAI_API_KEY`
