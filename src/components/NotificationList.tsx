@@ -3,6 +3,7 @@ import {
   Bell, ArrowDownLeft, ArrowUpRight, Gift, CreditCard, Landmark, Repeat, Percent, Info,
 } from "lucide-react";
 import type { Notification } from "@/hooks/useNotifications";
+import { formatAmount, getConversionDisplay, formatTxAmount } from "@/lib/formatTransaction";
 
 const NOTIF_ICONS: Record<string, typeof Info> = {
   deposit: ArrowDownLeft,
@@ -26,6 +27,27 @@ export function notifAmount(notif: Notification): number | null {
   if (raw === undefined || raw === null || raw === "") return null;
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
+}
+
+function notifAmountLabel(notif: Notification): string | null {
+  const meta = (notif.metadata || {}) as Record<string, unknown>;
+  const txType = String(meta.tx_type || notif.type || "");
+
+  if (txType === "conversion" || txType === "convert" || /convert/i.test(notif.title || "")) {
+    const conv = getConversionDisplay({
+      type: "conversion",
+      amount: Number(meta.amount ?? meta.from_amount ?? 0),
+      description: notif.message || notif.title,
+      metadata: meta,
+    });
+    if (conv) return conv.amountText;
+  }
+
+  const amount = notifAmount(notif);
+  if (amount === null) return null;
+  const currency = String(meta.currency || "USD");
+  const sign = amount >= 0 ? "+" : "-";
+  return `${sign}${formatAmount(amount, currency)}`;
 }
 
 export function NotificationList({
@@ -54,7 +76,13 @@ export function NotificationList({
       {items.map((notif) => {
         const Icon = notifIcon(notif);
         const amount = notifAmount(notif);
+        const amountLabel = notifAmountLabel(notif);
         const isPositive = amount !== null && amount > 0;
+        const isConvert =
+          amountLabel?.includes("→") ||
+          /convert/i.test(notif.title || "") ||
+          (notif.metadata as { tx_type?: string } | null)?.tx_type === "conversion";
+
         return (
           <li key={notif.id}>
             <button
@@ -64,14 +92,24 @@ export function NotificationList({
                 !notif.is_read ? "bg-primary/5" : ""
               }`}
             >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                isPositive ? "bg-emerald-500/10" : "bg-secondary"
-              }`}>
-                <Icon className={`w-4 h-4 ${isPositive ? "text-emerald-500" : "text-muted-foreground"}`} />
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                  isConvert ? "bg-accent/10" : isPositive ? "bg-emerald-500/10" : "bg-secondary"
+                }`}
+              >
+                <Icon
+                  className={`w-4 h-4 ${
+                    isConvert ? "text-accent" : isPositive ? "text-emerald-500" : "text-muted-foreground"
+                  }`}
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2">
-                  <p className={`text-sm leading-snug ${!notif.is_read ? "font-semibold text-foreground" : "font-medium text-foreground/80"}`}>
+                  <p
+                    className={`text-sm leading-snug ${
+                      !notif.is_read ? "font-semibold text-foreground" : "font-medium text-foreground/80"
+                    }`}
+                  >
                     {notif.title}
                   </p>
                   {!notif.is_read && (
@@ -83,11 +121,13 @@ export function NotificationList({
                   {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
                 </p>
               </div>
-              {amount !== null && (
-                <span className={`text-sm font-semibold tabular-nums shrink-0 ${
-                  isPositive ? "text-emerald-500" : "text-foreground"
-                }`}>
-                  {isPositive ? "+" : ""}${Math.abs(amount).toFixed(2)}
+              {amountLabel && (
+                <span
+                  className={`text-xs sm:text-sm font-semibold tabular-nums shrink-0 text-right max-w-[42%] leading-snug ${
+                    isConvert ? "text-foreground" : isPositive ? "text-emerald-500" : "text-foreground"
+                  }`}
+                >
+                  {amountLabel}
                 </span>
               )}
             </button>
