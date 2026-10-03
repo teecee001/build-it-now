@@ -30,7 +30,7 @@ const NAV_ITEMS = [
   { path: "/markets", icon: TrendingUp, label: "Markets" },
   { path: "/forecasts", icon: Target, label: "Forecasts" },
   { path: "/referrals", icon: Users, label: "Refer & Earn" },
-  { path: "/advisor", icon: Bot, label: "AI Advisor" },
+  { path: "/advisor", icon: Bot, label: "Exo" },
   { path: "/premium", icon: Crown, label: "Pro" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
