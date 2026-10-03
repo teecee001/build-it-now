@@ -170,13 +170,15 @@ export default function Auth() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-5">
+        <div className="text-center mb-6">
           <a
             href="/"
-            className="inline-flex items-center justify-center gap-2 mb-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            className="inline-flex items-center justify-center mb-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            <ExoLogo size="md" variant="mark" />
-            <span className="text-2xl font-bold tracking-tight">
+            <ExoLogo size="lg" variant="mark" />
+          </a>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: "var(--gradient-accent)" }}
@@ -184,12 +186,12 @@ export default function Auth() {
                 Ξ╳
               </span>
               oSky
-            </span>
+            </h1>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">
               Beta
             </span>
-          </a>
-          <p className="text-muted-foreground mt-1.5 text-sm">
+          </div>
+          <p className="text-muted-foreground mt-2 text-sm">
             {isSignUp
               ? "Create your demo account. Paper balances, live markets."
               : "Welcome back. Sign in to continue."}
