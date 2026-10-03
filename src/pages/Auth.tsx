@@ -24,6 +24,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   if (authLoading) {
     return (
@@ -34,6 +35,21 @@ export default function Auth() {
   }
 
   if (user) return <Navigate to={postAuthTarget} replace />;
+
+  const handleForgotPassword = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setIsResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    if (error) toast.error(error.message);
+    else toast.success("Password reset link sent. Check your inbox and spam.");
+    setIsResetting(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,15 +170,13 @@ export default function Auth() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-8">
+        <div className="text-center mb-5">
           <a
             href="/"
-            className="inline-flex items-center justify-center mb-4 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            className="inline-flex items-center justify-center gap-2 mb-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
           >
-            <ExoLogo size="lg" variant="mark" />
-          </a>
-          <div className="flex items-center justify-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">
+            <ExoLogo size="md" variant="mark" />
+            <span className="text-2xl font-bold tracking-tight">
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: "var(--gradient-accent)" }}
@@ -170,15 +184,15 @@ export default function Auth() {
                 Ξ╳
               </span>
               oSky
-            </h1>
+            </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">
               Beta
             </span>
-          </div>
-          <p className="text-muted-foreground mt-2 text-sm">
+          </a>
+          <p className="text-muted-foreground mt-1.5 text-sm">
             {isSignUp
-              ? "Create your demo account — paper balances, live markets"
-              : "Welcome back — sign in to continue"}
+              ? "Create your demo account. Paper balances, live markets."
+              : "Welcome back. Sign in to continue."}
           </p>
         </div>
 
@@ -219,7 +233,7 @@ export default function Auth() {
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
+            <div className="relative flex justify-center text-xs">
               <span className="bg-card px-2 text-muted-foreground">or email</span>
             </div>
           </div>
@@ -254,6 +268,18 @@ export default function Auth() {
               autoComplete={isSignUp ? "new-password" : "current-password"}
               className="h-11 bg-secondary border-border"
             />
+            {!isSignUp && (
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={isResetting}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isResetting ? "Sending..." : "Forgot password?"}
+                </button>
+              </div>
+            )}
             <Button
               type="submit"
               className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 font-semibold"
@@ -272,7 +298,7 @@ export default function Auth() {
           {isSignUp && (
             <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1.5 bg-secondary/50 rounded-lg p-2.5">
               <Sparkles className="w-3.5 h-3.5 text-accent shrink-0" />
-              Demo mode — paper balances, no real money
+              Demo mode. Paper balances, no real money.
             </p>
           )}
 
