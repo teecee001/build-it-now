@@ -12,9 +12,12 @@ dist
 dist-ssr
 *.local
 
-# Env (keep .env.example). .env is still tracked for the Vercel Vite build.
+# Env — never commit secrets. Set API keys in Vercel / Supabase, or copy .env.example locally.
+.env
 .env.local
 .env.*.local
+.env.development
+.env.production
 
 # Editor directories and files
 .vscode/*
