@@ -1,102 +1,61 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@/tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import LandingPage from "./pages/LandingPage";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { AuthProvider } from "@/hooks/useAuth";
 import { ActiveCurrencyProvider } from "@/hooks/useActiveCurrency";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { useGeoVerification } from "@/hooks/useGeoVerification";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { CountryOnboarding } from "@/components/CountryOnboarding";
+import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import WalletPage from "./pages/WalletPage";
 import SendMoney from "./pages/SendMoney";
+import Deposit from "./pages/Deposit";
+import Activity from "./pages/Activity";
+import Rewards from "./pages/Rewards";
+import CardPage from "./pages/CardPage";
+import BillPay from "./pages/BillPay";
 import Markets from "./pages/Markets";
 import Forecasts from "./pages/Forecasts";
 import AIAdvisor from "./pages/AIAdvisor";
-import Rewards from "./pages/Rewards";
-import Activity from "./pages/Activity";
-import CardPage from "./pages/CardPage";
-import Deposit from "./pages/Deposit";
-import BillPay from "./pages/BillPay";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import ComplianceDisclosures from "./pages/ComplianceDisclosures";
-import KYCVerification from "./pages/KYCVerification";
 import Savings from "./pages/Savings";
 import Referrals from "./pages/Referrals";
 import Premium from "./pages/Premium";
 import Settings from "./pages/Settings";
+import KYCVerification from "./pages/KYCVerification";
 import SpendingAnalytics from "./pages/SpendingAnalytics";
 import QRPayments from "./pages/QRPayments";
 import RecurringPayments from "./pages/RecurringPayments";
 import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
 import StocksPage from "./pages/StocksPage";
-import Admin from "./pages/Admin";
-import OAuthConsent from "./pages/OAuthConsent";
 import Notifications from "./pages/Notifications";
+import Admin from "./pages/Admin";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ComplianceDisclosures from "./pages/ComplianceDisclosures";
+import OAuthConsent from "./pages/OAuthConsent";
 import NotFound from "./pages/NotFound";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
 
 const queryClient = new QueryClient();
 
-// Authentication is enforced.
-const BYPASS_AUTH = false;
-
-function ProtectedRoute({
-  children,
-  skipOnboarding = false,
-}: {
-  children: React.ReactNode;
-  skipOnboarding?: boolean;
-}) {
-  const { user, isLoading } = useAuth();
-  const { isCheckingGeo, hasCompletedGeoSetup } = useGeoVerification();
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
-
-  if (BYPASS_AUTH) return <>{children}</>;
-
-  if (isLoading || (!skipOnboarding && isCheckingGeo)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!user) return <Navigate to="/auth" replace />;
-
-  if (!skipOnboarding && !hasCompletedGeoSetup && !onboardingComplete) {
-    return <CountryOnboarding onComplete={() => setOnboardingComplete(true)} />;
-  }
-
-  return <>{children}</>;
-}
-
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<LandingPage />} />
-            {/* OAuth consent (used by external MCP clients) */}
             <Route path="/oauth/consent" element={<OAuthConsent />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-            {/* Public legal pages */}
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclosures" element={<ComplianceDisclosures />} />
             <Route path="/compliance" element={<ComplianceDisclosures />} />
-            {/* Admin: signed-in at the router; role check lives in the page + RPCs */}
             <Route
               path="/admin"
               element={
@@ -105,7 +64,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            {/* Protected routes */}
             <Route
               element={
                 <ProtectedRoute>
@@ -136,16 +94,16 @@ const App = () => (
               <Route path="/qr/pay" element={<QRPayments />} />
               <Route path="/recurring" element={<RecurringPayments />} />
               <Route path="/currencies" element={<MultiCurrencyWallet />} />
+              <Route path="/convert" element={<MultiCurrencyWallet />} />
               <Route path="/stocks" element={<StocksPage />} />
               <Route path="/notifications" element={<Notifications />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 );
 
 export default App;
