@@ -153,7 +153,7 @@ export default function Dashboard() {
         </Card>
         <Card
           className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/cards")}
+          onClick={() => navigate("/card")}
         >
           <CreditCard className="w-5 h-5 text-primary mb-2" />
           <p className="text-sm font-semibold">Cards</p>
