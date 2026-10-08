@@ -162,6 +162,18 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
                 ))}
               </div>
             </motion.div>
+            {["USD", "EUR", "GBP"].map((c, i) => (
+              <motion.div
+                key={c}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 1.2 + i * 0.15, type: "spring", stiffness: 300 }}
+                className="absolute w-8 h-8 rounded-full border border-white/10 bg-card/80 backdrop-blur flex items-center justify-center"
+                style={{ top: `${-8 + i * 15}px`, right: `${-12 + i * 8}px` }}
+              >
+                <span className="text-[7px] font-bold text-white/70">{c}</span>
+              </motion.div>
+            ))}
           </div>
         </div>
       );
@@ -200,6 +212,15 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
                   <p className="text-[10px] font-mono font-semibold text-white">{field.value}</p>
                 </motion.div>
               ))}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="flex items-center gap-1.5"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-[8px] text-green-400 font-medium">Ready to receive</span>
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -213,6 +234,7 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
             animate={{ rotateY: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
             className="w-full max-w-[260px]"
+            style={{ perspective: 600 }}
           >
             <div
               className="rounded-2xl p-4 aspect-[1.586/1] flex flex-col justify-between relative overflow-hidden"
@@ -221,6 +243,7 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
                 border: "1px solid hsl(150 30% 20%)",
               }}
             >
+              <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-20" style={{ background: accent }} />
               <div className="relative flex items-start justify-between">
                 <span className="text-[8px] font-bold tracking-wider text-white/80">Ξ╳OSKY</span>
                 <span className="text-[7px] font-medium text-white/50">METAL</span>
@@ -243,9 +266,27 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
     case "send":
       return (
         <div className={baseClasses}>
-          <div className="w-full max-w-[240px]">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-xl p-4 border border-white/10 bg-white/[0.06]">
-              <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1, type: "spring" }} className="text-center p-3 rounded-lg" style={{ backgroundColor: `hsl(${accentColor} / 0.08)` }}>
+          <div className="w-full max-w-[240px] space-y-2">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="rounded-xl p-4 border border-white/10 bg-white/[0.06] space-y-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white">JD</div>
+                <div>
+                  <p className="text-[9px] font-semibold text-white">@johndoe</p>
+                  <p className="text-[7px] text-white/40">John Doe</p>
+                </div>
+              </div>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.7, type: "spring" }}
+                className="text-center p-3 rounded-lg"
+                style={{ backgroundColor: `hsl(${accentColor} / 0.08)` }}
+              >
                 <p className="text-lg font-bold text-white font-mono">$500.00</p>
                 <p className="text-[8px] mt-1" style={{ color: accent }}>Instant · Zero fees</p>
               </motion.div>
@@ -257,14 +298,28 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
     case "markets":
       return (
         <div className={baseClasses}>
-          <div className="w-full max-w-[240px]">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-xl p-3 border border-white/10 bg-white/[0.06]">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[9px] font-bold text-white">Bitcoin</p>
-                <p className="text-[9px] font-bold text-white font-mono">$67,842</p>
-              </div>
-              <p className="text-[7px] font-semibold text-green-400">+5.23%</p>
-            </motion.div>
+          <div className="w-full max-w-[240px] space-y-1.5">
+            {[
+              { name: "Bitcoin", price: "$67,842", change: "+5.23%", up: true },
+              { name: "Ethereum", price: "$3,421", change: "+2.18%", up: true },
+              { name: "Tesla", price: "$248.50", change: "-1.42%", up: false },
+            ].map((asset, i) => (
+              <motion.div
+                key={asset.name}
+                initial={{ x: -30, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3 + i * 0.15 }}
+                className="flex items-center justify-between p-2.5 rounded-lg border border-white/10 bg-white/[0.06]"
+              >
+                <div>
+                  <p className="text-[9px] font-bold text-white">{asset.name}</p>
+                  <p className="text-[8px] font-mono text-white/50">{asset.price}</p>
+                </div>
+                <span className={`text-[9px] font-semibold ${asset.up ? "text-green-400" : "text-red-400"}`}>
+                  {asset.change}
+                </span>
+              </motion.div>
+            ))}
           </div>
         </div>
       );
@@ -273,11 +328,38 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
       return (
         <div className={baseClasses}>
           <div className="w-full max-w-[240px]">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-xl p-4 border border-white/10 bg-white/[0.06] space-y-3">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="rounded-xl p-4 border border-white/10 bg-white/[0.06] space-y-3"
+            >
               <div className="flex items-center justify-between">
                 <p className="text-[9px] text-white/40">Savings APY</p>
                 <p className="text-2xl font-bold" style={{ color: accent }}>6.00%</p>
               </div>
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: accent }}
+                  initial={{ width: 0 }}
+                  animate={{ width: "72%" }}
+                  transition={{ delay: 0.6, duration: 1, ease: "easeOut" }}
+                />
+              </div>
+              <div className="flex justify-between text-[8px] text-white/40">
+                <span>No lock-ups</span>
+                <span>Withdraw anytime</span>
+              </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2 }}
+                className="p-2 rounded-lg border border-white/5 bg-white/[0.03]"
+              >
+                <p className="text-[7px] text-white/30">Projected monthly</p>
+                <p className="text-[11px] font-semibold text-white font-mono">+$124.50</p>
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -287,12 +369,40 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
       return (
         <div className={baseClasses}>
           <div className="w-full max-w-[240px] space-y-2">
-            <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="flex items-start gap-2">
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex gap-2"
+            >
               <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: accentDim }}>
                 <Bot className="w-3 h-3" style={{ color: accent }} />
               </div>
-              <div className="p-2 rounded-lg bg-white/[0.06] border border-white/10 max-w-[180px]">
-                <p className="text-[8px] text-white/70 leading-relaxed">Exo Intelligence is ready. Ask about markets, budgets, or strategy.</p>
+              <div className="p-2 rounded-lg border border-white/8 max-w-[75%]" style={{ backgroundColor: `hsl(${accentColor} / 0.08)` }}>
+                <p className="text-[8px] text-white/80 leading-relaxed">You spent 18% less on dining this month. Want a savings goal?</p>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="flex gap-2 justify-end"
+            >
+              <div className="p-2 rounded-lg bg-white/[0.06] border border-white/8 max-w-[70%]">
+                <p className="text-[8px] text-white/70">Yes — set a $500 goal</p>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1 }}
+              className="flex gap-2"
+            >
+              <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: accentDim }}>
+                <Bot className="w-3 h-3" style={{ color: accent }} />
+              </div>
+              <div className="p-2 rounded-lg border border-white/8" style={{ backgroundColor: `hsl(${accentColor} / 0.08)` }}>
+                <p className="text-[8px] text-white/80">Goal created. On track to hit it in 6 weeks.</p>
               </div>
             </motion.div>
           </div>
