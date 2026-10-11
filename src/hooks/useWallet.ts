@@ -13,11 +13,27 @@ export interface Wallet {
   updated_at: string;
 }
 
-async function invokeWalletOp(body: Record<string, unknown>) {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-  if (!token) throw new Error("Not authenticated");
+const SESSION_EXPIRED_MESSAGE = "Your session has expired. Please sign in again.";
 
+function isAuthFailure(message: string) {
+  return message === "Not authenticated" || message === "No authorization header";
+}
+
+async function currentAccessToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  if (data?.session?.access_token) return data.session.access_token;
+  // No usable session in storage: try to refresh once before giving up.
+  const { data: refreshed } = await supabase.auth.refreshSession();
+  return refreshed?.session?.access_token ?? null;
+}
+
+async function endExpiredSession(): Promise<never> {
+  // ProtectedRoute sends a signed-out user to /auth.
+  await supabase.auth.signOut().catch(() => undefined);
+  throw new Error(SESSION_EXPIRED_MESSAGE);
+}
+
+async function callWalletOp(body: Record<string, unknown>, token: string) {
   const { data, error } = await supabase.functions.invoke("wallet-operation", {
     body,
     headers: { Authorization: `Bearer ${token}` },
@@ -43,6 +59,29 @@ async function invokeWalletOp(body: Record<string, unknown>) {
   }
 
   return data;
+}
+
+async function invokeWalletOp(body: Record<string, unknown>) {
+  const token = await currentAccessToken();
+  if (!token) return endExpiredSession();
+
+  try {
+    return await callWalletOp(body, token);
+  } catch (err) {
+    if (!(err instanceof Error) || !isAuthFailure(err.message)) throw err;
+    // The server rejected the token (expired or revoked) although a session was
+    // stored. Refresh once and retry; the server rejected the call before doing
+    // anything, so retrying cannot repeat a money movement.
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    const fresh = refreshed?.session?.access_token;
+    if (!fresh) return endExpiredSession();
+    try {
+      return await callWalletOp(body, fresh);
+    } catch (retryErr) {
+      if (retryErr instanceof Error && isAuthFailure(retryErr.message)) return endExpiredSession();
+      throw retryErr;
+    }
+  }
 }
 
 export { invokeWalletOp };
