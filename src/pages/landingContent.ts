@@ -26,25 +26,25 @@ const FEATURES = [
   {
     icon: PiggyBank,
     title: "Savings",
-    description: "A savings experience built around a clear 6% APY target, with no lock-up story.",
+    description: "Explore a savings vault with a 6% APY target. It is a beta target, not a guaranteed rate, and no real interest is paid.",
     gradient: "from-warning/20 to-warning/5",
   },
   {
     icon: Globe,
     title: "Send money",
-    description: "P2P-style sends by handle, email, or QR. Built for speed and low fees.",
+    description: "P2P-style sends by handle, email, or QR, using demo balances in the beta.",
     gradient: "from-cyan-500/20 to-cyan-500/5",
   },
   {
     icon: Zap,
     title: "Bills & rewards",
-    description: "Bill pay flows and a simple cashback story on everyday spend.",
+    description: "Bill pay flows and rewards you can try in the demo.",
     gradient: "from-destructive/20 to-destructive/5",
   },
 ];
 
 const STATS = [
-  { value: "$25", label: "Welcome bonus" },
+  { value: "$25", label: "Demo welcome bonus" },
   { value: "Live", label: "Market data" },
   { value: "Multi", label: "Currencies" },
   { value: "Beta", label: "Open to try" },
@@ -52,27 +52,27 @@ const STATS = [
 
 const TRUST_BADGES = [
   { icon: Shield, label: "Security-first design" },
-  { icon: Lock, label: "Encrypted by default" },
-  { icon: Users, label: "Built for compliance" },
+  { icon: Lock, label: "Not a bank" },
+  { icon: Users, label: "No real deposits" },
 ];
 
 const HOW_IT_WORKS = [
   {
     step: "01",
     title: "Create your account",
-    description: "Sign up with email in a couple of minutes. New accounts get a $25 welcome bonus in the demo.",
+    description: "Sign up with email in a couple of minutes. New accounts get a $25 welcome bonus in demo money.",
     icon: Sparkles,
   },
   {
     step: "02",
     title: "Explore the product",
-    description: "Use paper balances, open Markets, and try convert flows. No real bank deposit required.",
+    description: "Use demo balances, open Markets, and try convert flows. No real bank deposit required.",
     icon: Wallet,
   },
   {
     step: "03",
     title: "See the full vision",
-    description: "Wallet, markets, savings, cards, and send. One app path from day one.",
+    description: "Wallet, markets, savings, cards, and send, all in one app.",
     icon: TrendingUp,
   },
 ];
@@ -84,19 +84,19 @@ const FAQS = [
   },
   {
     q: "Is the money real?",
-    a: "Balances in the beta are paper balances for product testing and demos. You can explore the full flow without funding a real account.",
+    a: "Balances in the beta are demo (\"paper\") balances for product testing. No real money is held or moved, and the $25 welcome bonus is demo money too. You can explore the full flow without funding a real account.",
   },
   {
     q: "What can I try right now?",
-    a: "Create an account, claim the welcome bonus, browse live markets, convert between currencies in the demo, and walk through the main product screens.",
+    a: "Create an account, claim the $25 demo welcome bonus, browse live markets, convert between currencies in the demo, and walk through the main product screens.",
   },
   {
     q: "What about the 6% APY and cards?",
-    a: "Those are part of the product vision you can explore in the app. Live banking rails, cards, and yield will come with partners and compliance, not in this beta.",
+    a: "The 6% APY is a target shown in the product vision, not a guaranteed rate, and no real interest is paid in this beta. Live banking rails, cards, and yield would depend on partners and compliance, and are not part of this beta.",
   },
   {
     q: "Is my data safe?",
-    a: "We take security seriously: encrypted connections, careful auth, and a design that assumes stronger controls as we grow. This beta is for product experience, not production banking.",
+    a: "The site uses encrypted (HTTPS) connections and a managed sign-in service. This beta is for product experience, not production banking, so please avoid sharing sensitive personal or financial details.",
   },
   {
     q: "Who is this for?",
