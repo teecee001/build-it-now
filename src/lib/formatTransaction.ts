@@ -32,7 +32,7 @@ export function formatAmount(amount: number, currency: string): string {
 function parseConvertDescription(description: string | null | undefined) {
   if (!description) return null;
   const match = description.match(
-    /Converted\s+([\d.,]+)\s+([A-Za-z]{3})\s*[→\-]+\s*([\d.,]+)\s+([A-Za-z]{3})/i,
+    /Converted\s+([\d.,]+)\s+([A-Za-z]{3})\s*[→-]+\s*([\d.,]+)\s+([A-Za-z]{3})/i,
   );
   if (!match) return null;
   return {
@@ -68,6 +68,12 @@ export function getConversionDisplay(tx: TxLike) {
     detail: `${left} → ${right}`,
     amountText: `${left} → ${right}`,
   };
+}
+
+/** "From @x" for received transfers (counterparty is the sender), otherwise "To @x". */
+export function getCounterpartyLabel(tx: { type: string; recipient?: string | null }): string {
+  if (!tx.recipient) return "";
+  return `${tx.type === "receive" ? "From" : "To"} ${tx.recipient}`;
 }
 
 export function getTransactionTitle(tx: TxLike): string {
