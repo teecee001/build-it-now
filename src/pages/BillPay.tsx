@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useBills } from "@/hooks/useBills";
+import { useBills, type Bill } from "@/hooks/useBills";
 import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
 import { 
   Zap, Wifi, Home, Phone, Tv, Droplets, Search,
@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
+import { getErrorMessage } from "@/lib/errors";
 
 const BILL_CATEGORIES = [
   { icon: Zap, label: "Electric", color: "text-warning" },
@@ -190,7 +191,7 @@ function BillPayContent() {
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
-  const [confirmBill, setConfirmBill] = useState<any | null>(null);
+  const [confirmBill, setConfirmBill] = useState<Bill | null>(null);
 
   const handleCategoryChange = (cat: string) => {
     setNewCategory(cat);
@@ -210,7 +211,7 @@ function BillPayContent() {
     if (provider) setNewAmount(provider.avgAmount.toFixed(2));
   };
 
-  const handlePayClick = (bill: any) => {
+  const handlePayClick = (bill: Bill) => {
     if (!bill.account_number) {
       toast.error("No account number on file. Edit this bill to add one before paying.");
       return;
@@ -236,8 +237,8 @@ function BillPayContent() {
       await payBill.mutateAsync(bill.id);
       const cashback = Number(result?.cashback ?? bill.amount * 0.01);
       toast.success(`Paid ${bill.biller_name} — earned $${cashback.toFixed(2)} cashback`);
-    } catch (err: any) {
-      toast.error(err.message || "Payment failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Payment failed");
     } finally {
       setPayingId(null);
     }
@@ -262,8 +263,8 @@ function BillPayContent() {
       setNewAmount("");
       setNewDueDate("");
       setNewAccountNumber("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to add bill");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to add bill");
     }
   };
 

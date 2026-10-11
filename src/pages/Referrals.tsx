@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function Referrals() {
   const {
@@ -44,8 +45,8 @@ export default function Referrals() {
       await redeemCode.mutateAsync(redeemInput.trim());
       toast.success("Referral redeemed! $10 bonus credited 🎉");
       setRedeemInput("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to redeem code");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to redeem code");
     }
   };
 

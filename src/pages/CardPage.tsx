@@ -19,6 +19,7 @@ import {
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/errors";
 
 type View = "list" | "detail" | "settings" | "add" | "tiers";
 
@@ -316,7 +317,7 @@ function CardPageContent() {
         type: "security",
         title: wasFrozen ? "Card Unfrozen" : "Card Frozen",
         message: `Your card ending in ${card.card_number_last4} has been ${wasFrozen ? "unfrozen" : "frozen"}.`,
-        metadata: { card_id: card.id, action: wasFrozen ? "unfreeze" : "freeze" } as any,
+        metadata: { card_id: card.id, action: wasFrozen ? "unfreeze" : "freeze" },
       });
     }
     toast.success(wasFrozen ? "Card unfrozen" : "Card frozen");
@@ -355,7 +356,7 @@ function CardPageContent() {
 
   const getDesignForCard = (c: CardData) => {
     // Try to get design from metadata or fallback
-    const designId = (c as any).card_design || "classic-dark";
+    const designId = c.card_design || "classic-dark";
     return getCardDesign(designId);
   };
 
@@ -487,9 +488,9 @@ function CardPageContent() {
       setNewCardDesign(CARD_DESIGNS[0].id);
       setAddStep("format");
       setView("list");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Card creation failed:", error);
-      setPinError(error?.message || "Failed to create card. Please try again.");
+      setPinError(getErrorMessage(error) || "Failed to create card. Please try again.");
     }
   };
 

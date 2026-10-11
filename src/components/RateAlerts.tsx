@@ -12,6 +12,7 @@ import {
   Bell, Plus, Trash2, TrendingUp, TrendingDown, Loader2, X, Check, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 const ALERT_CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "BTC", "ETH", "NGN", "KES", "ZAR", "INR", "BRL", "MXN"];
 
@@ -40,8 +41,8 @@ export function RateAlerts() {
       toast.success("Rate alert created");
       setTargetRate("");
       setShowCreate(false);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     }
   };
 

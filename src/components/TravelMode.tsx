@@ -12,6 +12,7 @@ import {
   Plane, MapPin, Globe, ArrowLeftRight, Loader2, X, Sparkles, Navigation
 } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 interface LocationData {
   countryCode: string;
@@ -67,8 +68,8 @@ export function TravelMode() {
       try {
         await addCurrency.mutateAsync(location.localCurrency);
         toast.success(`${location.localCurrency} wallet created`);
-      } catch (err: any) {
-        toast.error(err.message);
+      } catch (err: unknown) {
+        toast.error(getErrorMessage(err));
         return;
       }
     }

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function Deposit() {
   const { balance } = useWallet();
@@ -37,8 +38,8 @@ export default function Deposit() {
       });
       setDone(true);
       toast.success(`$${amount} deposited successfully`);
-    } catch (err: any) {
-      toast.error(err.message || "Deposit failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Deposit failed");
     } finally {
       setIsProcessing(false);
     }

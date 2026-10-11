@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 const APY_RATE = 6.0;
 
@@ -43,8 +44,8 @@ export function useSavings() {
       await invokeWalletOp({ operation: "savings_transfer", direction: "to_savings", amount });
       invalidate();
       toast.success(`$${amount.toFixed(2)} moved to Savings`);
-    } catch (err: any) {
-      toast.error(err.message || "Transfer failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Transfer failed");
     } finally {
       setIsTransferring(false);
     }
@@ -58,8 +59,8 @@ export function useSavings() {
       await invokeWalletOp({ operation: "savings_transfer", direction: "to_wallet", amount });
       invalidate();
       toast.success(`$${amount.toFixed(2)} moved to Wallet`);
-    } catch (err: any) {
-      toast.error(err.message || "Transfer failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Transfer failed");
     } finally {
       setIsTransferring(false);
     }

@@ -11,6 +11,7 @@ import { invokeWalletOp } from "@/hooks/useWallet";
 import { ArrowDownLeft, ArrowUpRight, Loader2, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { STOCK_LIST } from "@/constants/stockList";
+import { getErrorMessage } from "@/lib/errors";
 
 type TradeType = "buy" | "sell";
 
@@ -66,8 +67,8 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
         toast.success(`Sold ${sharesToTrade.toFixed(4)} shares of ${ticker} for $${dollarValue.toFixed(2)} 💰`);
       }
       setIsDone(true);
-    } catch (err: any) {
-      toast.error(err.message || "Trade failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Trade failed");
     } finally {
       setIsProcessing(false);
     }

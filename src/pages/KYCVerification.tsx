@@ -11,6 +11,7 @@ import {
   Camera, Upload, ArrowRight, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 type Step = "info" | "id" | "selfie" | "review" | "complete";
 
@@ -79,8 +80,8 @@ export default function KYCVerification() {
       await new Promise((r) => setTimeout(r, 2000));
       setStep("complete");
       toast.success("Verification submitted successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Verification failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Verification failed");
     } finally {
       setIsSubmitting(false);
     }

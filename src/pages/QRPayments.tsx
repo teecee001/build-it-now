@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+import { getErrorMessage } from "@/lib/errors";
+import type { Html5Qrcode } from "html5-qrcode";
 
 type View = "home" | "receive" | "scan" | "confirm" | "done";
 
@@ -90,7 +92,7 @@ export default function QRPayments() {
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const html5QrScannerRef = useRef<any>(null);
+  const html5QrScannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
   // The payee handle in the QR must be the real profile handle (that is what a
@@ -177,9 +179,9 @@ export default function QRPayments() {
         () => {} // ignore scan failures (normal while aiming)
       );
       setScannerActive(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Scanner error:", err);
-      setScanError(err?.message || "Could not access camera. Please allow camera permissions.");
+      setScanError(getErrorMessage(err) || "Could not access camera. Please allow camera permissions.");
       setScannerActive(false);
     }
   }, []);
@@ -189,7 +191,9 @@ export default function QRPayments() {
       try {
         await html5QrScannerRef.current.stop();
         html5QrScannerRef.current.clear();
-      } catch {}
+      } catch {
+        // ignore errors while stopping/clearing the scanner
+      }
       html5QrScannerRef.current = null;
     }
     setScannerActive(false);
@@ -229,7 +233,7 @@ export default function QRPayments() {
       setView("done");
       toast.success(`$${amt.toFixed(2)} sent to ${scanRecipient}`);
     } catch (err: unknown) {
-      toast.error(err instanceof Error && err.message ? err.message : "Payment failed");
+      toast.error(getErrorMessage(err) || "Payment failed");
     } finally {
       for (const key of ["wallet", "multi-wallets", "transactions", "notifications"]) {
         queryClient.invalidateQueries({ queryKey: [key] });

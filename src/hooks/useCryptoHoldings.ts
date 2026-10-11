@@ -22,7 +22,7 @@ export function useCryptoHoldings() {
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from("crypto_holdings" as any)
+        .from("crypto_holdings")
         .select("*")
         .eq("user_id", user.id);
       if (error) throw error;
@@ -59,7 +59,7 @@ export function useCryptoHoldings() {
         const newAmount = Number(existing.amount) + amountDelta;
         if (newAmount <= 0.000001) {
           // Remove holding if essentially zero
-          await supabase.from("crypto_holdings" as any).delete().eq("id", existing.id);
+          await supabase.from("crypto_holdings").delete().eq("id", existing.id);
         } else {
           // Update avg buy price on buys only
           let newAvg = Number(existing.avg_buy_price);
@@ -68,17 +68,17 @@ export function useCryptoHoldings() {
             newAvg = totalCost / newAmount;
           }
           await supabase
-            .from("crypto_holdings" as any)
-            .update({ amount: newAmount, avg_buy_price: newAvg } as any)
+            .from("crypto_holdings")
+            .update({ amount: newAmount, avg_buy_price: newAvg })
             .eq("id", existing.id);
         }
       } else if (amountDelta > 0) {
-        await supabase.from("crypto_holdings" as any).insert([{
+        await supabase.from("crypto_holdings").insert([{
           user_id: user.id,
           crypto_code: code,
           amount: amountDelta,
           avg_buy_price: pricePerUnit,
-        }] as any);
+        }]);
       }
     },
     onSuccess: () => {

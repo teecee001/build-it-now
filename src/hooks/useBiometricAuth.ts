@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { getErrorMessage } from "@/lib/errors";
 
 export type BiometricMethod = "face" | "fingerprint" | "password" | "none";
 
@@ -101,8 +102,8 @@ export function useBiometricAuth(): BiometricAuthState {
             setIsVerified(true);
             return true;
           }
-        } catch (err: any) {
-          console.log("WebAuthn failed, falling back to PIN:", err?.message);
+        } catch (err: unknown) {
+          console.log("WebAuthn failed, falling back to PIN:", getErrorMessage(err));
           // Fall through to PIN fallback
         }
       }

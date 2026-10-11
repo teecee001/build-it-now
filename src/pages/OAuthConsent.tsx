@@ -6,18 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { ExoLogo } from "@/components/ExoLogo";
 
+// Shape of the authorization payload fields this page reads.
+type OAuthAuthorizationData = {
+  redirect_url?: string;
+  redirect_to?: string;
+  client?: { name?: string };
+};
+type OAuthResult = { data: OAuthAuthorizationData | null; error: { message: string } | null };
+
 // Typed local wrapper for the beta supabase.auth.oauth namespace.
 type OAuthApi = {
-  getAuthorizationDetails: (id: string) => Promise<{ data: any; error: { message: string } | null }>;
-  approveAuthorization: (id: string) => Promise<{ data: any; error: { message: string } | null }>;
-  denyAuthorization: (id: string) => Promise<{ data: any; error: { message: string } | null }>;
+  getAuthorizationDetails: (id: string) => Promise<OAuthResult>;
+  approveAuthorization: (id: string) => Promise<OAuthResult>;
+  denyAuthorization: (id: string) => Promise<OAuthResult>;
 };
 const oauthApi = (supabase.auth as unknown as { oauth: OAuthApi }).oauth;
 
 export default function OAuthConsent() {
   const [params] = useSearchParams();
   const authorizationId = params.get("authorization_id") ?? "";
-  const [details, setDetails] = useState<any>(null);
+  const [details, setDetails] = useState<OAuthAuthorizationData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 

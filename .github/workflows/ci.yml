@@ -32,6 +32,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Fails the job on any ESLint *error* (warnings are reported but do not
+      # fail the job).
+      - name: Lint
+        run: npx eslint .
+
       # Root tsconfig.json has "files": [] so a bare `tsc --noEmit` checks
       # nothing; the app project must be targeted explicitly.
       - name: Type-check

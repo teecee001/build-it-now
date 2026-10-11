@@ -19,6 +19,7 @@ import { invokeWalletOp } from "@/hooks/useWallet";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowRight, QrCode, Users, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function SendMoney() {
   return (
@@ -78,7 +79,7 @@ function SendMoneyContent() {
       setSent(true);
       toast.success(`${formatBalance(parsedAmount)} sent to ${recipient.trim()}`);
     } catch (err: unknown) {
-      toast.error(err instanceof Error && err.message ? err.message : "Transfer failed");
+      toast.error(getErrorMessage(err) || "Transfer failed");
     } finally {
       // Refresh on success and on failure so balances/history always match the server.
       for (const key of ["wallet", "multi-wallets", "transactions", "notifications"]) {

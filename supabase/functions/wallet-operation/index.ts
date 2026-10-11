@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -552,7 +552,7 @@ async function liveStockPrice(ticker: string, clientPrice: number): Promise<numb
 }
 
 async function upsertCryptoHolding(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string,
   code: string,
   amountDelta: number,
@@ -578,14 +578,14 @@ async function upsertCryptoHolding(
   }
 }
 
-async function getCryptoHolding(supabase: any, userId: string, code: string): Promise<number> {
+async function getCryptoHolding(supabase: SupabaseClient, userId: string, code: string): Promise<number> {
   const { data } = await supabase
     .from("crypto_holdings").select("amount").eq("user_id", userId).eq("crypto_code", code).maybeSingle();
   return data?.amount ?? 0;
 }
 
 async function upsertStockHolding(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string,
   ticker: string,
   sharesDelta: number,
@@ -611,7 +611,7 @@ async function upsertStockHolding(
   }
 }
 
-async function getStockShares(supabase: any, userId: string, ticker: string): Promise<number> {
+async function getStockShares(supabase: SupabaseClient, userId: string, ticker: string): Promise<number> {
   const { data } = await supabase
     .from("stock_holdings").select("shares").eq("user_id", userId).eq("ticker", ticker).maybeSingle();
   return data?.shares ?? 0;
