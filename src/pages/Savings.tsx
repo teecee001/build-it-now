@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatMoney } from "@/lib/formatCurrency";
 import { FeatureGate } from "@/components/FeatureGate";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -294,7 +295,7 @@ function SavingsContent() {
             <div className="p-3 rounded-lg bg-secondary/50">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Projected Balance</p>
               <p className="text-sm font-semibold font-mono">
-                ${projectedEnd?.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                {formatMoney(projectedEnd?.balance ?? 0)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-success/5 border border-success/10">
