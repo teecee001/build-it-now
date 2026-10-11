@@ -15,7 +15,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -49,8 +48,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <OnboardingTutorial />
-
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
           <div>

@@ -7,9 +7,28 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { SCENES, SceneVisual } from "@/components/OnboardingTutorialScenes";
 
 const STORAGE_KEY = "exosky-onboarding-complete";
+const RESET_EVENT = "exosky-onboarding-reset";
+const METADATA_KEY = "onboarding_complete";
+
+function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // storage unavailable (private mode); the in-memory + account flag still apply
+  }
+}
 
 export function OnboardingTutorial() {
   const [isVisible, setIsVisible] = useState(false);
@@ -24,20 +43,39 @@ export function OnboardingTutorial() {
 
   const storageKey = user?.id ? `${STORAGE_KEY}:${user.id}` : STORAGE_KEY;
 
+  // Account-level flag (survives new devices / cleared storage). Only the metadata the
+  // user's session already carries is read, so no extra request is needed.
+  const completedInAccount = user?.user_metadata?.[METADATA_KEY] === true;
+
+  const startTour = () => {
+    setCurrentScene(0);
+    setProgress(0);
+    setIsPlaying(true);
+    setHasCompleted(false);
+    setIsVisible(true);
+  };
+
   useEffect(() => {
     if (!user?.id) return;
-    const completed = localStorage.getItem(storageKey);
-    if (!completed) {
-      const timer = setTimeout(() => {
-        setCurrentScene(0);
-        setProgress(0);
-        setIsPlaying(true);
-        setHasCompleted(false);
-        setIsVisible(true);
-      }, 500);
-      return () => clearTimeout(timer);
+    if (completedInAccount) {
+      // Keep this device in sync so the flag also works offline of the session.
+      safeSet(storageKey, "true");
+      return;
     }
-  }, [user?.id, storageKey]);
+    if (safeGet(storageKey)) return;
+    const timer = setTimeout(() => {
+      // Re-check right before showing: it may have been dismissed during the delay.
+      if (!safeGet(storageKey)) startTour();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [user?.id, storageKey, completedInAccount]);
+
+  // Allows Settings -> "Replay tutorial" to restart the tour without remounting the layout.
+  useEffect(() => {
+    const onReset = () => startTour();
+    window.addEventListener(RESET_EVENT, onReset);
+    return () => window.removeEventListener(RESET_EVENT, onReset);
+  }, []);
 
   useEffect(() => {
     if (!isVisible || !isPlaying) {
@@ -72,8 +110,11 @@ export function OnboardingTutorial() {
   }, [isVisible, isPlaying, currentScene]);
 
   const handleClose = () => {
-    localStorage.setItem(storageKey, "true");
+    safeSet(storageKey, "true");
     setIsVisible(false);
+    if (user?.id && !completedInAccount) {
+      void supabase.auth.updateUser({ data: { [METADATA_KEY]: true } });
+    }
   };
 
   const handleReplay = () => {
@@ -306,12 +347,18 @@ export function OnboardingTutorial() {
 }
 
 export function resetOnboarding(userId?: string) {
-  if (userId) {
-    localStorage.removeItem(`${STORAGE_KEY}:${userId}`);
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith(`${STORAGE_KEY}:`))
-      .forEach((k) => localStorage.removeItem(k));
+  try {
+    if (userId) {
+      localStorage.removeItem(`${STORAGE_KEY}:${userId}`);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith(`${STORAGE_KEY}:`))
+        .forEach((k) => localStorage.removeItem(k));
+    }
+  } catch {
+    // ignore
   }
+  void supabase.auth.updateUser({ data: { [METADATA_KEY]: false } });
+  window.dispatchEvent(new Event(RESET_EVENT));
 }
