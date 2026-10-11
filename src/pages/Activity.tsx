@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { formatTxAmount, getTransactionTitle, getConversionDisplay } from "@/lib/formatTransaction";
+import { formatTxAmount, getTransactionTitle, getConversionDisplay, getCounterpartyLabel } from "@/lib/formatTransaction";
 
 const TYPE_CONFIG: Record<string, { icon: typeof Send; color: string; bg: string }> = {
   send: { icon: ArrowUpRight, color: "text-foreground", bg: "bg-secondary" },
@@ -116,7 +116,7 @@ export default function Activity() {
                       <p className="text-sm font-medium truncate">{title}</p>
                       <p className="text-xs text-muted-foreground truncate">
                         {conversion ? `${conversion.detail} · ` : ""}
-                        {tx.recipient ? `To ${tx.recipient} · ` : ""}
+                        {tx.recipient ? `${getCounterpartyLabel(tx)} · ` : ""}
                         {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}
                       </p>
                     </div>
