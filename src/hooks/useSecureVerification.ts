@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/errors";
 
 export type VerificationMethod = "face" | "fingerprint" | "ai-challenge" | "password";
 export type VerificationStep = "idle" | "loading" | "challenge" | "verifying" | "verified" | "failed";
@@ -109,7 +110,7 @@ export function useSecureVerification(): VerificationState {
 
       setChallenge(data);
       setStep("challenge");
-    } catch (err: any) {
+    } catch (err: unknown) {
       try {
         const data = await localIdentityChallenge();
         setChallenge(data);
@@ -117,7 +118,7 @@ export function useSecureVerification(): VerificationState {
         return;
       } catch {
         console.error("Verification start error:", err);
-        setError(err.message || "Verification failed");
+        setError(getErrorMessage(err) || "Verification failed");
         setStep("failed");
       }
     }
@@ -165,8 +166,8 @@ export function useSecureVerification(): VerificationState {
       setIsVerified(true);
       setStep("verified");
       return true;
-    } catch (err: any) {
-      setError(err.message || "Verification failed");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || "Verification failed");
       setStep("failed");
       return false;
     }

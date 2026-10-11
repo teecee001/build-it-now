@@ -8,6 +8,7 @@ import { CURRENCIES } from "@/constants/currencies";
 import { Loader2, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 const CURRENCY_FLAGS: Record<string, string> = {
   USD: "🇺🇸", EUR: "🇪🇺", GBP: "🇬🇧", JPY: "🇯🇵", AUD: "🇦🇺", CAD: "🇨🇦",
@@ -79,8 +80,8 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
       toast.success(`Switched to ${pendingCurrency}`, {
         description: `${fmtAmt(convertedAmount, pendingCurrency)} now in your ${pendingCurrency} wallet`,
       });
-    } catch (err: any) {
-      toast.error("Conversion failed", { description: err.message });
+    } catch (err: unknown) {
+      toast.error("Conversion failed", { description: getErrorMessage(err) });
     } finally {
       setIsConverting(false);
       setPendingCurrency(null);

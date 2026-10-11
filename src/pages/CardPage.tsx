@@ -19,6 +19,7 @@ import {
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from "@/lib/errors";
 
 type View = "list" | "detail" | "settings" | "add" | "tiers";
 
@@ -487,9 +488,9 @@ function CardPageContent() {
       setNewCardDesign(CARD_DESIGNS[0].id);
       setAddStep("format");
       setView("list");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Card creation failed:", error);
-      setPinError(error?.message || "Failed to create card. Please try again.");
+      setPinError(getErrorMessage(error) || "Failed to create card. Please try again.");
     }
   };
 

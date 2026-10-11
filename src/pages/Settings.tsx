@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
@@ -58,8 +59,8 @@ export default function Settings() {
       toast.success("Profile updated");
       setFullName(null);
       setHandle(null);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update profile");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to update profile");
     } finally {
       setIsSaving(false);
     }
@@ -73,8 +74,8 @@ export default function Settings() {
     try {
       await uploadAvatar(file);
       toast.success("Avatar updated");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to upload avatar");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to upload avatar");
     } finally {
       setIsUploading(false);
     }
@@ -89,8 +90,8 @@ export default function Settings() {
       setShowPinSetup(false);
       setNewPin("");
       setConfirmPin("");
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     }
   };
 

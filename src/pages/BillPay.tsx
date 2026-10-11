@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
+import { getErrorMessage } from "@/lib/errors";
 
 const BILL_CATEGORIES = [
   { icon: Zap, label: "Electric", color: "text-warning" },
@@ -245,8 +246,8 @@ function BillPayContent() {
       });
       await payBill.mutateAsync(bill.id);
       toast.success(`Paid ${bill.biller_name} — earned $${cashback.toFixed(2)} cashback`);
-    } catch (err: any) {
-      toast.error(err.message || "Payment failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Payment failed");
     } finally {
       setPayingId(null);
     }
@@ -271,8 +272,8 @@ function BillPayContent() {
       setNewAmount("");
       setNewDueDate("");
       setNewAccountNumber("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to add bill");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to add bill");
     }
   };
 

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 export interface CardData {
   id: string;
@@ -70,9 +71,9 @@ export function useCard() {
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       toast.success("Card added successfully");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Card creation error:", error);
-      toast.error(error?.message || "Failed to create card");
+      toast.error(getErrorMessage(error) || "Failed to create card");
     },
   });
 

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+import { getErrorMessage } from "@/lib/errors";
 
 type View = "home" | "receive" | "scan" | "confirm" | "done";
 
@@ -172,9 +173,9 @@ export default function QRPayments() {
         () => {} // ignore scan failures (normal while aiming)
       );
       setScannerActive(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Scanner error:", err);
-      setScanError(err?.message || "Could not access camera. Please allow camera permissions.");
+      setScanError(getErrorMessage(err) || "Could not access camera. Please allow camera permissions.");
       setScannerActive(false);
     }
   }, []);
@@ -222,8 +223,8 @@ export default function QRPayments() {
       });
       setView("done");
       toast.success(`$${amt.toFixed(2)} sent to ${scanRecipient}`);
-    } catch (err: any) {
-      toast.error(err.message || "Payment failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Payment failed");
     } finally {
       setIsSending(false);
     }

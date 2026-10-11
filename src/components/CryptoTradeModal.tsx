@@ -12,6 +12,7 @@ import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Send, Loader2, CheckCircle
 import { toast } from "sonner";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
 import { Html5Qrcode } from "html5-qrcode";
+import { getErrorMessage } from "@/lib/errors";
 
 type TradeType = "buy" | "sell" | "swap" | "send";
 
@@ -163,8 +164,8 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         toast.success(`Swapped ${numAmount} ${code} → ${swapTo} ⚡`);
       }
       setIsDone(true);
-    } catch (err: any) {
-      toast.error(err.message || "Trade failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Trade failed");
     } finally {
       setIsProcessing(false);
     }

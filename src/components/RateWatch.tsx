@@ -11,6 +11,7 @@ import { useForecastMarkets } from "@/hooks/useForecastMarkets";
 import { useRateAlerts } from "@/hooks/useRateAlerts";
 import { TrendingUp, TrendingDown, Timer, ArrowUpRight, Loader2, BellRing } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 interface RateWatchProps {
   /** Currency the user is sending from / interested in (e.g. "EUR"). */
@@ -61,8 +62,8 @@ export function RateWatch({ currency }: RateWatchProps) {
       });
       toast.success(`Alert saved — we'll notify you when USD/${toCurrency} goes ${direction} ${value}`);
       setAlertOpen(false);
-    } catch (err: any) {
-      toast.error(err?.message || "Couldn't save the alert. Please try again.");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Couldn't save the alert. Please try again.");
     }
   };
 

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
+import { getErrorMessage } from "@/lib/errors";
 
 const FREQUENCIES = [
   { value: "daily", label: "Daily" },
@@ -51,8 +52,8 @@ export default function RecurringPayments() {
       setAmount("");
       setDescription("");
       setNextDate("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to create");
     }
   };
 
@@ -60,8 +61,8 @@ export default function RecurringPayments() {
     try {
       await updatePayment.mutateAsync({ id, is_active: !isActive });
       toast.success(isActive ? "Payment paused" : "Payment resumed");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to update");
     }
   };
 
@@ -69,8 +70,8 @@ export default function RecurringPayments() {
     try {
       await deletePayment.mutateAsync(id);
       toast.success("Recurring payment deleted");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to delete");
     }
   };
 

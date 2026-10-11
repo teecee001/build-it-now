@@ -14,6 +14,7 @@ import {
   Plus, ArrowLeftRight, Globe, Loader2, DollarSign, Briefcase
 } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 const AVAILABLE_CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "NGN", "KES", "ZAR", "INR", "BRL", "MXN", "CNY", "KRW", "SGD", "HKD", "SEK", "NOK", "DKK", "BTC", "ETH"];
 
@@ -69,8 +70,8 @@ export default function MultiCurrencyWallet() {
       toast.success(`${newCurrency} wallet created`);
       setNewCurrency("");
       setShowAddCurrency(false);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -91,8 +92,8 @@ export default function MultiCurrencyWallet() {
       toast.success(`Converted ${amt} ${fromCurrency} → ${result.convertedAmount.toFixed(4)} ${toCurrency}`);
       setConvertAmount("");
       setShowConvert(false);
-    } catch (err: any) {
-      toast.error(err.message || "Conversion failed");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Conversion failed");
     } finally {
       setIsConverting(false);
     }
