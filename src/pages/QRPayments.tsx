@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
+import { useProfile } from "@/hooks/useProfile";
 import {
   QrCode, Camera, Copy, CheckCircle2, Loader2, ArrowRight,
   Share2, DollarSign, ArrowLeft, AlertTriangle, X
@@ -68,6 +70,8 @@ function parseScannedData(raw: string): { handle: string; amount?: number; note?
 export default function QRPayments() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { profile } = useProfile();
   const { balance } = useWallet();
   const [view, setView] = useState<View>("home");
   const [receiveAmount, setReceiveAmount] = useState("");
@@ -90,7 +94,9 @@ export default function QRPayments() {
   const html5QrScannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
-  const handle = "@" + (user?.email?.split("@")[0] || "user");
+  // The payee handle in the QR must be the real profile handle (that is what a
+  // payment is matched against); the email prefix is only a fallback while it loads.
+  const handle = profile?.handle || "@" + (user?.email?.split("@")[0] || "user");
 
   // Auto-fill from URL params (when opened via scanned QR)
   useEffect(() => {
@@ -213,17 +219,24 @@ export default function QRPayments() {
     }
     setIsSending(true);
     try {
-      await invokeWalletOp({
+      const result = await invokeWalletOp({
         operation: "qr_pay",
         amount: amt,
         recipient: scanRecipient,
         note: scanNote,
+        idempotency_key: crypto.randomUUID(),
       });
+      if (!result || result.success !== true || !result.transaction_id) {
+        throw new Error("Payment could not be confirmed. Check your activity before trying again.");
+      }
       setView("done");
       toast.success(`$${amt.toFixed(2)} sent to ${scanRecipient}`);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Payment failed");
     } finally {
+      for (const key of ["wallet", "multi-wallets", "transactions", "notifications"]) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
       setIsSending(false);
     }
   };

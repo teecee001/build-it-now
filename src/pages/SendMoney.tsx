@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { FeatureGate } from "@/components/FeatureGate";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -30,6 +31,7 @@ export default function SendMoney() {
 
 function SendMoneyContent() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { activeCurrency, activeBalance, activeSymbol, formatBalance, toUSD } = useActiveCurrency();
   const { wallets } = useMultiCurrencyWallet();
@@ -42,32 +44,48 @@ function SendMoneyContent() {
   const [isSending, setIsSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  // Blocks a second submit before React re-renders (double tap / double Enter).
+  const sendInFlight = useRef(false);
 
   const parsedAmount = parseFloat(amount || "0");
   const usdAmount = toUSD(parsedAmount);
 
   const executeSend = async () => {
-    if (!user) return;
+    if (!user || sendInFlight.current) return;
+    sendInFlight.current = true;
     setIsSending(true);
+    // One key per send attempt: the server treats a repeat of the same key as the
+    // same transfer and never moves money twice.
+    const idempotencyKey = crypto.randomUUID();
     try {
       const activeWallet = wallets.find(w => w.currency === activeCurrency);
       if (!activeWallet) throw new Error(`No ${activeCurrency} wallet found`);
       if (parsedAmount > activeWallet.balance) throw new Error("Insufficient balance");
 
-      await invokeWalletOp({
+      const result = await invokeWalletOp({
         operation: "send",
         wallet_id: activeWallet.id,
         amount: parsedAmount,
         usd_amount: usdAmount,
         currency: activeCurrency,
-        recipient,
-        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient}`,
+        recipient: recipient.trim(),
+        idempotency_key: idempotencyKey,
+        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient.trim()}`,
       });
+      // Only report success when the server confirms the transfer was recorded.
+      if (!result || result.success !== true || !result.transaction_id) {
+        throw new Error("Transfer could not be confirmed. Check your activity before trying again.");
+      }
       setSent(true);
-      toast.success(`${formatBalance(parsedAmount)} sent to ${recipient}`);
+      toast.success(`${formatBalance(parsedAmount)} sent to ${recipient.trim()}`);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Transfer failed");
     } finally {
+      // Refresh on success and on failure so balances/history always match the server.
+      for (const key of ["wallet", "multi-wallets", "transactions", "notifications"]) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+      sendInFlight.current = false;
       setIsSending(false);
     }
   };
