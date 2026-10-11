@@ -1,0 +1,41 @@
+name: CI
+
+# Verifies that every change type-checks and builds before it can reach
+# production (Vercel deploys main directly). Make the "Build & type-check" job
+# a required status check in branch protection to enforce it.
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & type-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The project's up-to-date lockfile is bun.lock (package-lock.json is
+      # stale and fails `npm ci`), so install with Bun and a frozen lockfile.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Root tsconfig.json has "files": [] so a bare `tsc --noEmit` checks
+      # nothing; the app project must be targeted explicitly.
+      - name: Type-check
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Build
+        run: npm run build
