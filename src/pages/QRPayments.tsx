@@ -5,8 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { useWallet } from "@/hooks/useWallet";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
 import {
   QrCode, Camera, Copy, CheckCircle2, Loader2, ArrowRight,
   Share2, DollarSign, ArrowLeft, AlertTriangle, X
@@ -69,8 +68,7 @@ function parseScannedData(raw: string): { handle: string; amount?: number; note?
 export default function QRPayments() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { balance, updateBalance } = useWallet();
-  const { addTransaction } = useTransactions();
+  const { balance } = useWallet();
   const [view, setView] = useState<View>("home");
   const [receiveAmount, setReceiveAmount] = useState("");
   const [receiveNote, setReceiveNote] = useState("");
@@ -215,12 +213,11 @@ export default function QRPayments() {
     }
     setIsSending(true);
     try {
-      await updateBalance.mutateAsync({ balance: balance - amt });
-      await addTransaction.mutateAsync({
-        type: "send",
-        amount: -amt,
-        description: `QR Payment to ${scanRecipient}${scanNote ? ` — ${scanNote}` : ""}`,
+      await invokeWalletOp({
+        operation: "qr_pay",
+        amount: amt,
         recipient: scanRecipient,
+        note: scanNote,
       });
       setView("done");
       toast.success(`$${amt.toFixed(2)} sent to ${scanRecipient}`);

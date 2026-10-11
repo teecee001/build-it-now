@@ -3,8 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useWallet } from "@/hooks/useWallet";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
 import { 
   Landmark, Building2, CreditCard, ArrowDownLeft, 
   CheckCircle2, Copy, Percent, Loader2
@@ -14,8 +13,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errors";
 
 export default function Deposit() {
-  const { wallet, balance, updateBalance } = useWallet();
-  const { addTransaction } = useTransactions();
+  const { balance } = useWallet();
   const [method, setMethod] = useState<"direct" | "bank" | "card" | null>(null);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -32,13 +30,10 @@ export default function Deposit() {
     }
     setIsProcessing(true);
     try {
-      // Update wallet balance
-      await updateBalance.mutateAsync({ balance: balance + depositAmount });
-      // Record transaction
-      await addTransaction.mutateAsync({
-        type: "deposit",
+      await invokeWalletOp({
+        operation: "demo_deposit",
         amount: depositAmount,
-        description: method === "bank" ? "Bank transfer deposit" : "Debit card deposit",
+        method: method === "bank" ? "bank" : "card",
       });
       setDone(true);
       toast.success(`$${amount} deposited successfully`);

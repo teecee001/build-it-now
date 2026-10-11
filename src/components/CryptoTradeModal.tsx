@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
-import { useTransactions } from "@/hooks/useTransactions";
 import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { useAuth } from "@/hooks/useAuth";
 import { invokeWalletOp } from "@/hooks/useWallet";
@@ -51,14 +50,14 @@ interface CryptoTradeModalProps {
   type: TradeType;
   code: string;
   price: number;
+  getPrice?: (code: string) => number;
   onClose: () => void;
 }
 
-export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModalProps) {
+export function CryptoTradeModal({ type, code, price, getPrice, onClose }: CryptoTradeModalProps) {
   const { user } = useAuth();
   const { getWallet } = useMultiCurrencyWallet();
-  const { addTransaction } = useTransactions();
-  const { holdingsMap, upsertHolding } = useCryptoHoldings();
+  const { holdingsMap } = useCryptoHoldings();
   const [amount, setAmount] = useState("");
   const [swapTo, setSwapTo] = useState(code === "BTC" ? "ETH" : "BTC");
   const [walletAddress, setWalletAddress] = useState("");
@@ -140,26 +139,25 @@ export function CryptoTradeModal({ type, code, price, onClose }: CryptoTradeModa
         toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
       } else if (type === "send") {
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
-        await upsertHolding.mutateAsync({ code, amountDelta: -numAmount, pricePerUnit: price });
-        await addTransaction.mutateAsync({
-          type: "send",
-          amount: -(numAmount * price),
-          description: `Sent ${numAmount.toFixed(6)} ${code} to ${walletAddress.slice(0, 8)}...${walletAddress.slice(-4)}`,
-          recipient: walletAddress,
-          metadata: { crypto: code, crypto_amount: numAmount, price_per_unit: price, action: "crypto_send", wallet_address: walletAddress },
+        await invokeWalletOp({
+          operation: "crypto_send",
+          code,
+          amount: numAmount,
+          price,
+          address: walletAddress,
         });
         toast.success(`Sent ${numAmount.toFixed(6)} ${code} 🚀`);
       } else {
-        // Swap
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
-        await upsertHolding.mutateAsync({ code, amountDelta: -numAmount, pricePerUnit: price });
-        const swapToPrice = 1;
-        await upsertHolding.mutateAsync({ code: swapTo, amountDelta: numAmount, pricePerUnit: swapToPrice });
-        await addTransaction.mutateAsync({
-          type: "conversion",
-          amount: -numAmount,
-          description: `Swapped ${numAmount} ${code} → ${swapTo}`,
-          metadata: { from: code, to: swapTo, amount: numAmount, action: "swap" },
+        const swapToPrice = getPrice?.(swapTo) || 0;
+        if (swapToPrice <= 0) throw new Error(`No price for ${swapTo}`);
+        await invokeWalletOp({
+          operation: "crypto_swap",
+          code,
+          swap_to: swapTo,
+          amount: numAmount,
+          price,
+          swap_to_price: swapToPrice,
         });
         toast.success(`Swapped ${numAmount} ${code} → ${swapTo} ⚡`);
       }

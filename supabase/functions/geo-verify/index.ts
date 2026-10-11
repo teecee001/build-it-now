@@ -23,7 +23,14 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { action, user_id, country_code, phone_number } = await req.json();
+    const { action, country_code, phone_number } = await req.json();
+
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const { data: userData } = token
+      ? await supabase.auth.getUser(token)
+      : { data: { user: null } };
+    const authedUser = userData?.user ?? null;
 
     // ─── CHECK COUNTRY ───
     if (action === "check_country") {
@@ -72,9 +79,10 @@ Deno.serve(async (req) => {
 
     // ─── REGISTER ───
     if (action === "register_geo") {
-      if (!user_id) {
-        return jsonResponse({ success: false, error: "User ID required" }, 400);
+      if (!authedUser) {
+        return jsonResponse({ success: false, error: "Not authenticated" }, 401);
       }
+      const user_id = authedUser.id;
 
       // Upsert geo record
       const { error: geoError } = await supabase
@@ -106,9 +114,10 @@ Deno.serve(async (req) => {
 
     // ─── SESSION CHECK ───
     if (action === "session_check") {
-      if (!user_id) {
-        return jsonResponse({ success: false, error: "User ID required" }, 400);
+      if (!authedUser) {
+        return jsonResponse({ success: false, error: "Not authenticated" }, 401);
       }
+      const user_id = authedUser.id;
 
       const { data: geo } = await supabase
         .from("user_geo_verification")
@@ -124,9 +133,9 @@ Deno.serve(async (req) => {
         success: true,
         geo: {
           country_code: geo.country_code,
-          is_blocked: false,
-          vpn_detected: false,
-          location_mismatch: false,
+          is_blocked: !!geo.is_blocked,
+          vpn_detected: !!geo.vpn_detected,
+          location_mismatch: !!geo.location_mismatch,
           country: geo.countries,
         },
       });
