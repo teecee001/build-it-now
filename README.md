@@ -19,6 +19,18 @@ cp .env.example .env   # optional; the public Supabase project is also wired in 
 npm run dev
 ```
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and every push: it installs dependencies
+(`bun install --frozen-lockfile`), type-checks (`npx tsc --noEmit -p tsconfig.app.json`) and builds
+(`npm run build`). Run the same checks locally before pushing:
+
+```sh
+bun install --frozen-lockfile
+npx tsc --noEmit -p tsconfig.app.json
+npm run build
+```
+
 ## Environment
 
 Do **not** commit `.env`. Git ignores it.
