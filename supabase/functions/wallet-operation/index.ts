@@ -31,22 +31,22 @@ serve(async (req) => {
 
     switch (operation) {
       case "send": {
-        const { wallet_id, amount, currency, recipient, description } = body;
-        if (!wallet_id || !amount || amount <= 0) throw new Error("Invalid parameters");
+        // Peer-to-peer send. The sender is ALWAYS the verified JWT user; any
+        // user/sender id in the body is ignored. The whole transfer (debit,
+        // credit, both ledger rows) runs inside one database function.
+        const recipient = cleanRecipient(body.recipient);
+        const idempotencyKey = cleanIdempotencyKey(body.idempotency_key);
+        const currency = cleanCurrency(body.currency);
+        const amount = roundMoney(finitePositive(body.amount, "amount"));
+        const usdAmount = await usdEquivalent(currency, amount, body.usd_amount);
+        const description = typeof body.description === "string"
+          ? body.description.trim().slice(0, 300) || null
+          : null;
 
-        const { data: wallet, error: wErr } = await supabase
-          .from("wallets").select("*").eq("id", wallet_id).eq("user_id", userId).maybeSingle();
-        if (wErr || !wallet) throw new Error("Wallet not found");
-        if (wallet.balance < amount) throw new Error("Insufficient balance");
-
-        await supabase.from("wallets").update({ balance: wallet.balance - amount }).eq("id", wallet_id);
-        await supabase.from("transactions").insert({
-          user_id: userId, type: "send", amount: -(body.usd_amount ?? amount),
-          description: description ?? `Sent ${amount} ${currency} to ${recipient}`,
-          recipient, status: "completed",
-          metadata: { currency, original_amount: amount },
+        const transactionId = await p2pSend(supabase, {
+          sender: userId, recipient, currency, amount, usdAmount, description, idempotencyKey,
         });
-        return ok({ success: true });
+        return ok({ success: true, transaction_id: transactionId });
       }
 
       case "savings_transfer": {
@@ -243,22 +243,19 @@ serve(async (req) => {
       }
 
       case "qr_pay": {
-        const amount = finitePositive(body.amount, "amount");
-        const recipient = String(body.recipient || "").slice(0, 120);
+        // QR payments carry the payee's @handle (see QRPayments.tsx), so they use
+        // the same atomic transfer as "send": the payee is credited, and a payee
+        // that cannot be resolved is rejected before any money moves.
+        const amount = roundMoney(finitePositive(body.amount, "amount"));
+        const recipient = cleanRecipient(body.recipient);
+        const idempotencyKey = cleanIdempotencyKey(body.idempotency_key);
         const note = String(body.note || "").slice(0, 140);
-        if (!recipient) throw new Error("Recipient required");
-        const { data: wallet, error: wErr } = await supabase
-          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
-        if (wErr || !wallet) throw new Error("USD wallet not found");
-        if (Number(wallet.balance) + 1e-8 < amount) throw new Error("Insufficient balance");
-        const { error: uErr } = await supabase.from("wallets")
-          .update({ balance: Number(wallet.balance) - amount }).eq("id", wallet.id);
-        if (uErr) throw new Error(uErr.message);
-        await supabase.from("transactions").insert({
-          user_id: userId, type: "send", amount: -amount, status: "completed", recipient,
+        const transactionId = await p2pSend(supabase, {
+          sender: userId, recipient, currency: "USD", amount, usdAmount: amount,
           description: `QR Payment to ${recipient}${note ? ` — ${note}` : ""}`,
+          idempotencyKey,
         });
-        return ok({ success: true });
+        return ok({ success: true, transaction_id: transactionId });
       }
 
       case "convert": {
@@ -370,6 +367,96 @@ function ok(data: Record<string, unknown>) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status: 200,
   });
+}
+
+function roundMoney(n: number): number {
+  const r = Math.round(n * 1e8) / 1e8;
+  if (!Number.isFinite(r) || r <= 0) throw new Error("Invalid amount");
+  return r;
+}
+
+function cleanRecipient(value: unknown): string {
+  const r = typeof value === "string" ? value.trim() : "";
+  if (!r) throw new Error("Recipient is required");
+  if (r.length > 254) throw new Error("Recipient is too long");
+  return r;
+}
+
+function cleanIdempotencyKey(value: unknown): string {
+  const k = typeof value === "string" ? value.trim() : "";
+  if (!k || k.length > 128) throw new Error("Missing idempotency key. Please refresh the page and try again.");
+  return k;
+}
+
+function cleanCurrency(value: unknown): string {
+  const c = String(value ?? "USD").trim().toUpperCase();
+  if (!/^[A-Z0-9]{2,10}$/.test(c)) throw new Error("Invalid currency");
+  return c;
+}
+
+// USD value recorded on the ledger rows. Computed from live rates; the client's
+// number is only a fallback if rates are unavailable (display only, it never
+// affects the wallet balances, which move in the wallet's own currency).
+async function usdEquivalent(currency: string, amount: number, clientUsd: unknown): Promise<number> {
+  if (currency === "USD") return amount;
+  try {
+    const rates = await usdPerUnitRates();
+    const perUsd = rates[currency];
+    if (perUsd && perUsd > 0) return roundMoney(amount / perUsd);
+  } catch {
+    // fall through to the client value
+  }
+  const fallback = Number(clientUsd);
+  if (Number.isFinite(fallback) && fallback > 0) return roundMoney(fallback);
+  throw new Error(`No live rate for ${currency}. Try again in a moment.`);
+}
+
+type RpcClient = {
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => PromiseLike<{ data: unknown; error: { code?: string; message?: string } | null }>;
+};
+
+// Error codes raised by public.p2p_send whose message is safe and useful to show.
+const P2P_USER_ERROR_CODES = new Set(["22023", "P0002", "23514"]);
+
+async function p2pSend(
+  client: unknown,
+  t: {
+    sender: string;
+    recipient: string;
+    currency: string;
+    amount: number;
+    usdAmount: number;
+    description: string | null;
+    idempotencyKey: string;
+  },
+): Promise<string> {
+  const supabase = client as RpcClient;
+  const { data, error } = await supabase.rpc("p2p_send", {
+    p_sender: t.sender,
+    p_recipient: t.recipient,
+    p_currency: t.currency,
+    p_amount: t.amount,
+    p_usd_amount: t.usdAmount,
+    p_description: t.description,
+    p_idempotency_key: t.idempotencyKey,
+  });
+  if (error) {
+    if (error.code && P2P_USER_ERROR_CODES.has(error.code)) throw new Error(error.message ?? "Transfer failed");
+    console.error("p2p_send failed", error.code, error.message);
+    if (error.code === "PGRST202" || /could not find the function/i.test(error.message ?? "")) {
+      // Migration not applied yet: nothing was moved.
+      throw new Error("Transfers are temporarily unavailable. No money was moved. Please try again later.");
+    }
+    throw new Error("Transfer failed. No money was moved. Please try again.");
+  }
+  if (typeof data !== "string" || !data) {
+    console.error("p2p_send returned no transaction id", data);
+    throw new Error("Transfer could not be confirmed. Please check your activity before retrying.");
+  }
+  return data;
 }
 
 function finitePositive(value: unknown, label: string): number {
