@@ -121,6 +121,7 @@ export default function WalletPage() {
             type={tradeModal.type}
             code={tradeModal.code}
             price={getPrice(tradeModal.code)}
+            getPrice={getPrice}
             onClose={() => setTradeModal(null)}
           />
         )}
