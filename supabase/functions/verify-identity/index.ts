@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function fallbackChallenge(profile: any, wallet: any) {
+function fallbackChallenge(profile: { full_name?: string | null } | null | undefined, wallet?: unknown) {
   const name = profile?.full_name || "User";
   return {
     question: "What is the name on this account?",
@@ -103,7 +103,7 @@ Respond ONLY with valid JSON in this exact format:
 - Name: ${profile?.full_name || "Unknown"}
 - Handle: ${profile?.handle || "Unknown"}
 - Current balance: $${wallet?.balance?.toFixed?.(2) || "0.00"} ${wallet?.currency || "USD"}
-- Recent transactions: ${JSON.stringify(transactions?.map((t: any) => ({
+- Recent transactions: ${JSON.stringify(transactions?.map((t: { type: string; amount: number; description: string | null; created_at: string }) => ({
   type: t.type,
   amount: t.amount,
   description: t.description,
