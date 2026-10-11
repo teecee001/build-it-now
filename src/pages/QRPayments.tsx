@@ -184,7 +184,9 @@ export default function QRPayments() {
       try {
         await html5QrScannerRef.current.stop();
         html5QrScannerRef.current.clear();
-      } catch {}
+      } catch {
+        // ignore errors while stopping/clearing the scanner
+      }
       html5QrScannerRef.current = null;
     }
     setScannerActive(false);

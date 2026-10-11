@@ -53,7 +53,7 @@ export default function WalletPage() {
   const [tradeModal, setTradeModal] = useState<{ type: "buy" | "sell" | "swap" | "send"; code: string } | null>(null);
 
   const toggleFav = (code: string) => {
-    setFavorites(prev => { const n = new Set(prev); n.has(code) ? n.delete(code) : n.add(code); return n; });
+    setFavorites(prev => { const n = new Set(prev); if (n.has(code)) { n.delete(code); } else { n.add(code); } return n; });
   };
 
   const getPrice = (code: string) => rates[code] ? 1 / rates[code] : 0;

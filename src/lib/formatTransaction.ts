@@ -32,7 +32,7 @@ export function formatAmount(amount: number, currency: string): string {
 function parseConvertDescription(description: string | null | undefined) {
   if (!description) return null;
   const match = description.match(
-    /Converted\s+([\d.,]+)\s+([A-Za-z]{3})\s*[→\-]+\s*([\d.,]+)\s+([A-Za-z]{3})/i,
+    /Converted\s+([\d.,]+)\s+([A-Za-z]{3})\s*[→-]+\s*([\d.,]+)\s+([A-Za-z]{3})/i,
   );
   if (!match) return null;
   return {

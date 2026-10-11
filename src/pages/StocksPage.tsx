@@ -55,7 +55,7 @@ function StocksContent() {
   const [tradeModal, setTradeModal] = useState<{ type: "buy" | "sell"; ticker: string } | null>(null);
 
   const toggleFav = (ticker: string) => {
-    setFavorites(prev => { const n = new Set(prev); n.has(ticker) ? n.delete(ticker) : n.add(ticker); return n; });
+    setFavorites(prev => { const n = new Set(prev); if (n.has(ticker)) { n.delete(ticker); } else { n.add(ticker); } return n; });
   };
 
   const usdBalance = getWallet("USD")?.balance ?? 0;
