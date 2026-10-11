@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 
 interface AuthContextType {
   user: User | null;
@@ -56,10 +56,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async (redirectUri?: string) => {
+    // Preflight: if the Google provider is not enabled on the Supabase project, the
+    // authorize endpoint answers with raw JSON (HTTP 400) and the user would be left on
+    // an error page with no feedback. Check the public settings first and fail gracefully.
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+        headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
+      });
+      if (res.ok) {
+        const settings = (await res.json()) as { external?: Record<string, boolean> };
+        if (settings.external && settings.external.google === false) {
+          return {
+            error: new Error(
+              "Google sign-in isn't available right now. Please use email and password instead.",
+            ),
+          };
+        }
+      }
+    } catch {
+      // Network/CORS problem on the preflight: fall through and let the real call decide.
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: redirectUri ?? window.location.origin,
+        // Return to /auth so the session in the URL is picked up and the user is routed on.
+        redirectTo: redirectUri ?? `${window.location.origin}/auth`,
       },
     });
     return { error: error as Error | null };

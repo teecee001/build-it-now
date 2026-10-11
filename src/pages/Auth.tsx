@@ -205,7 +205,7 @@ export default function Auth() {
             onClick={async () => {
               const redirectUri = nextPath
                 ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
-                : window.location.origin;
+                : `${window.location.origin}/auth`;
               const { error } = await signInWithGoogle(redirectUri);
               if (error) toast.error(error.message);
             }}
