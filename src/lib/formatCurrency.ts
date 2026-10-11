@@ -25,7 +25,8 @@ export function formatMoney(value: number, currency = "USD"): string {
 }
 
 // A number directly followed by a 3-letter currency code, e.g. "24.9549 USD" or "1,234.5 NGN".
-const AMOUNT_WITH_CODE = /(?<![\w.])(-?\d[\d,]*(?:\.\d+)?)\s?(USD|GBP|EUR|NGN)\b/g;
+// An already-present symbol in front ("$1.00 USD") is consumed so it is not shown twice.
+const AMOUNT_WITH_CODE = /(?<![\w.])[$£€₦]?(-?\d[\d,]*(?:\.\d+)?)\s?(USD|GBP|EUR|NGN)\b/g;
 
 /**
  * Re-format "<number> <CODE>" pairs inside free text for display.
@@ -33,8 +34,11 @@ const AMOUNT_WITH_CODE = /(?<![\w.])(-?\d[\d,]*(?:\.\d+)?)\s?(USD|GBP|EUR|NGN)\b
  */
 export function formatAmountsInText(text: string | null | undefined): string {
   if (!text) return text ?? "";
-  return text.replace(AMOUNT_WITH_CODE, (match, num: string, code: string) => {
-    const value = Number(num.replace(/,/g, ""));
-    return Number.isFinite(value) ? formatMoney(value, code) : match;
-  });
+  return text
+    .replace(AMOUNT_WITH_CODE, (match, num: string, code: string) => {
+      const value = Number(num.replace(/,/g, ""));
+      return Number.isFinite(value) ? formatMoney(value, code) : match;
+    })
+    // Safety net for rows that were stored with a doubled symbol ("$$1.00").
+    .replace(/([$£€₦])\1+(?=\d)/g, "$1");
 }

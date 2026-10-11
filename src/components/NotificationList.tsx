@@ -3,7 +3,7 @@ import {
   Bell, ArrowDownLeft, ArrowUpRight, Gift, CreditCard, Landmark, Repeat, Percent, Info,
 } from "lucide-react";
 import type { Notification } from "@/hooks/useNotifications";
-import { formatAmount, getConversionDisplay } from "@/lib/formatTransaction";
+import { formatAmount, getConversionDisplay, formatHandleInText } from "@/lib/formatTransaction";
 import { formatAmountsInText } from "@/lib/formatCurrency";
 
 const NOTIF_ICONS: Record<string, typeof Info> = {
@@ -109,7 +109,7 @@ export function NotificationList({
                     <span className="mt-1.5 w-2 h-2 rounded-full bg-primary shrink-0" />
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{formatAmountsInText(notif.message)}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{formatHandleInText(formatAmountsInText(notif.message))}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">
                   {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
                 </p>

@@ -8,9 +8,35 @@ export type TxLike = {
   metadata?: Record<string, unknown> | null;
 };
 
+const FALLBACK_FIAT = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY", "INR", "NGN", "GHS", "KES", "UGX", "KRW", "VND", "MXN", "BRL", "ZAR"];
+let fiatCodes: Set<string> | null = null;
+
+/** True for ISO-4217 fiat codes; false for crypto tickers like BTC or ETH. */
+function isFiatCode(code: string): boolean {
+  if (!fiatCodes) {
+    try {
+      const list = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.("currency");
+      fiatCodes = new Set(list && list.length ? list : FALLBACK_FIAT);
+    } catch {
+      fiatCodes = new Set(FALLBACK_FIAT);
+    }
+  }
+  return fiatCodes.has(code);
+}
+
+/** Crypto amounts: no currency symbol, coin code after the number, e.g. "0.000061 BTC". */
+function formatCryptoAmount(abs: number, code: string): string {
+  const body = abs.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: abs >= 1 ? 4 : 8,
+  });
+  return `${body} ${code}`;
+}
+
 export function formatAmount(amount: number, currency: string): string {
   const cur = (currency || "USD").toUpperCase();
   const abs = Math.abs(Number(amount) || 0);
+  if (!isFiatCode(cur)) return formatCryptoAmount(abs, cur);
   let maxFrac = 2;
   if (["JPY", "KRW", "VND"].includes(cur)) maxFrac = 0;
   else if (["NGN", "GHS", "KES", "UGX"].includes(cur) && abs >= 100) maxFrac = 2;
@@ -32,7 +58,7 @@ export function formatAmount(amount: number, currency: string): string {
 function parseConvertDescription(description: string | null | undefined) {
   if (!description) return null;
   const match = description.match(
-    /Converted\s+([\d.,]+)\s+([A-Za-z]{3})\s*[→-]+\s*([\d.,]+)\s+([A-Za-z]{3})/i,
+    /(?:Converted|Swapped)\s+([\d.,]+)\s+([A-Za-z]{3})\s*[→-]+\s*([\d.,]+)\s+([A-Za-z]{3})/i,
   );
   if (!match) return null;
   return {
@@ -47,8 +73,9 @@ export function getConversionDisplay(tx: TxLike) {
   const m = (tx.metadata || {}) as Record<string, unknown>;
   let from = String(m.from || m.from_currency || "");
   let to = String(m.to || m.to_currency || "");
-  let fromAmt = Number(m.from_amount);
-  let toAmt = Number(m.to_amount);
+  // Crypto swaps store the amounts as `amount` (sent) and `received`.
+  let fromAmt = Number(m.from_amount ?? (m.action === "swap" ? m.amount : undefined));
+  let toAmt = Number(m.to_amount ?? (m.action === "swap" ? m.received : undefined));
 
   if (!from || !to || !Number.isFinite(fromAmt) || !Number.isFinite(toAmt) || toAmt <= 0) {
     const parsed = parseConvertDescription(tx.description);
@@ -64,23 +91,41 @@ export function getConversionDisplay(tx: TxLike) {
   const left = formatAmount(fromAmt, from);
   const right = formatAmount(toAmt, to);
   return {
-    title: `Converted ${from} → ${to}`,
+    title: m.action === "swap" ? `Swapped ${from} → ${to}` : `Converted ${from} → ${to}`,
     detail: `${left} → ${right}`,
     amountText: `${left} → ${right}`,
   };
 }
 
+// A bare username (no "@", no dots/dashes). Emails, names with spaces and long
+// wallet addresses do not match, so they are left untouched.
+const BARE_HANDLE = /^[A-Za-z0-9_]{2,30}$/;
+
+/** "exoskydemo" -> "@exoskydemo"; "@x", emails, names and wallet addresses are unchanged. */
+export function formatHandle(value: string | null | undefined): string {
+  const v = (value ?? "").trim();
+  if (!v) return "";
+  if (v.startsWith("@")) return v;
+  return BARE_HANDLE.test(v) && !/^0x/i.test(v) ? `@${v}` : v;
+}
+
+/** Adds the "@" to the trailing handle in "Sent <amount> to <handle>" text. */
+export function formatHandleInText(text: string | null | undefined): string {
+  if (!text) return text ?? "";
+  return text.replace(/^(Sent\b.*\sto\s)([A-Za-z0-9_]{2,30})$/, (_m, head: string, name: string) => `${head}${formatHandle(name)}`);
+}
+
 /** "From @x" for received transfers (counterparty is the sender), otherwise "To @x". */
 export function getCounterpartyLabel(tx: { type: string; recipient?: string | null }): string {
   if (!tx.recipient) return "";
-  return `${tx.type === "receive" ? "From" : "To"} ${tx.recipient}`;
+  return `${tx.type === "receive" ? "From" : "To"} ${formatHandle(tx.recipient)}`;
 }
 
 export function getTransactionTitle(tx: TxLike): string {
   if (tx.type === "conversion" || tx.type === "convert") {
     return getConversionDisplay(tx)?.title || tx.description || "Conversion";
   }
-  return tx.description || tx.type;
+  return formatHandleInText(tx.description) || tx.type;
 }
 
 export function formatTxAmount(tx: TxLike): { text: string; tone: "in" | "out" | "neutral" } {
