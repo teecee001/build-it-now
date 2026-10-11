@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ArrowRight, QrCode, Users, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errors";
+import { formatHandle } from "@/lib/formatTransaction";
 
 export default function SendMoney() {
   return (
@@ -70,7 +71,7 @@ function SendMoneyContent() {
         currency: activeCurrency,
         recipient: recipient.trim(),
         idempotency_key: idempotencyKey,
-        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${recipient.trim()}`,
+        description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${formatHandle(recipient)}`,
       });
       // Only report success when the server confirms the transfer was recorded.
       if (!result || result.success !== true || !result.transaction_id) {
