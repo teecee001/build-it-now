@@ -25,7 +25,7 @@ export function useRecurringPayments() {
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from("recurring_payments" as any)
+        .from("recurring_payments")
         .select("*")
         .eq("user_id", user.id)
         .order("next_payment_date", { ascending: true });
@@ -45,10 +45,10 @@ export function useRecurringPayments() {
       next_payment_date: string;
     }) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("recurring_payments" as any).insert([{
+      const { error } = await supabase.from("recurring_payments").insert([{
         user_id: user.id,
         ...payment,
-      }] as any);
+      }]);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recurring_payments"] }),
@@ -57,8 +57,8 @@ export function useRecurringPayments() {
   const updatePayment = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; is_active?: boolean; next_payment_date?: string }) => {
       const { error } = await supabase
-        .from("recurring_payments" as any)
-        .update(updates as any)
+        .from("recurring_payments")
+        .update(updates)
         .eq("id", id);
       if (error) throw error;
     },
@@ -67,7 +67,7 @@ export function useRecurringPayments() {
 
   const deletePayment = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("recurring_payments" as any).delete().eq("id", id);
+      const { error } = await supabase.from("recurring_payments").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recurring_payments"] }),

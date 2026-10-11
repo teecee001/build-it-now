@@ -45,7 +45,7 @@ export function useRateAlerts() {
       const { error } = await supabase.from("rate_alerts").insert({
         user_id: user.id,
         ...alert,
-      } as any);
+      });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rate-alerts"] }),

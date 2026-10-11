@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import type { Json, TablesInsert } from "@/integrations/supabase/types";
 
 export interface Transaction {
   id: string;
@@ -63,12 +64,12 @@ export function useTransactions(limit?: number) {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("transactions").insert([{
         user_id: user.id,
-        type: tx.type as any,
+        type: tx.type as TablesInsert<"transactions">["type"],
         amount: tx.amount,
         description: tx.description || null,
         recipient: tx.recipient || null,
-        status: (tx.status || "completed") as any,
-        metadata: (tx.metadata || {}) as any,
+        status: (tx.status || "completed") as TablesInsert<"transactions">["status"],
+        metadata: (tx.metadata || {}) as Json,
       }]);
       if (error) throw error;
     },

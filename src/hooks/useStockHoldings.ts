@@ -22,7 +22,7 @@ export function useStockHoldings() {
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from("stock_holdings" as any)
+        .from("stock_holdings")
         .select("*")
         .eq("user_id", user.id);
       if (error) throw error;
@@ -59,7 +59,7 @@ export function useStockHoldings() {
       if (existing) {
         const newShares = Number(existing.shares) + sharesDelta;
         if (newShares <= 0.000001) {
-          await supabase.from("stock_holdings" as any).delete().eq("id", existing.id);
+          await supabase.from("stock_holdings").delete().eq("id", existing.id);
         } else {
           let newAvg = Number(existing.avg_buy_price);
           if (sharesDelta > 0) {
@@ -67,17 +67,17 @@ export function useStockHoldings() {
             newAvg = totalCost / newShares;
           }
           await supabase
-            .from("stock_holdings" as any)
-            .update({ shares: newShares, avg_buy_price: newAvg } as any)
+            .from("stock_holdings")
+            .update({ shares: newShares, avg_buy_price: newAvg })
             .eq("id", existing.id);
         }
       } else if (sharesDelta > 0) {
-        await supabase.from("stock_holdings" as any).insert([{
+        await supabase.from("stock_holdings").insert([{
           user_id: user.id,
           ticker,
           shares: sharesDelta,
           avg_buy_price: pricePerShare,
-        }] as any);
+        }]);
       }
     },
     onSuccess: () => {

@@ -21,12 +21,12 @@ export function BetaFeedback() {
     if (!message.trim() || !user) return;
     setSubmitting(true);
 
-    const { error } = await supabase.from("beta_feedback" as any).insert({
+    const { error } = await supabase.from("beta_feedback").insert({
       user_id: user.id,
       type,
       message: message.trim(),
       page_url: window.location.pathname,
-    } as any);
+    });
 
     setSubmitting(false);
     if (error) {
