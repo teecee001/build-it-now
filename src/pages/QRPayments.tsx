@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
+import { formatMoney } from "@/lib/formatCurrency";
 import {
   QrCode, Camera, Copy, CheckCircle2, Loader2, ArrowRight,
   Share2, DollarSign, ArrowLeft, AlertTriangle, X
@@ -246,7 +247,7 @@ export default function QRPayments() {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
             <Card className="p-4 bg-card border-border flex items-center justify-between">
               <p className="text-sm text-muted-foreground">Available balance</p>
-              <p className="text-lg font-bold font-mono">${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+              <p className="text-lg font-bold font-mono">{formatMoney(balance)}</p>
             </Card>
 
             <div className="grid grid-cols-2 gap-3">
@@ -471,7 +472,7 @@ export default function QRPayments() {
                 )}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-secondary">
                   <span className="text-sm text-muted-foreground">Balance after</span>
-                  <span className="text-sm font-mono">${(balance - parseFloat(scanAmount || "0")).toFixed(2)}</span>
+                  <span className="text-sm font-mono">{formatMoney(balance - parseFloat(scanAmount || "0"))}</span>
                 </div>
               </div>
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
+import { formatMoney } from "@/lib/formatCurrency";
 import { 
   Landmark, Building2, CreditCard, ArrowDownLeft, 
   CheckCircle2, Copy, Percent, Loader2
@@ -69,7 +70,7 @@ export default function Deposit() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
         <Card className="p-4 bg-card border-border flex items-center justify-between">
           <p className="text-sm text-muted-foreground">Current wallet balance</p>
-          <p className="text-lg font-bold font-mono">${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+          <p className="text-lg font-bold font-mono">{formatMoney(balance)}</p>
         </Card>
       </motion.div>
 
