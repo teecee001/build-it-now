@@ -28,7 +28,8 @@ export default function Dashboard() {
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
-  const apyRate = 6.0;
+  // Beta: no real yield yet. Show clear demo label instead of a fixed APY number.
+  const isBeta = true;
 
   const totalInActiveCurrency = wallets.reduce((sum, w) => {
     const wRate = rates[w.currency] || 1;
@@ -162,7 +163,7 @@ export default function Dashboard() {
         >
           <PiggyBank className="w-5 h-5 text-success mb-2" />
           <p className="text-sm font-semibold">Savings</p>
-          <p className="text-xs text-muted-foreground">{apyRate}% APY</p>
+          <p className="text-xs text-muted-foreground">{isBeta ? "Beta" : "Yield"}</p>
         </Card>
         <Card
           className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
