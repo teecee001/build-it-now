@@ -17,6 +17,8 @@ export interface CardData {
   card_name: string;
   shipping_status: string | null;
   created_at: string;
+  /** Not a database column; optional client-side design id (defaults applied by the UI). */
+  card_design?: string;
 }
 
 export function useCard() {

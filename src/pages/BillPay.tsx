@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useBills } from "@/hooks/useBills";
+import { useBills, type Bill } from "@/hooks/useBills";
 import { useWallet } from "@/hooks/useWallet";
 import { useTransactions } from "@/hooks/useTransactions";
 import { 
@@ -193,7 +193,7 @@ function BillPayContent() {
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
-  const [confirmBill, setConfirmBill] = useState<any | null>(null);
+  const [confirmBill, setConfirmBill] = useState<Bill | null>(null);
 
   const handleCategoryChange = (cat: string) => {
     setNewCategory(cat);
@@ -213,7 +213,7 @@ function BillPayContent() {
     if (provider) setNewAmount(provider.avgAmount.toFixed(2));
   };
 
-  const handlePayClick = (bill: any) => {
+  const handlePayClick = (bill: Bill) => {
     if (!bill.account_number) {
       toast.error("No account number on file. Edit this bill to add one before paying.");
       return;

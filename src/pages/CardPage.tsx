@@ -317,7 +317,7 @@ function CardPageContent() {
         type: "security",
         title: wasFrozen ? "Card Unfrozen" : "Card Frozen",
         message: `Your card ending in ${card.card_number_last4} has been ${wasFrozen ? "unfrozen" : "frozen"}.`,
-        metadata: { card_id: card.id, action: wasFrozen ? "unfreeze" : "freeze" } as any,
+        metadata: { card_id: card.id, action: wasFrozen ? "unfreeze" : "freeze" },
       });
     }
     toast.success(wasFrozen ? "Card unfrozen" : "Card frozen");
@@ -356,7 +356,7 @@ function CardPageContent() {
 
   const getDesignForCard = (c: CardData) => {
     // Try to get design from metadata or fallback
-    const designId = (c as any).card_design || "classic-dark";
+    const designId = c.card_design || "classic-dark";
     return getCardDesign(designId);
   };
 

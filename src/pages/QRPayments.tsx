@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { getErrorMessage } from "@/lib/errors";
+import type { Html5Qrcode } from "html5-qrcode";
 
 type View = "home" | "receive" | "scan" | "confirm" | "done";
 
@@ -88,7 +89,7 @@ export default function QRPayments() {
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const html5QrScannerRef = useRef<any>(null);
+  const html5QrScannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
   const handle = "@" + (user?.email?.split("@")[0] || "user");
