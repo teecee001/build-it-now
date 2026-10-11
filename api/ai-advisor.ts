@@ -30,11 +30,29 @@ function getAiConfig() {
   return null;
 }
 
+const SUPABASE_URL = "https://vxcxwmhesgpncbkhwsej.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ceCUc9fqMwACxBU43yg43Q_nmKqkbmt";
+
+async function signedIn(req: Request) {
+  const auth = req.headers.get("authorization") || "";
+  if (!auth.toLowerCase().startsWith("bearer ")) return false;
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { Authorization: auth, apikey: SUPABASE_KEY },
+  });
+  return res.ok;
+}
+
 export default async function handler(req: Request) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+  if (!(await signedIn(req))) {
+    return new Response(JSON.stringify({ error: "Sign in required" }), {
+      status: 401,
       headers: { ...cors, "Content-Type": "application/json" },
     });
   }
@@ -49,6 +67,12 @@ export default async function handler(req: Request) {
 
   try {
     const { messages } = await req.json();
+    if (!Array.isArray(messages) || messages.length > 40) {
+      return new Response(JSON.stringify({ error: "Invalid messages" }), {
+        status: 400,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
     const response = await fetch(cfg.url, {
       method: "POST",
       headers: {
