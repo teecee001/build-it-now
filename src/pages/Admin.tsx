@@ -12,7 +12,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Loader2, CheckCircle2, Search, Users, ShieldCheck, Trash2, RefreshCw,
   Clock, Mail, Calendar, Shield, LayoutDashboard, Activity, MessageSquare,
-  UserPlus, Ban, ShieldOff, Plus, CheckCheck,
+  Ban, ShieldOff, Plus, CheckCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -185,14 +185,6 @@ export default function Admin() {
     else {
       toast.success(banned ? `Banned ${email}` : `Unbanned ${email}`);
       setUsers((p) => p.map((u) => u.id === id ? { ...u, banned_until: banned ? "2099-01-01" : null } : u));
-    }
-  });
-  const setRole = (id: string, email: string, admin: boolean) => run(id, async () => {
-    const { error } = await supabase.rpc("admin_user_set_role", { p_user_id: id, p_admin: admin });
-    if (error) toast.error(rpcMessage(error));
-    else {
-      toast.success(admin ? `${email} is now admin` : `Removed admin from ${email}`);
-      setUsers((p) => p.map((u) => u.id === id ? { ...u, is_admin: admin } : u));
     }
   });
 
@@ -380,11 +372,6 @@ export default function Admin() {
                                   {banned ? <><ShieldOff className="w-3.5 h-3.5" /> Unban</> : <><Ban className="w-3.5 h-3.5" /> Ban</>}
                                 </Button>
                               )}
-                              {u.id !== user.id && lowerEmail(u.email) !== "edwinmaurice11@gmail.com" && (
-                                <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={() => setRole(u.id, u.email, !u.is_admin)}>
-                                  <UserPlus className="w-3.5 h-3.5" /> {u.is_admin ? "Remove admin" : "Make admin"}
-                                </Button>
-                              )}
                             </>
                           )}
                         </div>
@@ -438,8 +425,4 @@ export default function Admin() {
       </div>
     </div>
   );
-}
-
-function lowerEmail(email: string | null) {
-  return (email || "").toLowerCase();
 }

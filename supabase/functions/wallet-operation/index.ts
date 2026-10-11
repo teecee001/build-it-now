@@ -86,31 +86,42 @@ serve(async (req) => {
       }
 
       case "crypto_trade": {
-        const { action, code, amount: tradeAmount, price, crypto_amount, usd_value } = body;
-        if (!code || !tradeAmount || tradeAmount <= 0 || !price) throw new Error("Invalid parameters");
+        const code = String(body.code || "");
+        const action = String(body.action || "");
+        const quoted = finitePositive(body.price, "price");
+        if (!code) throw new Error("Invalid parameters");
+        const price = await liveUsdPrice(code, quoted);
 
         const { data: usdWallet, error: wErr } = await supabase
           .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
         if (wErr || !usdWallet) throw new Error("No USD wallet");
 
         if (action === "buy") {
-          if (usdWallet.balance < tradeAmount) throw new Error("Insufficient USD balance");
-          await supabase.from("wallets").update({ balance: usdWallet.balance - tradeAmount }).eq("id", usdWallet.id);
-          await upsertCryptoHolding(supabase, userId, code, crypto_amount, price);
+          const usd = finitePositive(body.amount, "amount");
+          if (Number(usdWallet.balance) + 1e-8 < usd) throw new Error("Insufficient USD balance");
+          const units = usd / price;
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) - usd }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
+          await upsertCryptoHolding(supabase, userId, code, units, price);
           await supabase.from("transactions").insert({
-            user_id: userId, type: "purchase", amount: -tradeAmount, status: "completed",
-            description: `Bought ${crypto_amount.toFixed(6)} ${code} at $${price.toLocaleString()}`,
-            metadata: { crypto: code, crypto_amount, price_per_unit: price, action: "buy" },
+            user_id: userId, type: "purchase", amount: -usd, status: "completed",
+            description: `Bought ${units.toFixed(6)} ${code} at $${price.toLocaleString()}`,
+            metadata: { crypto: code, crypto_amount: units, price_per_unit: price, action: "buy" },
           });
         } else if (action === "sell") {
+          const units = finitePositive(body.amount, "amount");
           const holding = await getCryptoHolding(supabase, userId, code);
-          if (holding < tradeAmount) throw new Error(`Insufficient ${code} balance`);
-          await supabase.from("wallets").update({ balance: usdWallet.balance + usd_value }).eq("id", usdWallet.id);
-          await upsertCryptoHolding(supabase, userId, code, -tradeAmount, price);
+          if (holding + 1e-12 < units) throw new Error(`Insufficient ${code} balance`);
+          const credit = units * price;
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) + credit }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
+          await upsertCryptoHolding(supabase, userId, code, -units, price);
           await supabase.from("transactions").insert({
-            user_id: userId, type: "purchase", amount: usd_value, status: "completed",
-            description: `Sold ${tradeAmount.toFixed(6)} ${code} at $${price.toLocaleString()}`,
-            metadata: { crypto: code, crypto_amount: tradeAmount, price_per_unit: price, action: "sell" },
+            user_id: userId, type: "purchase", amount: credit, status: "completed",
+            description: `Sold ${units.toFixed(6)} ${code} at $${price.toLocaleString()}`,
+            metadata: { crypto: code, crypto_amount: units, price_per_unit: price, action: "sell" },
           });
         } else {
           throw new Error("Invalid action");
@@ -118,30 +129,76 @@ serve(async (req) => {
         return ok({ success: true });
       }
 
+      case "crypto_send": {
+        const code = String(body.code || "");
+        const units = finitePositive(body.amount, "amount");
+        const address = String(body.address || body.recipient || "").slice(0, 200);
+        if (!code || !address) throw new Error("Invalid parameters");
+        const holding = await getCryptoHolding(supabase, userId, code);
+        if (holding + 1e-12 < units) throw new Error(`Insufficient ${code} balance`);
+        await upsertCryptoHolding(supabase, userId, code, -units, Number(body.price) || 0);
+        await supabase.from("transactions").insert({
+          user_id: userId, type: "send", amount: -(units * (Number(body.price) || 0)), status: "completed",
+          description: `Sent ${units.toFixed(6)} ${code}`,
+          recipient: address,
+          metadata: { crypto: code, crypto_amount: units, action: "crypto_send", wallet_address: address },
+        });
+        return ok({ success: true });
+      }
+
+      case "crypto_swap": {
+        const from = String(body.code || body.from || "");
+        const to = String(body.swap_to || body.to || "");
+        const units = finitePositive(body.amount, "amount");
+        const fromPrice = await liveUsdPrice(from, finitePositive(body.price, "price"));
+        const toPrice = await liveUsdPrice(to, finitePositive(body.swap_to_price, "swap price"));
+        if (!from || !to || from === to) throw new Error("Invalid swap pair");
+        const holding = await getCryptoHolding(supabase, userId, from);
+        if (holding + 1e-12 < units) throw new Error(`Insufficient ${from} balance`);
+        const received = (units * fromPrice) / toPrice;
+        await upsertCryptoHolding(supabase, userId, from, -units, fromPrice);
+        await upsertCryptoHolding(supabase, userId, to, received, toPrice);
+        await supabase.from("transactions").insert({
+          user_id: userId, type: "conversion", amount: -units, status: "completed",
+          description: `Swapped ${units.toFixed(6)} ${from} → ${received.toFixed(6)} ${to}`,
+          metadata: { from, to, amount: units, received, action: "swap" },
+        });
+        return ok({ success: true, received });
+      }
+
       case "stock_trade": {
-        const { action, ticker, shares, dollar_value, price } = body;
-        if (!ticker || !shares || shares <= 0 || !price) throw new Error("Invalid parameters");
+        const ticker = String(body.ticker || "");
+        const action = String(body.action || "");
+        const shares = finitePositive(body.shares, "shares");
+        const quoted = finitePositive(body.price, "price");
+        if (!ticker) throw new Error("Invalid parameters");
+        const price = await liveStockPrice(ticker, quoted);
+        const dollars = shares * price;
 
         const { data: usdWallet, error: wErr } = await supabase
           .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
         if (wErr || !usdWallet) throw new Error("No USD wallet");
 
         if (action === "buy") {
-          if (usdWallet.balance < dollar_value) throw new Error("Insufficient USD balance");
-          await supabase.from("wallets").update({ balance: usdWallet.balance - dollar_value }).eq("id", usdWallet.id);
+          if (Number(usdWallet.balance) + 1e-8 < dollars) throw new Error("Insufficient USD balance");
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) - dollars }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
           await upsertStockHolding(supabase, userId, ticker, shares, price);
           await supabase.from("transactions").insert({
-            user_id: userId, type: "purchase", amount: -dollar_value, status: "completed",
+            user_id: userId, type: "purchase", amount: -dollars, status: "completed",
             description: `Bought ${shares.toFixed(4)} shares of ${ticker} at $${price.toFixed(2)}`,
             metadata: { stock: ticker, shares, price_per_share: price, action: "stock_buy" },
           });
         } else if (action === "sell") {
           const currentShares = await getStockShares(supabase, userId, ticker);
-          if (currentShares < shares) throw new Error(`Insufficient ${ticker} shares`);
-          await supabase.from("wallets").update({ balance: usdWallet.balance + dollar_value }).eq("id", usdWallet.id);
+          if (currentShares + 1e-8 < shares) throw new Error(`Insufficient ${ticker} shares`);
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) + dollars }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
           await upsertStockHolding(supabase, userId, ticker, -shares, price);
           await supabase.from("transactions").insert({
-            user_id: userId, type: "purchase", amount: dollar_value, status: "completed",
+            user_id: userId, type: "purchase", amount: dollars, status: "completed",
             description: `Sold ${shares.toFixed(4)} shares of ${ticker} at $${price.toFixed(2)}`,
             metadata: { stock: ticker, shares, price_per_share: price, action: "stock_sell" },
           });
@@ -151,10 +208,63 @@ serve(async (req) => {
         return ok({ success: true });
       }
 
+      case "demo_deposit": {
+        const amount = finitePositive(body.amount, "amount");
+        if (amount > 100000) throw new Error("Demo deposits are capped at $100,000");
+        const { data: wallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !wallet) throw new Error("USD wallet not found");
+        const { error: uErr } = await supabase.from("wallets")
+          .update({ balance: Number(wallet.balance) + amount }).eq("id", wallet.id);
+        if (uErr) throw new Error(uErr.message);
+        const method = body.method === "bank" ? "Bank transfer deposit (demo)" : "Card deposit (demo)";
+        await supabase.from("transactions").insert({
+          user_id: userId, type: "deposit", amount, status: "completed", description: method,
+        });
+        return ok({ success: true });
+      }
+
+      case "bill_pay": {
+        const amount = finitePositive(body.amount, "amount");
+        const name = String(body.biller_name || "bill").slice(0, 80);
+        const { data: wallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !wallet) throw new Error("USD wallet not found");
+        if (Number(wallet.balance) + 1e-8 < amount) throw new Error("Insufficient balance");
+        const cashback = Math.round(amount * 0.01 * 100) / 100;
+        const { error: uErr } = await supabase.from("wallets")
+          .update({ balance: Number(wallet.balance) - amount + cashback }).eq("id", wallet.id);
+        if (uErr) throw new Error(uErr.message);
+        await supabase.from("transactions").insert([
+          { user_id: userId, type: "bill_payment", amount: -amount, status: "completed", description: `Bill payment — ${name}` },
+          { user_id: userId, type: "cashback", amount: cashback, status: "completed", description: `1% cashback — ${name}` },
+        ]);
+        return ok({ success: true, cashback });
+      }
+
+      case "qr_pay": {
+        const amount = finitePositive(body.amount, "amount");
+        const recipient = String(body.recipient || "").slice(0, 120);
+        const note = String(body.note || "").slice(0, 140);
+        if (!recipient) throw new Error("Recipient required");
+        const { data: wallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !wallet) throw new Error("USD wallet not found");
+        if (Number(wallet.balance) + 1e-8 < amount) throw new Error("Insufficient balance");
+        const { error: uErr } = await supabase.from("wallets")
+          .update({ balance: Number(wallet.balance) - amount }).eq("id", wallet.id);
+        if (uErr) throw new Error(uErr.message);
+        await supabase.from("transactions").insert({
+          user_id: userId, type: "send", amount: -amount, status: "completed", recipient,
+          description: `QR Payment to ${recipient}${note ? ` — ${note}` : ""}`,
+        });
+        return ok({ success: true });
+      }
+
       case "convert": {
         const { from_currency, to_currency } = body;
         const amount = Number(body.amount);
-        const rate = Number(body.rate);
+        const rate = await checkedRate(String(from_currency), String(to_currency), Number(body.rate));
 
         if (!from_currency || !to_currency) {
           throw new Error("Missing from/to currency");
@@ -260,6 +370,98 @@ function ok(data: Record<string, unknown>) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status: 200,
   });
+}
+
+function finitePositive(value: unknown, label: string): number {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || n <= 0) throw new Error(`Invalid ${label}`);
+  return n;
+}
+
+let usdRatesCache: { at: number; rates: Record<string, number> } | null = null;
+
+const COINGECKO_IDS: Record<string, string> = {
+  BTC: "bitcoin", ETH: "ethereum", USDT: "tether", BNB: "binancecoin",
+  XRP: "ripple", ADA: "cardano", DOGE: "dogecoin", SOL: "solana",
+  TRX: "tron", DOT: "polkadot", MATIC: "matic-network", LTC: "litecoin",
+  SHIB: "shiba-inu", AVAX: "avalanche-2", UNI: "uniswap", LINK: "chainlink",
+  ATOM: "cosmos", XMR: "monero", ETC: "ethereum-classic", BCH: "bitcoin-cash",
+  XLM: "stellar", ALGO: "algorand", FIL: "filecoin", VET: "vechain",
+  ICP: "internet-computer", APT: "aptos", HBAR: "hedera-hashgraph",
+  NEAR: "near", ARB: "arbitrum", OP: "optimism",
+};
+
+async function usdPerUnitRates(): Promise<Record<string, number>> {
+  const now = Date.now();
+  if (usdRatesCache && now - usdRatesCache.at < 60_000) return usdRatesCache.rates;
+  const rates: Record<string, number> = { USD: 1 };
+  const fiat = await fetch("https://open.er-api.com/v6/latest/USD");
+  if (!fiat.ok) throw new Error("Could not load exchange rates");
+  const fiatJson = await fiat.json();
+  if (fiatJson?.rates) {
+    for (const [code, value] of Object.entries(fiatJson.rates as Record<string, number>)) {
+      if (typeof value === "number" && value > 0) rates[code] = value;
+    }
+  }
+  try {
+    const ids = Object.values(COINGECKO_IDS).join(",");
+    const crypto = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`,
+    );
+    if (crypto.ok) {
+      const data = await crypto.json();
+      for (const [code, id] of Object.entries(COINGECKO_IDS)) {
+        const usd = data?.[id]?.usd;
+        if (typeof usd === "number" && usd > 0) rates[code] = 1 / usd;
+      }
+    }
+  } catch {
+    // Fiat rates still work if CoinGecko is down.
+  }
+  usdRatesCache = { at: now, rates };
+  return rates;
+}
+
+async function checkedRate(from: string, to: string, clientRate: number): Promise<number> {
+  if (!Number.isFinite(clientRate) || clientRate <= 0) throw new Error("Invalid exchange rate");
+  const rates = await usdPerUnitRates();
+  const fromPerUsd = rates[from];
+  const toPerUsd = rates[to];
+  if (!fromPerUsd || !toPerUsd) {
+    throw new Error(`No live rate for ${from} → ${to}`);
+  }
+  const live = toPerUsd / fromPerUsd;
+  if (Math.abs(clientRate - live) / live > 0.08) {
+    throw new Error("Exchange rate is out of date. Refresh and try again.");
+  }
+  return live;
+}
+
+async function liveUsdPrice(code: string, clientPrice: number): Promise<number> {
+  const rates = await usdPerUnitRates();
+  const perUsd = rates[code];
+  if (!perUsd) throw new Error(`No live price for ${code}`);
+  const live = 1 / perUsd;
+  if (Math.abs(clientPrice - live) / live > 0.08) {
+    throw new Error(`${code} price is out of date. Refresh and try again.`);
+  }
+  return live;
+}
+
+async function liveStockPrice(ticker: string, clientPrice: number): Promise<number> {
+  const sym = ticker === "BRK.B" ? "BRK-B" : ticker;
+  const res = await fetch(
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`,
+    { headers: { "User-Agent": "Mozilla/5.0 ExoSky/1.0" } },
+  );
+  if (!res.ok) throw new Error("Could not load stock price");
+  const data = await res.json();
+  const live = Number(data?.chart?.result?.[0]?.meta?.regularMarketPrice);
+  if (!Number.isFinite(live) || live <= 0) throw new Error(`No live price for ${ticker}`);
+  if (Math.abs(clientPrice - live) / live > 0.08) {
+    throw new Error(`${ticker} price is out of date. Refresh and try again.`);
+  }
+  return live;
 }
 
 async function upsertCryptoHolding(

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Bot, Send, Loader2, User, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -14,7 +15,7 @@ const SUGGESTIONS = [
   "What are key factors for long-term investing?",
 ];
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-advisor`;
+const CHAT_URL = `${SUPABASE_URL}/functions/v1/ai-advisor`;
 
 export default function AIAdvisor() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,15 +38,28 @@ export default function AIAdvisor() {
     let assistantContent = "";
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sign in required");
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
+          apikey: SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ messages: [...messages, userMsg] }),
       });
 
+      if (resp.status === 401) {
+        setMessages((p) => [
+          ...p,
+          { role: "assistant", content: "Please sign in again, then try the advisor." },
+        ]);
+        setIsLoading(false);
+        return;
+      }
       if (resp.status === 429) {
         setMessages((p) => [
           ...p,

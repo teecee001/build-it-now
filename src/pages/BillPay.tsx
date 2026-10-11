@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useBills } from "@/hooks/useBills";
-import { useWallet } from "@/hooks/useWallet";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
 import { 
   Zap, Wifi, Home, Phone, Tv, Droplets, Search,
   CheckCircle2, Loader2, ArrowRight, Plus, Shield, FileText
@@ -181,8 +180,7 @@ export default function BillPay() {
 
 function BillPayContent() {
   const { bills, isLoading, payBill, addBill } = useBills();
-  const { balance, updateBalance } = useWallet();
-  const { addTransaction } = useTransactions();
+  const { balance } = useWallet();
   const [search, setSearch] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -230,20 +228,13 @@ function BillPayContent() {
     }
     setPayingId(bill.id);
     try {
-      await updateBalance.mutateAsync({ balance: balance - bill.amount });
-      await addTransaction.mutateAsync({
-        type: "bill_payment",
-        amount: -bill.amount,
-        description: `Bill payment — ${bill.biller_name} (Acct: ...${(bill.account_number || "").slice(-4)})`,
-      });
-      const cashback = bill.amount * 0.01;
-      await updateBalance.mutateAsync({ balance: balance - bill.amount + cashback });
-      await addTransaction.mutateAsync({
-        type: "cashback",
-        amount: cashback,
-        description: `1% cashback — ${bill.biller_name}`,
+      const result = await invokeWalletOp({
+        operation: "bill_pay",
+        amount: bill.amount,
+        biller_name: bill.biller_name,
       });
       await payBill.mutateAsync(bill.id);
+      const cashback = Number(result?.cashback ?? bill.amount * 0.01);
       toast.success(`Paid ${bill.biller_name} — earned $${cashback.toFixed(2)} cashback`);
     } catch (err: any) {
       toast.error(err.message || "Payment failed");
