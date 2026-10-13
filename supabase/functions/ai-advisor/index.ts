@@ -1,19 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { ADVISOR_SYSTEM, chatCompletions, getAdvisorAiConfig } from "../_shared/ai.ts";
+import { ADVISOR_SYSTEM, chatCompletions, getAdvisorProviders } from "../_shared/ai.ts";
 import { type AccountData, type Quote, accountSummary, ruleAnswer } from "./rules.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Expose-Headers": "x-exo-source",
+  "Access-Control-Expose-Headers": "x-exo-source, x-exo-provider, x-exo-tried",
 };
 
 const json = (body: unknown, status: number) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 /** Emit a complete answer in the same OpenAI-style SSE format the client already parses. */
-function sseAnswer(text: string): Response {
+function sseAnswer(text: string, extra: Record<string, string> = {}): Response {
   const enc = new TextEncoder();
   const stream = new ReadableStream({
     start(c) {
@@ -25,7 +25,7 @@ function sseAnswer(text: string): Response {
       c.close();
     },
   });
-  return new Response(stream, { headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Exo-Source": "built-in" } });
+  return new Response(stream, { headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Exo-Source": "built-in", ...extra } });
 }
 
 async function fetchQuotes(cls: "crypto" | "stocks"): Promise<Record<string, Quote>> {
@@ -108,35 +108,48 @@ serve(async (req) => {
       userData.user.id,
       (userData.user.user_metadata?.full_name as string | undefined) ?? undefined,
     );
-    const builtIn = () => sseAnswer(ruleAnswer(question, account));
+    const builtIn = (extra: Record<string, string> = {}) => sseAnswer(ruleAnswer(question, account), extra);
 
-    const cfg = getAdvisorAiConfig();
-    if (!cfg) return builtIn();
-
-    try {
-      const response = await chatCompletions(cfg, {
-        messages: [
-          { role: "system", content: ADVISOR_SYSTEM },
-          {
-            role: "system",
-            content:
-              `Signed-in user's account summary. Use it for personalised answers, never invent numbers, never promise returns:\n${accountSummary(account)}`,
-          },
-          ...messages.slice(-20),
-        ],
-        stream: true,
-      });
-      if (!response.ok || !response.body) {
-        console.error("AI provider error, using built-in advisor:", response.status, await response.text().catch(() => ""));
-        return builtIn();
+    const providers = getAdvisorProviders();
+    const tried: string[] = [];
+    const body = {
+      messages: [
+        { role: "system", content: ADVISOR_SYSTEM },
+        {
+          role: "system",
+          content:
+            `Signed-in user's account summary. Use it for personalised answers, never invent numbers, never promise returns:\n${accountSummary(account)}`,
+        },
+        ...messages.slice(-20),
+      ],
+      stream: true,
+    };
+    for (const p of providers) {
+      try {
+        const response = await chatCompletions(p, body);
+        if (response.ok && response.body) {
+          tried.push(`${p.name}=${response.status}`);
+          return new Response(response.body, {
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "text/event-stream",
+              "X-Exo-Source": "ai",
+              "X-Exo-Provider": p.name,
+              "X-Exo-Tried": tried.join(","),
+            },
+          });
+        }
+        const reason = (await response.text().catch(() => "")).split(p.apiKey).join("[redacted]")
+          .replace(/\b(sk|gsk|xai|AIza)[-_A-Za-z0-9*.]{6,}/g, "[redacted]")
+          .replace(/\s+/g, " ").slice(0, 200);
+        console.error(`Exo provider ${p.name} failed: HTTP ${response.status} ${reason}`);
+        tried.push(`${p.name}=${response.status}`);
+      } catch (e) {
+        console.error(`Exo provider ${p.name} threw: ${e instanceof Error ? e.name + ": " + e.message.slice(0, 200) : "unknown"}`);
+        tried.push(`${p.name}=error`);
       }
-      return new Response(response.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Exo-Source": "ai" },
-      });
-    } catch (e) {
-      console.error("AI provider failed, using built-in advisor:", e);
-      return builtIn();
     }
+    return builtIn({ "X-Exo-Provider": "built-in", "X-Exo-Tried": tried.length ? tried.join(",") : "none-configured" });
   } catch (e) {
     console.error("ai-advisor error:", e);
     return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);

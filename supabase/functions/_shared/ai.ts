@@ -40,27 +40,39 @@ export async function chatCompletions(cfg: AiConfig, body: Record<string, unknow
   });
 }
 
+export type AdvisorProvider = AiConfig & { name: string };
+
 /**
- * Text-chat config for the Exo advisor: the paid/primary keys above first,
- * then free-tier OpenAI-compatible providers (Groq, Google Gemini).
+ * Every configured text-chat provider for the Exo advisor, in priority order:
+ * xai, openai, lovable, groq, gemini. The caller tries each until one succeeds.
  * Kept separate from getAiConfig() so vision callers (verify-identity) are unaffected.
  */
-export function getAdvisorAiConfig(): AiConfig | null {
-  const primary = getAiConfig();
-  if (primary) return primary;
-  const groq = Deno.env.get("GROQ_API_KEY");
-  if (groq) {
-    return { apiKey: groq, url: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile" };
+export function getAdvisorProviders(): AdvisorProvider[] {
+  const out: AdvisorProvider[] = [];
+  const env = (k: string) => (Deno.env.get(k) ?? "").trim();
+  const xai = env("XAI_API_KEY");
+  if (xai) out.push({ name: "xai", apiKey: xai, url: "https://api.x.ai/v1/chat/completions", model: "grok-4.3" });
+  const openai = env("OPENAI_API_KEY");
+  if (openai) out.push({ name: "openai", apiKey: openai, url: "https://api.openai.com/v1/chat/completions", model: "gpt-4o-mini" });
+  const lovable = env("LOVABLE_API_KEY");
+  if (lovable) {
+    out.push({
+      name: "lovable",
+      apiKey: lovable,
+      url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+      model: "google/gemini-3-flash-preview",
+    });
   }
-  const gemini = Deno.env.get("GEMINI_API_KEY");
+  const groq = env("GROQ_API_KEY");
+  if (groq) out.push({ name: "groq", apiKey: groq, url: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile" });
+  const gemini = env("GEMINI_API_KEY");
   if (gemini) {
-    return {
-      apiKey: gemini,
-      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-      // gemini-2.0-flash was shut down by Google on 2026-06-01. Use the rolling
-      // Flash alias (overridable via GEMINI_MODEL) so future retirements don't break Exo.
-      model: Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest",
-    };
+    // OpenAI-compatible endpoint + Bearer auth per https://ai.google.dev/gemini-api/docs/openai
+    // (gemini-2.0-flash was shut down 2026-06-01). Optional GEMINI_MODEL override first,
+    // then the current documented Flash model, then the rolling alias.
+    const url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    const models = [env("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-flash-latest"].filter(Boolean);
+    for (const model of [...new Set(models)]) out.push({ name: `gemini:${model}`, apiKey: gemini, url, model });
   }
-  return null;
+  return out;
 }
