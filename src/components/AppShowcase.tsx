@@ -15,10 +15,10 @@ import {
 
 /* ─── Screen definitions ─── */
 const SCREENS = [
-  { id: "dashboard", label: "Dashboard", icon: Wallet, color: "hsl(142 71% 45%)", hint: "Balance tracking (demo data)" },
+  { id: "dashboard", label: "Dashboard", icon: Wallet, color: "hsl(142 71% 45%)", hint: "Real-time balance tracking" },
   { id: "markets", label: "Markets", icon: TrendingUp, color: "hsl(217 91% 60%)", hint: "Live crypto & stock prices" },
   { id: "cards", label: "Cards", icon: CreditCard, color: "hsl(280 73% 58%)", hint: "Virtual & physical cards" },
-  { id: "savings", label: "Savings", icon: PiggyBank, color: "hsl(38 92% 50%)", hint: "Savings vault (6% APY target)" },
+  { id: "savings", label: "Savings", icon: PiggyBank, color: "hsl(38 92% 50%)", hint: "6% APY savings vault" },
   { id: "send", label: "Send", icon: Send, color: "hsl(190 90% 50%)", hint: "Instant global transfers" },
   { id: "analytics", label: "Analytics", icon: BarChart3, color: "hsl(280 70% 55%)", hint: "Smart spending insights" },
   { id: "wallet", label: "Crypto", icon: Coins, color: "hsl(38 80% 50%)", hint: "Multi-asset portfolio" },
@@ -170,7 +170,7 @@ function DashboardScreen() {
               <p className="text-[10px] text-white/50 font-medium">Total Balance</p>
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/10 border border-green-500/15">
                 <motion.div className="w-1 h-1 rounded-full bg-green-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
-                <span className="text-[7px] font-semibold text-green-400">Demo</span>
+                <span className="text-[7px] font-semibold text-green-400">Live</span>
               </div>
             </div>
             <p className="text-[26px] font-bold text-white tracking-tight font-mono">
@@ -191,7 +191,7 @@ function DashboardScreen() {
                 <div className="flex items-center gap-1.5 mb-1">
                   <PiggyBank className="w-2.5 h-2.5 text-green-400/60" />
                   <p className="text-[8px] text-green-400/60 font-medium">Savings</p>
-                  <span className="text-[6px] px-1 py-0 rounded-full bg-green-500/15 text-green-400 font-bold">6% target</span>
+                  <span className="text-[6px] px-1 py-0 rounded-full bg-green-500/15 text-green-400 font-bold">6%</span>
                 </div>
                 <p className="text-[12px] font-bold text-white font-mono">
                   ${savings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -573,7 +573,7 @@ function SavingsScreen() {
             <PiggyBank className="w-4 h-4 text-green-400" />
             <p className="text-[15px] font-bold text-white tracking-tight">Savings</p>
           </div>
-          <div className="px-2 py-1 rounded-full bg-green-500/10 border border-green-500/15 text-[9px] font-bold text-green-400">6% APY target</div>
+          <div className="px-2 py-1 rounded-full bg-green-500/10 border border-green-500/15 text-[9px] font-bold text-green-400">6% APY</div>
         </div>
       </Stagger>
 
@@ -1072,7 +1072,7 @@ function DesktopDashboardScreen() {
             <div className="flex items-center gap-1 mb-0.5">
               <PiggyBank className="w-2 h-2 text-green-400/50" />
               <p className="text-[8px] text-green-400/50 font-medium">Savings</p>
-              <span className="text-[6px] px-1 py-0 rounded-full bg-green-500/15 text-green-400 font-bold">6% target</span>
+              <span className="text-[6px] px-1 py-0 rounded-full bg-green-500/15 text-green-400 font-bold">6%</span>
             </div>
             <p className="text-[16px] font-bold text-white font-mono">
               ${savings.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -1396,7 +1396,7 @@ function DesktopSavingsScreen() {
             <PiggyBank className="w-4 h-4 text-green-400" />
             <p className="text-[14px] font-bold text-white tracking-tight">Savings</p>
           </div>
-          <div className="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/15 text-[8px] font-bold text-green-400">6% APY target</div>
+          <div className="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/15 text-[8px] font-bold text-green-400">6% APY</div>
         </div>
       </Stagger>
 
@@ -2033,10 +2033,10 @@ export function AppShowcase() {
 
   // Floating label configs per screen
   const floatingLabels: Record<string, { text: string; position: string }> = {
-    dashboard: { text: "Demo balance", position: "top-16 left-6" },
+    dashboard: { text: "Real-time balance", position: "top-16 left-6" },
     markets: { text: "Live prices", position: "top-16 right-6" },
     cards: { text: "Metal card", position: "top-28 left-6" },
-    savings: { text: "6% APY target", position: "top-16 right-6" },
+    savings: { text: "6% APY vault", position: "top-16 right-6" },
     send: { text: "Instant transfer", position: "top-16 left-6" },
     analytics: { text: "Smart insights", position: "top-16 right-6" },
     wallet: { text: "Multi-asset portfolio", position: "top-16 left-6" },
@@ -2340,7 +2340,7 @@ export function AppShowcase() {
             {activeIndex + 1}/{SCREENS.length}
           </span>
           <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
-            {deviceMode === "phone" ? "Demo data · Mobile" : "Demo data · Desktop"}
+            {deviceMode === "phone" ? "Mobile" : "Desktop"}
           </span>
         </motion.div>
       </AnimatePresence>

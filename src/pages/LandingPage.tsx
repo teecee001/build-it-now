@@ -67,7 +67,7 @@ const COMPARE_ROWS = [
   { feature: "Multi-currency balances", exo: true, typical: false },
   { feature: "Wallet + markets in one app", exo: true, typical: false },
   { feature: "Clear beta labeling", exo: true, typical: false },
-  { feature: "Demo balances, no real money", exo: true, typical: false },
+  { feature: "Paper balances for demos", exo: true, typical: false },
 ];
 
 export default function LandingPage() {
@@ -152,7 +152,7 @@ export default function LandingPage() {
             >
               <Gift className="w-3.5 h-3.5 text-accent" />
               <span className="text-xs font-semibold text-accent">
-                Get $25 in demo money when you sign up. No deposit required.
+                Get $25 when you sign up. No deposit required.
               </span>
             </motion.div>
 
@@ -180,8 +180,8 @@ export default function LandingPage() {
               variants={fadeUp}
               className="mt-4 text-sm sm:text-base text-muted-foreground max-w-md mx-auto lg:mx-0 leading-relaxed"
             >
-              Wallet, markets, savings, cards, and global send in one app. Now in beta: demo
-              balances, live market data, and the full product flow.
+              Wallet, markets, savings, cards, and global send in one app. Now in beta: paper
+              balances, live market data, real product feel.
             </motion.p>
 
             <motion.div
@@ -217,7 +217,7 @@ export default function LandingPage() {
               variants={fadeUp}
               className="mt-5 flex items-center justify-center lg:justify-start gap-4 flex-wrap"
             >
-              {["No real money needed", "Live markets", "Demo-friendly beta"].map((item) => (
+              {["Encrypted by design", "Live markets", "Demo-friendly beta"].map((item) => (
                 <div key={item} className="flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5 text-accent" />
                   <span className="text-[11px] text-muted-foreground font-medium">{item}</span>
@@ -302,7 +302,7 @@ export default function LandingPage() {
               <span className="text-muted-foreground">Nothing you don&apos;t.</span>
             </h2>
             <p className="text-sm text-muted-foreground mt-3 max-w-lg mx-auto">
-              From everyday balances to markets and send. All in one app instead of three separate
+              From everyday balances to markets and send. One product path instead of three separate
               apps.
             </p>
           </RevealSection>
@@ -338,7 +338,7 @@ export default function LandingPage() {
           <RevealSection className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Why try the beta</h2>
             <p className="text-sm text-muted-foreground mt-2">
-              Open to early users and anyone who wants a walkthrough. Honest about what works today.
+              Built for demos, investors, and early users. Honest about what works today.
             </p>
           </RevealSection>
 
@@ -433,7 +433,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Wallet, markets, and global send in one app. Demo beta with demo balances and live market data.
+                Wallet, markets, and global send in one app. Demo beta with paper balances and live market data.
               </p>
               <div className="flex items-center gap-3 mt-5">
                 {[
