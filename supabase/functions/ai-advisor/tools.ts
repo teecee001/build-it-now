@@ -35,9 +35,9 @@ export function toolDefs(withGoals: boolean) {
     fn("calculate", "Exact maths done in code. Always use this instead of doing arithmetic yourself.", {
       op: {
         type: "string",
-        enum: ["compound_savings", "monthly_needed", "budget_50_30_20", "convert", "arithmetic"],
+        enum: ["compound_savings", "monthly_needed", "budget_50_30_20", "convert", "arithmetic", "days_until"],
         description:
-          "compound_savings(principal, monthly, years, apy?) | monthly_needed(target, months, principal?, apy?) | budget_50_30_20(income) | convert(amount, from, to) | arithmetic(expression with + - * / ( ) and numbers)",
+          "compound_savings(principal, monthly, years, apy?) | monthly_needed(target, months, principal?, apy?) | budget_50_30_20(income) | convert(amount, from, to) | arithmetic(expression with + - * / ( ) and numbers) | days_until(date YYYY-MM-DD or MM-DD; a past date rolls to its next occurrence)",
       },
       principal: { type: "number" },
       monthly: { type: "number" },
@@ -50,6 +50,7 @@ export function toolDefs(withGoals: boolean) {
       from: { type: "string" },
       to: { type: "string" },
       expression: { type: "string" },
+      date: { type: "string", description: "For days_until: YYYY-MM-DD or MM-DD" },
     }, ["op"]),
   ];
   if (withGoals) {
@@ -189,6 +190,17 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
         if (f == null || t == null) return { op, error: `no rate for ${f == null ? from : to}` };
         const result = (amount * f) / t;
         return { op, amount, from, to, result: Number(result.toPrecision(10)), rate: Number((f / t).toPrecision(10)) };
+      }
+      if (op === "days_until") {
+        const today = todayISO(a.now ?? new Date(), a.timeZone ?? "UTC");
+        const m = /^(?:(\d{4})-)?(\d{2})-(\d{2})$/.exec(s("date").trim());
+        if (!m) return { op, error: "date must be YYYY-MM-DD or MM-DD" };
+        let y = m[1] ? Number(m[1]) : Number(today.slice(0, 4));
+        const md = `-${m[2]}-${m[3]}`;
+        while (`${y}${md}` < today) y++;
+        const target = `${y}${md}`;
+        const days = Math.round((Date.parse(`${target}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86400000);
+        return { op, today, target, days };
       }
       if (op === "arithmetic") {
         try {
