@@ -39,3 +39,26 @@ export async function chatCompletions(cfg: AiConfig, body: Record<string, unknow
     body: JSON.stringify({ model: cfg.model, ...body }),
   });
 }
+
+/**
+ * Text-chat config for the Exo advisor: the paid/primary keys above first,
+ * then free-tier OpenAI-compatible providers (Groq, Google Gemini).
+ * Kept separate from getAiConfig() so vision callers (verify-identity) are unaffected.
+ */
+export function getAdvisorAiConfig(): AiConfig | null {
+  const primary = getAiConfig();
+  if (primary) return primary;
+  const groq = Deno.env.get("GROQ_API_KEY");
+  if (groq) {
+    return { apiKey: groq, url: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile" };
+  }
+  const gemini = Deno.env.get("GEMINI_API_KEY");
+  if (gemini) {
+    return {
+      apiKey: gemini,
+      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      model: "gemini-2.0-flash",
+    };
+  }
+  return null;
+}
