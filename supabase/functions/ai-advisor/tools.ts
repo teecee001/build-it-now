@@ -1,6 +1,6 @@
 // Exo server-side tools. Account reads come from data already loaded through the
 // user's own RLS client; goals go through that same client. No service role here.
-import { type AccountData, APY_RATE, projectSavings, spendingByCategory } from "./rules.ts";
+import { type AccountData, APY_RATE, projectSavings, spendingByCategory, todayISO } from "./rules.ts";
 
 export type GoalsDb = {
   list(): Promise<{ data: unknown[] | null; error: { code?: string; message?: string } | null }>;
@@ -205,7 +205,7 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
       // Models don't know today's date; never save a goal in the past. Roll a past
       // date forward to its next occurrence (e.g. "Dec 31" -> this or next year).
       if (date) {
-        const today = (a.now ?? new Date()).toISOString().slice(0, 10);
+        const today = todayISO(a.now ?? new Date(), a.timeZone ?? "UTC");
         const md = date.slice(4);
         let y = Number(date.slice(0, 4));
         while (`${y}${md}` < today) y++;

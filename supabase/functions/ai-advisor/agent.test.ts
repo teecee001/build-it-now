@@ -108,3 +108,14 @@ Deno.test("set_goal never saves a past date", async () => {
   await runTool("set_goal", { goal: "x", target_date: "2026-03-01" }, { account: { ...account, now }, goals });
   assertEquals(saved.map((r) => r.target_date), ["2026-12-31", "2027-03-01"]);
 });
+
+Deno.test("date: intent, built-in answer, summary and goal rollover use the user's time zone", async () => {
+  const { detectIntent, ruleAnswer, todayText } = await import("./rules.ts");
+  const now = new Date("2026-10-13T21:06:00Z");
+  for (const q of ["Today's date?", "what is the date", "What day is it today?", "what's today?"]) assertEquals(detectIntent(q), "date", q);
+  for (const q of ["What's today's Bitcoin price?", "How can I grow my savings?"]) assert(detectIntent(q) !== "date", q);
+  assertEquals(todayText(now, "UTC"), "Tuesday, October 13, 2026");
+  assertEquals(todayText(now, "Asia/Tokyo"), "Wednesday, October 14, 2026");
+  assert(ruleAnswer("Today's date?", { ...account, now, timeZone: "UTC" }).includes("Tuesday, October 13, 2026"));
+  assert(accountSummary({ ...account, now, timeZone: "UTC" }).includes("Today: Tuesday, October 13, 2026 (2026-10-13"));
+});

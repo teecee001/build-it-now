@@ -76,7 +76,16 @@ export async function askExo(history: ChatMessage[]): Promise<AdvisorResult> {
         Authorization: `Bearer ${token}`,
         apikey: SUPABASE_PUBLISHABLE_KEY,
       },
-      body: JSON.stringify({ messages: toApiMessages(history) }),
+      body: JSON.stringify({
+        messages: toApiMessages(history),
+        timezone: (() => {
+          try {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+          } catch {
+            return undefined;
+          }
+        })(),
+      }),
     });
 
     if (resp.status === 401) return { ok: false, text: "Please sign in again, then try the advisor." };

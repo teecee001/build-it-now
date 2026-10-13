@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ADVISOR_SYSTEM, chatCompletions, getAdvisorProviders } from "../_shared/ai.ts";
-import { type AccountData, type Quote, accountSummary, ruleAnswer } from "./rules.ts";
+import { type AccountData, type Quote, accountSummary, detectIntent, ruleAnswer, safeTimeZone, todayISO, todayText } from "./rules.ts";
 import { type CallResult, runAgent } from "./agent.ts";
 import type { GoalsDb } from "./tools.ts";
 
@@ -13,8 +13,10 @@ const EXO_DATA_RULES = [
   "Only state dollar amounts and percentages that come from tool results or the account summary.",
   "Only call set_goal when the user explicitly asks to save a goal.",
 ].join("\n");
-const todayLine = () =>
-  `Today's date is ${new Date().toISOString().slice(0, 10)} (UTC). Resolve relative dates like "by December 31" to the next such date, never one in the past.`;
+const todayLine = (a: AccountData) =>
+  `Today's date is ${todayText(a.now ?? new Date(), a.timeZone ?? "UTC")} (${todayISO(a.now ?? new Date(), a.timeZone ?? "UTC")}, user's time zone ${
+    a.timeZone ?? "UTC"
+  }). This is authoritative and overrides your training data. Resolve relative dates like "by December 31" to the next such date, never one in the past.`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,7 +126,7 @@ serve(async (req) => {
     const { data: userData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !userData.user) return json({ error: "Sign in required" }, 401);
 
-    const { messages } = await req.json();
+    const { messages, timezone } = await req.json();
     if (!Array.isArray(messages) || messages.length > 40) return json({ error: "Invalid messages" }, 400);
 
     const lastUser = [...messages].reverse().find((m) => m?.role === "user");
@@ -135,14 +137,22 @@ serve(async (req) => {
       userData.user.id,
       (userData.user.user_metadata?.full_name as string | undefined) ?? undefined,
     );
+    account.now = new Date();
+    account.timeZone = safeTimeZone(timezone);
     const builtIn = (extra: Record<string, string> = {}) => sseAnswer(ruleAnswer(question, account), extra);
+
+    // Date questions are answered exactly from the server clock in the user's time zone.
+    if (detectIntent(question) === "date") {
+      return builtIn({ "X-Exo-Provider": "built-in", "X-Exo-Tried": "date-shortcut", "X-Exo-Tools": "none", "X-Exo-Factcheck": "pass" });
+    }
 
     const providers = getAdvisorProviders();
     const tried: string[] = [];
     const summary = accountSummary(account);
     const baseMessages = [
+      { role: "system", content: todayLine(account) },
       { role: "system", content: ADVISOR_SYSTEM },
-      { role: "system", content: `${EXO_DATA_RULES}\n${todayLine()}` },
+      { role: "system", content: EXO_DATA_RULES },
       {
         role: "system",
         content:
