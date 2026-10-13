@@ -19,7 +19,7 @@ const PALETTE = [
   "bg-blue-500/25 text-blue-400",
 ];
 
-/** Stock ticker → company domain */
+/** Stock ticker → company domain (expanded) */
 const STOCK_DOMAIN: Record<string, string> = {
   AAPL: "apple.com",
   MSFT: "microsoft.com",
@@ -61,9 +61,19 @@ const STOCK_DOMAIN: Record<string, string> = {
   VZ: "verizon.com",
   UBER: "uber.com",
   SQ: "block.xyz",
+  ORCL: "oracle.com",
+  IBM: "ibm.com",
+  QCOM: "qualcomm.com",
+  TXN: "ti.com",
+  AMAT: "appliedmaterials.com",
+  NOW: "servicenow.com",
+  INTU: "intuit.com",
+  SNOW: "snowflake.com",
+  PLTR: "palantir.com",
+  COIN: "coinbase.com",
 };
 
-/** Index symbol → operator brand domain (official logos) */
+/** Index symbol → operator brand domain */
 const INDEX_DOMAIN: Record<string, string> = {
   SPX: "spglobal.com",
   DJI: "dowjones.com",
@@ -102,7 +112,7 @@ const FOREX_FLAG: Record<string, string> = {
   NZD: "nz",
 };
 
-/** Symbol aliases for icon packs that use older tickers */
+/** Symbol aliases for icon packs */
 const CRYPTO_ICON_ALIAS: Record<string, string> = {
   MATIC: "matic",
   POL: "matic",
@@ -142,7 +152,6 @@ const CRYPTO_ICON_ALIAS: Record<string, string> = {
 type Category = "crypto" | "stocks" | "forex" | "commodities" | "indices";
 
 function domainLogoUrls(domain: string): string[] {
-  // Clearbit is dead (Dec 2025). Use working free providers.
   return [
     `https://logos-api.apistemic.com/domain:${domain}`,
     `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
@@ -225,14 +234,13 @@ export function AssetLogo({
           referrerPolicy="no-referrer"
           onError={() => {
             if (idx < urls.length - 1) setIdx((i) => i + 1);
-            else setIdx(urls.length); // force fallback
+            else setIdx(urls.length);
           }}
         />
       </div>
     );
   }
 
-  // Letter fallback when all URLs exhausted or none available
   return (
     <div
       className={`rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${palette} ${className}`}
