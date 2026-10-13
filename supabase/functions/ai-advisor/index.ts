@@ -9,7 +9,7 @@ import type { GoalsDb } from "./tools.ts";
 const EXO_DATA_RULES = [
   "Account data (balances, transactions, bills, savings, holdings, prices, goals) comes from ExoSky's records through your tools and the account summary, NOT from the user.",
   'Never say "you mentioned", "you said" or "you told me" about account data; say "your account shows" instead.',
-  "Get figures by calling tools. Use the calculate tool for every calculation (interest, projections, budgets, conversions, totals); never do arithmetic yourself.",
+  "Get figures by calling tools. Use the calculate tool for every calculation (interest, projections, budgets, conversions, totals, and days between dates via op days_until); never do arithmetic yourself.",
   "Only state dollar amounts and percentages that come from tool results or the account summary.",
   "Only call set_goal when the user explicitly asks to save a goal.",
 ].join("\n");

@@ -119,3 +119,13 @@ Deno.test("date: intent, built-in answer, summary and goal rollover use the user
   assert(ruleAnswer("Today's date?", { ...account, now, timeZone: "UTC" }).includes("Tuesday, October 13, 2026"));
   assert(accountSummary({ ...account, now, timeZone: "UTC" }).includes("Today: Tuesday, October 13, 2026 (2026-10-13"));
 });
+
+Deno.test("days_until is exact and day counts are fact-checked", async () => {
+  const now = new Date("2026-10-13T21:30:00Z");
+  const r = await runTool("calculate", { op: "days_until", date: "12-31" }, { account: { ...account, now, timeZone: "UTC" } }) as { days: number; target: string };
+  assertEquals([r.days, r.target], [79, "2026-12-31"]);
+  const past = await runTool("calculate", { op: "days_until", date: "2026-01-01" }, { account: { ...account, now, timeZone: "UTC" } }) as { target: string };
+  assertEquals(past.target, "2027-01-01");
+  assertEquals(unsupportedFigures("There are 109 days left.", [JSON.stringify(r)]).map((f) => f.raw), ["109 days"]);
+  assertEquals(unsupportedFigures("There are 79 days left.", [JSON.stringify(r)]).length, 0);
+});

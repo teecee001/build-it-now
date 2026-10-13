@@ -1,7 +1,7 @@
 // Fact-check: every $ amount and % in an answer must be backed by data Exo actually has.
 // Pure functions so they can be tested without Deno/network.
 
-export type Figure = { raw: string; value: number; kind: "money" | "pct" };
+export type Figure = { raw: string; value: number; kind: "money" | "pct" | "days" };
 
 export function extractFigures(text: string): Figure[] {
   const out: Figure[] = [];
@@ -12,6 +12,9 @@ export function extractFigures(text: string): Figure[] {
   }
   for (const m of text.matchAll(/([+-−]?\d+(?:\.\d+)?)\s?%/g)) {
     out.push({ raw: m[0].trim(), value: Math.abs(Number(m[1].replace("−", "-"))), kind: "pct" });
+  }
+  for (const m of text.matchAll(/\b(\d[\d,]*)\s+days?\b/gi)) {
+    out.push({ raw: m[0].trim(), value: Number(m[1].replace(/,/g, "")), kind: "days" });
   }
   return out;
 }
