@@ -101,6 +101,21 @@ const COMMODITY_DOMAIN: Record<string, string> = {
   CORN: "cmegroup.com",
 };
 
+// Commodity glyphs: exchange/org favicons (CME, ICE, ...) were generic
+// placeholders, and several returned blank tiles.
+const COMMODITY_GLYPH: Record<string, { glyph: string; bg: string }> = {
+  GOLD: { glyph: "🥇", bg: "bg-amber-400/20" },
+  SILVER: { glyph: "🥈", bg: "bg-slate-300/20" },
+  OIL: { glyph: "🛢️", bg: "bg-zinc-500/25" },
+  BRENT: { glyph: "🛢️", bg: "bg-stone-500/25" },
+  NATGAS: { glyph: "🔥", bg: "bg-sky-500/20" },
+  COPPER: { glyph: "🔶", bg: "bg-orange-500/20" },
+  PLAT: { glyph: "💍", bg: "bg-slate-400/20" },
+  PALL: { glyph: "💎", bg: "bg-indigo-400/20" },
+  WHEAT: { glyph: "🌾", bg: "bg-yellow-500/20" },
+  CORN: { glyph: "🌽", bg: "bg-lime-500/20" },
+};
+
 const FOREX_FLAG: Record<string, string> = {
   EUR: "eu",
   GBP: "gb",
@@ -216,6 +231,20 @@ export function AssetLogo({
   const dim = { width: size, height: size };
 
   const src = urls[idx];
+  const commodity = category === "commodities" ? COMMODITY_GLYPH[symbol] : undefined;
+
+  if (commodity) {
+    return (
+      <div
+        className={`rounded-full flex items-center justify-center shrink-0 ${commodity.bg} ${className}`}
+        style={{ ...dim, fontSize: Math.round(size * 0.5) }}
+        title={symbol}
+        aria-label={symbol}
+      >
+        <span aria-hidden>{commodity.glyph}</span>
+      </div>
+    );
+  }
 
   if (src) {
     return (
