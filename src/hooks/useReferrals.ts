@@ -27,13 +27,24 @@ export function useReferrals() {
         .eq("id", user.id)
         .maybeSingle();
       if (error) throw error;
-      if (data && !data.referral_code) {
-        const code = "EXO" + Math.random().toString(36).substring(2, 8).toUpperCase();
-        await supabase.from("profiles").update({ referral_code: code }).eq("id", user.id);
-        return { referral_code: code };
+      if (data?.referral_code) return data;
+      if (!data) throw new Error("Profile not found");
+      // No code yet (older profiles created before the trigger): generate and persist one,
+      // retrying on a unique-constraint clash. Only return a code that was actually saved.
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const code = "EXO" + Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, "0");
+        const { data: updated, error: updateError } = await supabase
+          .from("profiles")
+          .update({ referral_code: code })
+          .eq("id", user.id)
+          .select("referral_code")
+          .maybeSingle();
+        if (!updateError && updated?.referral_code) return updated;
+        if (updateError && updateError.code !== "23505") throw updateError;
       }
-      return data;
+      throw new Error("Could not generate referral code");
     },
+    retry: 3,
     enabled: !!user,
   });
 
