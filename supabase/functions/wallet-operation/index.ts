@@ -470,7 +470,7 @@ let usdRatesCache: { at: number; rates: Record<string, number> } | null = null;
 const COINGECKO_IDS: Record<string, string> = {
   BTC: "bitcoin", ETH: "ethereum", USDT: "tether", BNB: "binancecoin",
   XRP: "ripple", ADA: "cardano", DOGE: "dogecoin", SOL: "solana",
-  TRX: "tron", DOT: "polkadot", MATIC: "matic-network", LTC: "litecoin",
+  TRX: "tron", DOT: "polkadot", MATIC: "polygon-ecosystem-token", LTC: "litecoin",
   SHIB: "shiba-inu", AVAX: "avalanche-2", UNI: "uniswap", LINK: "chainlink",
   ATOM: "cosmos", XMR: "monero", ETC: "ethereum-classic", BCH: "bitcoin-cash",
   XLM: "stellar", ALGO: "algorand", FIL: "filecoin", VET: "vechain",
