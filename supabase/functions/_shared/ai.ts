@@ -69,9 +69,10 @@ export function getAdvisorProviders(): AdvisorProvider[] {
   if (gemini) {
     // OpenAI-compatible endpoint + Bearer auth per https://ai.google.dev/gemini-api/docs/openai
     // (gemini-2.0-flash was shut down 2026-06-01). Optional GEMINI_MODEL override first,
-    // then the current documented Flash model, then the rolling alias.
+    // then the current documented Flash model, the rolling alias, and lighter/older
+    // models that stay available when the newest Flash returns 503 (overloaded).
     const url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-    const models = [env("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-flash-latest"].filter(Boolean);
+    const models = [env("GEMINI_MODEL"), "gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite", "gemini-2.5-flash"].filter(Boolean);
     for (const model of [...new Set(models)]) out.push({ name: `gemini:${model}`, apiKey: gemini, url, model });
   }
   return out;
