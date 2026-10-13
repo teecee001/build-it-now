@@ -13,6 +13,8 @@ const EXO_DATA_RULES = [
   "Only state dollar amounts and percentages that come from tool results or the account summary.",
   "Only call set_goal when the user explicitly asks to save a goal.",
 ].join("\n");
+const todayLine = () =>
+  `Today's date is ${new Date().toISOString().slice(0, 10)} (UTC). Resolve relative dates like "by December 31" to the next such date, never one in the past.`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -140,7 +142,7 @@ serve(async (req) => {
     const summary = accountSummary(account);
     const baseMessages = [
       { role: "system", content: ADVISOR_SYSTEM },
-      { role: "system", content: EXO_DATA_RULES },
+      { role: "system", content: `${EXO_DATA_RULES}\n${todayLine()}` },
       {
         role: "system",
         content:

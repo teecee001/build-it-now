@@ -201,7 +201,16 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
     }
     case "set_goal": {
       if (!ctx.goals) return { error: "goals not available" };
-      const date = /^\d{4}-\d{2}-\d{2}$/.test(s("target_date")) ? s("target_date") : null;
+      let date = /^\d{4}-\d{2}-\d{2}$/.test(s("target_date")) ? s("target_date") : null;
+      // Models don't know today's date; never save a goal in the past. Roll a past
+      // date forward to its next occurrence (e.g. "Dec 31" -> this or next year).
+      if (date) {
+        const today = (a.now ?? new Date()).toISOString().slice(0, 10);
+        const md = date.slice(4);
+        let y = Number(date.slice(0, 4));
+        while (`${y}${md}` < today) y++;
+        date = `${y}${md}`;
+      }
       const amt = typeof args.target_amount === "number" ? args.target_amount : null;
       const { data, error } = await ctx.goals.insert({ goal: s("goal").slice(0, 300), target_amount: amt, target_date: date });
       return error ? { error: "could not save goal" } : { saved: data };

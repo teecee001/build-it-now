@@ -99,3 +99,12 @@ Deno.test("calculate + factcheck helpers", async () => {
   assertEquals(unsupportedFigures("BTC at $83.4k, about $83,446 and 6% APY", ["83446", "6"]).length, 0);
   assertEquals(unsupportedFigures("$12,345", ["24"]).map((f) => f.raw), ["$12,345"]);
 });
+
+Deno.test("set_goal never saves a past date", async () => {
+  const saved: { target_date: string | null }[] = [];
+  const goals = { list: async () => ({ data: saved, error: null }), insert: async (row: { target_date: string | null }) => (saved.push(row), { data: row, error: null }) };
+  const now = new Date("2026-10-13T12:00:00Z");
+  await runTool("set_goal", { goal: "Save $500", target_amount: 500, target_date: "2024-12-31" }, { account: { ...account, now }, goals });
+  await runTool("set_goal", { goal: "x", target_date: "2026-03-01" }, { account: { ...account, now }, goals });
+  assertEquals(saved.map((r) => r.target_date), ["2026-12-31", "2027-03-01"]);
+});

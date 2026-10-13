@@ -202,7 +202,8 @@ export function AppLayout() {
         </div>
       </main>
 
-      <BetaFeedback />
+      {/* Hidden on /advisor: the floating button overlaps the chat composer's send button. */}
+      {location.pathname !== "/advisor" && <BetaFeedback />}
       <OnboardingTutorial />
     </div>
   );
