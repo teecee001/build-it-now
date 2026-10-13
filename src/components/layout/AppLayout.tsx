@@ -11,6 +11,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,7 +44,8 @@ export function AppLayout() {
   const isAdmin = useIsAdmin();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const { profile } = useProfile();
+  const displayName = profile?.full_name?.trim() || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
   return (

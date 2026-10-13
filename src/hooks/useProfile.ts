@@ -39,6 +39,13 @@ export function useProfile() {
         .update(updates)
         .eq("id", user.id);
       if (error) throw error;
+      // Keep auth user_metadata in sync so any reader of the session sees the same name.
+      if (updates.full_name !== undefined) {
+        const { error: metaError } = await supabase.auth.updateUser({
+          data: { full_name: updates.full_name, display_name: updates.full_name },
+        });
+        if (metaError) console.warn("Failed to sync auth metadata:", metaError.message);
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profile"] }),
   });
