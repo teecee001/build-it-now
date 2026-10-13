@@ -52,8 +52,8 @@ export default function Settings() {
     setIsSaving(true);
     try {
       const updates: Record<string, string> = {};
-      if (fullName !== null) updates.full_name = fullName;
-      if (handle !== null) updates.handle = handle;
+      if (fullName !== null && fullName !== (profile?.full_name ?? "")) updates.full_name = fullName;
+      if (handle !== null && handle !== (profile?.handle ?? "")) updates.handle = handle;
       if (Object.keys(updates).length === 0) { toast.info("No changes to save"); return; }
       await updateProfile.mutateAsync(updates);
       toast.success("Profile updated");
@@ -101,7 +101,9 @@ export default function Settings() {
     setDeviceName("");
   };
 
-  const hasChanges = fullName !== null || handle !== null;
+  const hasChanges =
+    (fullName !== null && fullName !== (profile?.full_name ?? "")) ||
+    (handle !== null && handle !== (profile?.handle ?? ""));
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
@@ -158,11 +160,11 @@ export default function Settings() {
           <div className="space-y-3">
             <div>
               <label className="text-xs text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> Display Name</label>
-              <Input value={displayName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" className="mt-1 bg-secondary border-border" />
+              <Input value={displayName} onChange={(e) => setFullName(e.target.value)} onInput={(e) => setFullName(e.currentTarget.value)} placeholder="Your full name" className="mt-1 bg-secondary border-border" />
             </div>
             <div>
               <label className="text-xs text-muted-foreground flex items-center gap-1"><AtSign className="w-3 h-3" /> Handle</label>
-              <Input value={displayHandle} onChange={(e) => setHandle(e.target.value)} placeholder="@yourhandle" className="mt-1 bg-secondary border-border font-mono" />
+              <Input value={displayHandle} onChange={(e) => setHandle(e.target.value)} onInput={(e) => setHandle(e.currentTarget.value)} placeholder="@yourhandle" className="mt-1 bg-secondary border-border font-mono" />
             </div>
             <div>
               <label className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" /> Email</label>

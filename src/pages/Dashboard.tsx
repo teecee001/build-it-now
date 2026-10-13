@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { useActiveCurrency } from "@/hooks/useActiveCurrency";
 import { useWallet } from "@/hooks/useWallet";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -25,7 +26,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const { profile } = useProfile();
+  const displayName = profile?.full_name?.trim() || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
   const apyRate = 6.0;
