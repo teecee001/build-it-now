@@ -28,7 +28,29 @@ export type AccountData = {
   cryptoQuotes: Record<string, Quote>;
   stockQuotes: Record<string, Quote>;
   now?: Date;
+  timeZone?: string; // user's IANA time zone (from the browser), defaults to UTC
 };
+
+/** Validated IANA time zone, falling back to UTC. */
+export function safeTimeZone(tz: unknown): string {
+  if (typeof tz !== "string" || tz.length > 64) return "UTC";
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return tz;
+  } catch {
+    return "UTC";
+  }
+}
+
+/** e.g. "Tuesday, October 13, 2026" in the user's time zone. */
+export function todayText(now = new Date(), timeZone = "UTC"): string {
+  return new Intl.DateTimeFormat("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone }).format(now);
+}
+
+/** e.g. "2026-10-13" in the user's time zone. */
+export function todayISO(now = new Date(), timeZone = "UTC"): string {
+  return new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone }).format(now);
+}
 
 export type Intent =
   | "greeting"
@@ -44,6 +66,7 @@ export type Intent =
   | "dca"
   | "risk"
   | "longterm"
+  | "date"
   | "general";
 
 const DISCLAIMER = "_Not financial advice. Projections are estimates and the APY can change._";
@@ -69,6 +92,7 @@ function pct(n: number): string {
 export function detectIntent(text: string): Intent {
   const t = text.toLowerCase();
   const has = (...w: string[]) => w.some((x) => new RegExp(`\\b${x}`).test(t));
+  if (/\b(today'?s date|what('?s| is) (the |today'?s )?date|what day is (it|today)|which day is (it|today)|current date|date today)\b/.test(t) || /^what('?s| is) today\s*\??$/.test(t.trim())) return "date";
   if (has("how (do|can|to) .*send", "send money", "transfer", "pay (a|my) friend", "p2p") || (has("send") && has("how"))) return "send";
   if (has("deposit", "add money", "add funds", "top up", "fund my", "load")) return "deposit";
   if (has("dollar.cost", "dca\\b", "averaging")) return "dca";
@@ -319,6 +343,7 @@ export function ruleAnswer(question: string, d: AccountData): string {
     case "bills": return billsAnswer(d);
     case "crypto": return quotesAnswer("Crypto prices", d.cryptoQuotes, ["BTC", "ETH", "SOL", "XRP", "BNB", "DOGE"], d.crypto, question);
     case "stocks": return quotesAnswer("Stock prices", d.stockQuotes, ["AAPL", "NVDA", "MSFT", "TSLA", "AMZN", "GOOGL"], d.stocks, question);
+    case "date": return `Today is **${todayText(d.now ?? new Date(), d.timeZone ?? "UTC")}**.`;
     case "send": return SEND_HOWTO;
     case "deposit": return DEPOSIT_HOWTO;
     case "dca": return dcaAnswer(d);
@@ -344,6 +369,7 @@ Try asking me:
 export function accountSummary(d: AccountData): string {
   const { total, income, categories } = spendingByCategory(d.transactions, 30, d.now);
   const parts = [
+    `Today: ${todayText(d.now ?? new Date(), d.timeZone ?? "UTC")} (${todayISO(d.now ?? new Date(), d.timeZone ?? "UTC")}, time zone ${d.timeZone ?? "UTC"})`,
     `User: ${d.name ?? "unknown"}`,
     `Wallets: ${d.wallets.map((w) => `${w.currency} available ${w.balance}, savings ${w.savings_balance}`).join("; ") || "none"}`,
     `Savings APY: ${APY_RATE}%`,
