@@ -48,7 +48,7 @@ const INDEX_YAHOO: Record<string, string> = {
 };
 
 const CRYPTO_IDS =
-  "bitcoin,ethereum,tether,binancecoin,ripple,cardano,solana,dogecoin,matic-network,polkadot,shiba-inu,tron,avalanche-2,chainlink,uniswap,cosmos,litecoin,stellar,bitcoin-cash,algorand,vechain,filecoin,internet-computer,aptos,hedera-hashgraph,near,quant-network,arbitrum,optimism,the-graph,maker,aave,blockstack,elrond-erd-2,the-sandbox,decentraland,axie-infinity,theta-token,fantom,tezos";
+  "bitcoin,ethereum,tether,binancecoin,ripple,cardano,solana,dogecoin,polygon-ecosystem-token,polkadot,shiba-inu,tron,avalanche-2,chainlink,uniswap,cosmos,litecoin,stellar,bitcoin-cash,algorand,vechain,filecoin,internet-computer,aptos,hedera-hashgraph,near,quant-network,arbitrum,optimism,the-graph,maker,aave,blockstack,elrond-erd-2,the-sandbox,decentraland,axie-infinity,theta-token,fantom,tezos";
 
 const CRYPTO_CODE: Record<string, string> = {
   bitcoin: "BTC",
@@ -59,7 +59,7 @@ const CRYPTO_CODE: Record<string, string> = {
   cardano: "ADA",
   solana: "SOL",
   dogecoin: "DOGE",
-  "matic-network": "MATIC",
+  "polygon-ecosystem-token": "MATIC",
   polkadot: "DOT",
   "shiba-inu": "SHIB",
   tron: "TRX",
