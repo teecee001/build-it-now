@@ -11,7 +11,7 @@ const EXO_DATA_RULES = [
   'Never say "you mentioned", "you said" or "you told me" about account data; say "your account shows" instead.',
   "Get figures by calling tools. Use the calculate tool for every calculation (interest, projections, budgets, conversions, totals, and days between dates via op days_until); never do arithmetic yourself.",
   "Only state dollar amounts and percentages that come from tool results or the account summary.",
-  "Only call set_goal when the user explicitly asks to save a goal.",
+  "Only call set_goal when the user explicitly asks to save a goal. Only call delete_goal when the user explicitly asks to remove a goal; call list_goals first to get its id, and never delete goals the user didn't ask to remove.",
 ].join("\n");
 const todayLine = (a: AccountData) =>
   `Today's date is ${todayText(a.now ?? new Date(), a.timeZone ?? "UTC")} (${todayISO(a.now ?? new Date(), a.timeZone ?? "UTC")}, user's time zone ${
@@ -88,9 +88,11 @@ async function loadAccount(token: string, userId: string, fallbackName?: string)
     db.from("exo_goals").select("id").limit(1),
   ]);
   const goals: GoalsDb | undefined = goalsProbe.error ? undefined : {
-    list: async () => await db.from("exo_goals").select("goal, target_amount, target_date, created_at").eq("user_id", userId)
+    list: async () => await db.from("exo_goals").select("id, goal, target_amount, target_date, created_at").eq("user_id", userId)
       .order("created_at", { ascending: false }).limit(20),
-    insert: async (row) => await db.from("exo_goals").insert({ ...row, user_id: userId }).select("goal, target_amount, target_date").single(),
+    insert: async (row) => await db.from("exo_goals").insert({ ...row, user_id: userId }).select("id, goal, target_amount, target_date").single(),
+    // RLS restricts deletes to the owner; the user_id filter is a second guard.
+    remove: async (id) => await db.from("exo_goals").delete().eq("id", id).eq("user_id", userId).select("id"),
   };
   const account: AccountData = {
     name: profile.data?.full_name ?? fallbackName ?? null,
