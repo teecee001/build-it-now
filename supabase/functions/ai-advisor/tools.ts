@@ -3,6 +3,7 @@
 import { type AccountData, APY_RATE, projectSavings, spendingByCategory, todayISO } from "./rules.ts";
 
 export type GoalsDb = {
+  remove(id: string): Promise<{ data: unknown[] | null; error: { code?: string; message?: string } | null }>;
   list(): Promise<{ data: unknown[] | null; error: { code?: string; message?: string } | null }>;
   insert(row: { goal: string; target_amount: number | null; target_date: string | null }): Promise<
     { data: unknown | null; error: { code?: string; message?: string } | null }
@@ -60,7 +61,10 @@ export function toolDefs(withGoals: boolean) {
         target_amount: { type: "number" },
         target_date: { type: "string", description: "YYYY-MM-DD" },
       }, ["goal"]),
-      fn("list_goals", "The user's saved goals.", {}),
+      fn("list_goals", "The user's saved goals, each with its id.", {}),
+      fn("delete_goal", "Delete one of the user's saved goals by its id from list_goals. Only when the user explicitly asks to remove a goal.", {
+        goal_id: { type: "string", description: "The goal's id (uuid) from list_goals." },
+      }, ["goal_id"]),
     );
   }
   return defs;
@@ -231,6 +235,14 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
       if (!ctx.goals) return { error: "goals not available" };
       const { data, error } = await ctx.goals.list();
       return error ? { error: "could not load goals" } : { goals: data ?? [] };
+    }
+    case "delete_goal": {
+      if (!ctx.goals) return { error: "goals not available" };
+      const id = s("goal_id").trim();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return { error: "invalid goal_id; call list_goals for ids" };
+      const { data, error } = await ctx.goals.remove(id);
+      if (error) return { error: "could not delete goal" };
+      return (data ?? []).length ? { deleted: id } : { error: "no goal with that id" };
     }
     default:
       return { error: `unknown tool ${name}` };

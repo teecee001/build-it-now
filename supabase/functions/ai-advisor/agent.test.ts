@@ -82,7 +82,7 @@ Deno.test("http error is reported", async () => {
 
 Deno.test("goals tools only offered when table exists; work through db", async () => {
   const rows: unknown[] = [];
-  const goals = { list: async () => ({ data: rows, error: null }), insert: async (row: unknown) => (rows.push(row), { data: row, error: null }) };
+  const goals = { list: async () => ({ data: rows, error: null }), insert: async (row: unknown) => (rows.push(row), { data: row, error: null }), remove: async () => ({ data: [], error: null }) };
   await runTool("set_goal", { goal: "Emergency fund", target_amount: 500, target_date: "2027-06-01" }, { account, goals });
   const listed = await runTool("list_goals", {}, { account, goals }) as { goals: unknown[] };
   assertEquals(listed.goals.length, 1);
@@ -102,7 +102,7 @@ Deno.test("calculate + factcheck helpers", async () => {
 
 Deno.test("set_goal never saves a past date", async () => {
   const saved: { target_date: string | null }[] = [];
-  const goals = { list: async () => ({ data: saved, error: null }), insert: async (row: { target_date: string | null }) => (saved.push(row), { data: row, error: null }) };
+  const goals = { list: async () => ({ data: saved, error: null }), insert: async (row: { target_date: string | null }) => (saved.push(row), { data: row, error: null }), remove: async () => ({ data: [], error: null }) };
   const now = new Date("2026-10-13T12:00:00Z");
   await runTool("set_goal", { goal: "Save $500", target_amount: 500, target_date: "2024-12-31" }, { account: { ...account, now }, goals });
   await runTool("set_goal", { goal: "x", target_date: "2026-03-01" }, { account: { ...account, now }, goals });
@@ -128,4 +128,28 @@ Deno.test("days_until is exact and day counts are fact-checked", async () => {
   assertEquals(past.target, "2027-01-01");
   assertEquals(unsupportedFigures("There are 109 days left.", [JSON.stringify(r)]).map((f) => f.raw), ["109 days"]);
   assertEquals(unsupportedFigures("There are 79 days left.", [JSON.stringify(r)]).length, 0);
+});
+
+Deno.test("delete_goal: by id, owner rows only, validates ids, offered with goals", async () => {
+  const { toolDefs } = await import("./tools.ts");
+  const A = "11111111-1111-4111-8111-111111111111", B = "22222222-2222-4222-8222-222222222222";
+  let rows = [{ id: A, goal: "old" }, { id: B, goal: "keep" }];
+  const goals = {
+    list: async () => ({ data: rows, error: null }),
+    insert: async (row: unknown) => ({ data: row, error: null }),
+    remove: async (id: string) => {
+      const hit = rows.filter((r) => r.id === id);
+      rows = rows.filter((r) => r.id !== id);
+      return { data: hit.map((r) => ({ id: r.id })), error: null };
+    },
+  };
+  const listed = await runTool("list_goals", {}, { account, goals }) as { goals: { id: string }[] };
+  assertEquals(listed.goals.map((g) => g.id), [A, B]);
+  assertEquals(await runTool("delete_goal", { goal_id: A }, { account, goals }), { deleted: A });
+  assertEquals(rows.map((r) => r.id), [B]);
+  assert((await runTool("delete_goal", { goal_id: A }, { account, goals }) as { error: string }).error);
+  assert((await runTool("delete_goal", { goal_id: "1; drop table" }, { account, goals }) as { error: string }).error);
+  assert((await runTool("delete_goal", { goal_id: B }, { account }) as { error: string }).error);
+  const names = (w: boolean) => toolDefs(w).map((d) => d.function.name);
+  assert(names(true).includes("delete_goal") && !names(false).includes("delete_goal"));
 });
