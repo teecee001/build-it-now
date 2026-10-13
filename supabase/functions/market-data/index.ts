@@ -177,52 +177,41 @@ async function fetchCrypto(): Promise<Record<string, Quote>> {
 }
 
 async function fetchForex(): Promise<Record<string, Quote>> {
-  const res = await fetch("https://api.frankfurter.app/latest?from=USD");
+  // ECB publishes one fix per business day. "latest" is often the same day as
+  // "yesterday" (weekends, before the ~16:00 CET publish), which made every
+  // pair show 0.00%. Pull a 3-week series and compare the last two fixes.
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() - 21);
+  const res = await fetch(`https://api.frankfurter.app/${start.toISOString().slice(0, 10)}..?from=USD`);
   if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
   const data = await res.json();
-  const rates = data.rates as Record<string, number>;
+  const series = data.rates as Record<string, Record<string, number>>;
+  const days = Object.keys(series ?? {}).sort();
+  if (days.length === 0) throw new Error("Frankfurter: empty series");
 
-  const pairs: { symbol: string; price: number }[] = [];
-  if (rates.EUR) pairs.push({ symbol: "EUR/USD", price: 1 / rates.EUR });
-  if (rates.GBP) pairs.push({ symbol: "GBP/USD", price: 1 / rates.GBP });
-  if (rates.JPY) pairs.push({ symbol: "USD/JPY", price: rates.JPY });
-  if (rates.CHF) pairs.push({ symbol: "USD/CHF", price: rates.CHF });
-  if (rates.AUD) pairs.push({ symbol: "AUD/USD", price: 1 / rates.AUD });
-  if (rates.CAD) pairs.push({ symbol: "USD/CAD", price: rates.CAD });
-  if (rates.NZD) pairs.push({ symbol: "NZD/USD", price: 1 / rates.NZD });
-  if (rates.EUR && rates.GBP) pairs.push({ symbol: "EUR/GBP", price: rates.GBP / rates.EUR });
-  if (rates.EUR && rates.JPY) pairs.push({ symbol: "EUR/JPY", price: rates.JPY / rates.EUR });
-  if (rates.GBP && rates.JPY) pairs.push({ symbol: "GBP/JPY", price: rates.JPY / rates.GBP });
+  const pairPrice = (symbol: string, r: Record<string, number>): number | null => {
+    const [base, quote] = symbol.split("/");
+    const b = base === "USD" ? 1 : r[base];
+    const q = quote === "USD" ? 1 : r[quote];
+    if (!b || !q) return null;
+    return q / b;
+  };
 
-  let prevRates: Record<string, number> = {};
-  try {
-    const d = new Date();
-    d.setUTCDate(d.getUTCDate() - 1);
-    const ymd = d.toISOString().slice(0, 10);
-    const prevRes = await fetch(`https://api.frankfurter.app/${ymd}?from=USD`);
-    if (prevRes.ok) {
-      const pj = await prevRes.json();
-      prevRates = pj.rates ?? {};
-    }
-  } catch {
-    /* ignore */
-  }
+  const symbols = [
+    "EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", "USD/CAD",
+    "NZD/USD", "EUR/GBP", "EUR/JPY", "GBP/JPY",
+  ];
 
   const out: Record<string, Quote> = {};
-  for (const p of pairs) {
-    let changePct = 0;
-    const [base, quote] = p.symbol.split("/");
-    let prevPrice = 0;
-    if (quote === "USD" && prevRates[base]) prevPrice = 1 / prevRates[base];
-    else if (base === "USD" && prevRates[quote]) prevPrice = prevRates[quote];
-    else if (prevRates[base] && prevRates[quote]) prevPrice = prevRates[quote] / prevRates[base];
-    if (prevPrice) changePct = ((p.price - prevPrice) / prevPrice) * 100;
-
-    const n = 14;
-    const end = p.price;
-    const start = end / (1 + (changePct || 0.1) / 100);
-    const spark = Array.from({ length: n }, (_, j) => start + (end - start) * (j / (n - 1)));
-    out[p.symbol] = { price: p.price, changePct, spark };
+  for (const symbol of symbols) {
+    const points = days
+      .map((d) => pairPrice(symbol, series[d]))
+      .filter((v): v is number => v != null && Number.isFinite(v));
+    if (points.length === 0) continue;
+    const price = points[points.length - 1];
+    const prev = points.length > 1 ? points[points.length - 2] : 0;
+    const changePct = prev ? ((price - prev) / prev) * 100 : 0;
+    out[symbol] = { price, changePct, spark: points.slice(-14) };
   }
   return out;
 }

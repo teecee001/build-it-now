@@ -12,6 +12,8 @@ import { useCryptoHoldings } from "@/hooks/useCryptoHoldings";
 import { CRYPTO_LIST } from "@/constants/cryptoList";
 import { TradingViewChart } from "@/components/TradingViewChart";
 import { CryptoTradeModal } from "@/components/CryptoTradeModal";
+import { AssetLogo } from "@/components/AssetLogo";
+import { useMarketData } from "@/hooks/useMarketData";
 import {
   Search, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft,
   ArrowLeftRight, ChevronRight, Wallet, PieChart, Star, BarChart2, CandlestickChart, X
@@ -20,17 +22,21 @@ import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 const TOP_COINS = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX"];
 
-function generateSparkline(code: string) {
+function generateSparkline(code: string, change: number, values?: number[]) {
+  if (values && values.length > 1) return values.map((p, i) => ({ d: `D${i}`, p }));
+  // Fallback shape that still trends in the direction of the 24h change.
   const seed = code.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const dir = change >= 0 ? 1 : -1;
   return Array.from({ length: 7 }, (_, i) => ({
     d: `D${i}`,
-    p: 100 + Math.sin(seed + i * 0.8) * 15 + Math.cos(seed * 0.3 + i) * 8,
+    p: 100 + dir * i * 2 + Math.sin(seed + i * 0.8) * 1.5,
   }));
 }
 
-function MiniChart({ code }: { code: string }) {
-  const sparkline = generateSparkline(code);
-  const isUp = sparkline[sparkline.length - 1].p >= sparkline[0].p;
+function MiniChart({ code, change, values }: { code: string; change: number; values?: number[] }) {
+  const sparkline = generateSparkline(code, change, values);
+  // Color follows the sign of the displayed 24h change so they never disagree.
+  const isUp = change >= 0;
   return (
     <ResponsiveContainer width={56} height={28}>
       <LineChart data={sparkline}>
@@ -42,7 +48,8 @@ function MiniChart({ code }: { code: string }) {
 
 export default function WalletPage() {
   const navigate = useNavigate();
-  const { rates, isLive } = useExchangeRates();
+  const { rates, isLive, cryptoChanges } = useExchangeRates();
+  const md = useMarketData("crypto");
   const { wallets, getWallet } = useMultiCurrencyWallet();
   const { holdingsMap, holdings, isLoading: holdingsLoading } = useCryptoHoldings();
   const [search, setSearch] = useState("");
@@ -56,8 +63,17 @@ export default function WalletPage() {
     setFavorites(prev => { const n = new Set(prev); if (n.has(code)) { n.delete(code); } else { n.add(code); } return n; });
   };
 
-  const getPrice = (code: string) => rates[code] ? 1 / rates[code] : 0;
-  const getChange = (i: number) => parseFloat(((Math.sin(i * 1.7 + 0.3) * 8) + 0.5).toFixed(2));
+  // Same price/change sources and precedence as the Markets page.
+  const getPrice = (code: string) => {
+    const q = md.getCrypto(code);
+    if (q?.price) return q.price;
+    return rates[code] ? 1 / rates[code] : 0;
+  };
+  const getChange = (code: string) => {
+    const v = md.getCrypto(code)?.changePct ?? cryptoChanges[code] ?? 0;
+    return Number.isFinite(v) ? parseFloat(v.toFixed(2)) : 0;
+  };
+  const getSpark = (code: string) => md.getCrypto(code)?.spark;
 
   const portfolioValue = Object.entries(holdingsMap).reduce((sum, [code, amount]) => sum + amount * getPrice(code), 0);
   const usdBalance = getWallet("USD")?.balance ?? 0;
@@ -149,14 +165,14 @@ export default function WalletPage() {
               <Card key={code} className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => setSelectedCoin(code)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">{code.slice(0, 2)}</div>
+                    <AssetLogo symbol={code} category="crypto" size={32} />
                     <div>
                       <p className="text-sm font-semibold">{crypto?.name ?? code}</p>
                       <p className="text-xs text-muted-foreground">{amount.toFixed(6)} {code}</p>
                     </div>
                   </div>
                   <div className="text-right flex items-center gap-3">
-                    <MiniChart code={code} />
+                    <MiniChart code={code} change={getChange(code)} values={getSpark(code)} />
                     <div>
                       <p className="text-sm font-semibold font-mono">${value.toFixed(2)}</p>
                       <p className="text-[10px] text-muted-foreground">{pct.toFixed(1)}%</p>
@@ -176,7 +192,7 @@ export default function WalletPage() {
             <Card className="p-5 bg-card border-border space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-bold">{selectedCoin.slice(0, 2)}</div>
+                  <AssetLogo symbol={selectedCoin} category="crypto" size={40} />
                   <div>
                     <h3 className="font-semibold">{CRYPTO_LIST.find(c => c.code === selectedCoin)?.name}</h3>
                     <p className="text-xs text-muted-foreground">{selectedCoin}</p>
@@ -258,14 +274,14 @@ export default function WalletPage() {
 
           <TabsContent value="all" className="space-y-1.5 mt-0">
             {filteredCryptos.slice(0, 30).map((crypto, i) => (
-              <CoinRow key={crypto.code} crypto={crypto} index={i} price={getPrice(crypto.code)} change={getChange(i)} isFav={favorites.has(crypto.code)} onFav={() => toggleFav(crypto.code)} onSelect={() => setSelectedCoin(crypto.code)} />
+              <CoinRow key={crypto.code} crypto={crypto} index={i} price={getPrice(crypto.code)} change={getChange(crypto.code)} spark={getSpark(crypto.code)} isFav={favorites.has(crypto.code)} onFav={() => toggleFav(crypto.code)} onSelect={() => setSelectedCoin(crypto.code)} />
             ))}
           </TabsContent>
           <TabsContent value="trending" className="space-y-1.5 mt-0">
-            {TOP_COINS.map((code, i) => { const crypto = CRYPTO_LIST.find(c => c.code === code); if (!crypto) return null; return <CoinRow key={code} crypto={crypto} index={i} price={getPrice(code)} change={getChange(i)} isFav={favorites.has(code)} onFav={() => toggleFav(code)} onSelect={() => setSelectedCoin(code)} />; })}
+            {TOP_COINS.map((code, i) => { const crypto = CRYPTO_LIST.find(c => c.code === code); if (!crypto) return null; return <CoinRow key={code} crypto={crypto} index={i} price={getPrice(code)} change={getChange(code)} spark={getSpark(code)} isFav={favorites.has(code)} onFav={() => toggleFav(code)} onSelect={() => setSelectedCoin(code)} />; })}
           </TabsContent>
           <TabsContent value="watchlist" className="space-y-1.5 mt-0">
-            {Array.from(favorites).map((code, i) => { const crypto = CRYPTO_LIST.find(c => c.code === code); if (!crypto) return null; return <CoinRow key={code} crypto={crypto} index={i} price={getPrice(code)} change={getChange(i)} isFav={true} onFav={() => toggleFav(code)} onSelect={() => setSelectedCoin(code)} />; })}
+            {Array.from(favorites).map((code, i) => { const crypto = CRYPTO_LIST.find(c => c.code === code); if (!crypto) return null; return <CoinRow key={code} crypto={crypto} index={i} price={getPrice(code)} change={getChange(code)} spark={getSpark(code)} isFav={true} onFav={() => toggleFav(code)} onSelect={() => setSelectedCoin(code)} />; })}
             {favorites.size === 0 && <p className="text-center text-sm text-muted-foreground py-8">Tap the ★ to add coins to your watchlist</p>}
           </TabsContent>
         </Tabs>
@@ -274,8 +290,8 @@ export default function WalletPage() {
   );
 }
 
-function CoinRow({ crypto, index, price, change, isFav, onFav, onSelect }: {
-  crypto: { code: string; name: string }; index: number; price: number; change: number; isFav: boolean; onFav: () => void; onSelect: () => void;
+function CoinRow({ crypto, index, price, change, spark, isFav, onFav, onSelect }: {
+  crypto: { code: string; name: string }; index: number; price: number; change: number; spark?: number[]; isFav: boolean; onFav: () => void; onSelect: () => void;
 }) {
   const isPositive = change >= 0;
   return (
@@ -286,19 +302,19 @@ function CoinRow({ crypto, index, price, change, isFav, onFav, onSelect }: {
             <button onClick={(e) => { e.stopPropagation(); onFav(); }} className="shrink-0">
               <Star className={`w-3.5 h-3.5 ${isFav ? "fill-warning text-warning" : "text-muted-foreground/30"}`} />
             </button>
-            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold">{crypto.code.slice(0, 2)}</div>
+            <AssetLogo symbol={crypto.code} category="crypto" size={32} />
             <div>
               <p className="text-sm font-semibold">{crypto.name}</p>
               <p className="text-[10px] text-muted-foreground">{crypto.code}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <MiniChart code={crypto.code} />
+            <MiniChart code={crypto.code} change={change} values={spark} />
             <div className="text-right min-w-[70px]">
               <p className="text-sm font-semibold font-mono">${price > 1 ? price.toLocaleString("en-US", { maximumFractionDigits: 2 }) : price.toFixed(6)}</p>
               <div className="flex items-center justify-end gap-0.5">
                 {isPositive ? <TrendingUp className="w-2.5 h-2.5 text-success" /> : <TrendingDown className="w-2.5 h-2.5 text-destructive" />}
-                <p className={`text-[10px] font-medium ${isPositive ? "text-success" : "text-destructive"}`}>{isPositive ? "+" : ""}{change}%</p>
+                <p className={`text-[10px] font-medium ${isPositive ? "text-success" : "text-destructive"}`}>{isPositive ? "+" : ""}{change.toFixed(2)}%</p>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
