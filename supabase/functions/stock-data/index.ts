@@ -8,10 +8,11 @@ const TICKERS = [
   "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK-B", "JPM", "V",
   "UNH", "JNJ", "WMT", "PG", "MA", "HD", "XOM", "CVX", "BAC", "KO",
   "PEP", "ABBV", "COST", "MRK", "LLY", "AVGO", "TMO", "CRM", "AMD", "NFLX",
-  "DIS", "INTC", "CSCO", "ADBE", "NKE", "PYPL", "T", "VZ", "UBER",
+  "DIS", "INTC", "CSCO", "ADBE", "NKE", "PYPL", "T", "VZ", "UBER", "XYZ",
 ];
 
-const DISPLAY: Record<string, string> = { "BRK-B": "BRK.B" };
+// Block (SQ) now trades as XYZ; keep the app-facing ticker as SQ.
+const DISPLAY: Record<string, string> = { "BRK-B": "BRK.B", "XYZ": "SQ" };
 
 let cache: { at: number; body: string } | null = null;
 const TTL = 60_000;
@@ -30,7 +31,9 @@ async function quoteOne(sym: string) {
     (n: unknown) => typeof n === "number" && Number.isFinite(n),
   );
   const price = Number(meta?.regularMarketPrice) || closes[closes.length - 1];
-  const prev = Number(meta?.chartPreviousClose) || closes[closes.length - 2] || price;
+  // Daily change: compare with the previous session close. chartPreviousClose is the close
+  // before the whole 1mo range, which made "change" a monthly figure.
+  const prev = closes.length >= 2 ? closes[closes.length - 2] : Number(meta?.chartPreviousClose) || price;
   if (!price) return null;
   return {
     price,

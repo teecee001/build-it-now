@@ -17,6 +17,12 @@ import {
 
 type TransferDirection = "to_savings" | "to_wallet";
 
+// Y-axis labels: "$24" / "$1.2k" instead of "$0.0k" for balances under $1,000.
+function formatAxisMoney(v: number) {
+  if (Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+  return `$${Math.round(v)}`;
+}
+
 export default function Savings() {
   return (
     <FeatureGate feature="features_savings" featureLabel="Savings">
@@ -39,6 +45,7 @@ function SavingsContent() {
 
   const chartData = projectBalance(projectionMonths, monthlyContribution);
   const projectedEnd = chartData[chartData.length - 1];
+  const hasChartData = chartData.some((d) => Number(d.balance) > 0);
   const totalProjectedInterest = projectedEnd?.interest ?? 0;
 
   const handleTransfer = async () => {
@@ -262,9 +269,9 @@ function SavingsContent() {
                   tickFormatter={(v) => v % (projectionMonths <= 12 ? 3 : 12) === 0 ? `${v}mo` : ""}
                 />
                 <YAxis
-                  tick={{ fontSize: 10, fill: "hsl(240 5% 50%)" }}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
-                  width={50}
+                  tick={hasChartData ? { fontSize: 10, fill: "hsl(240 5% 50%)" } : false}
+                  tickFormatter={formatAxisMoney}
+                  width={hasChartData ? 50 : 0}
                 />
                 <Tooltip
                   contentStyle={{

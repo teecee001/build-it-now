@@ -34,7 +34,7 @@ async function fetchQuotesClient(): Promise<Record<string, LiveQuote>> {
           (n: unknown) => typeof n === "number" && Number.isFinite(n),
         );
         const price = Number(meta?.regularMarketPrice) || closes[closes.length - 1];
-        const prev = Number(meta?.chartPreviousClose) || closes[closes.length - 2] || price;
+        const prev = closes.length >= 2 ? closes[closes.length - 2] : Number(meta?.chartPreviousClose) || price;
         if (!price) return;
         out[t] = {
           price,
@@ -58,7 +58,11 @@ async function fetchStockQuotes(): Promise<Record<string, LiveQuote>> {
   } catch {
     /* fall through */
   }
-  return fetchQuotesClient();
+  const fallback = await fetchQuotesClient();
+  // Throw on an empty result so React Query retries instead of caching {} (which rendered
+  // every stock as $0.00 / +0% until the next 5-minute refetch).
+  if (!Object.keys(fallback).length) throw new Error("Stock quotes unavailable");
+  return fallback;
 }
 
 export function useStockPrices() {
@@ -67,14 +71,15 @@ export function useStockPrices() {
     queryFn: fetchStockQuotes,
     staleTime: 60_000,
     refetchInterval: 5 * 60_000,
-    retry: 1,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 15_000),
   });
 
   const quotes = query.data ?? {};
   const isLive = Object.keys(quotes).length > 0;
 
   const getPrice = (ticker: string) => quotes[ticker]?.price ?? 0;
-  const getChange = (ticker: string) => quotes[ticker]?.changePct ?? 0;
+  const getChange = (ticker: string) => Math.round((quotes[ticker]?.changePct ?? 0) * 100) / 100;
   const getSpark = (ticker: string) => quotes[ticker]?.spark ?? [];
 
   return {
