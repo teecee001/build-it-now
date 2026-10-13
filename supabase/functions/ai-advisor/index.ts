@@ -126,13 +126,13 @@ serve(async (req) => {
     };
     for (const p of providers) {
       try {
-        let response = await chatCompletions(p, body);
+        let response = await chatCompletions(p, { ...body, ...(p.extraBody ?? {}) });
         if (response.status === 503 || response.status === 429) {
           // Transient overload / rate limit: one short retry before moving on.
           await response.body?.cancel().catch(() => {});
           tried.push(`${p.name}=${response.status}`);
           await new Promise((r) => setTimeout(r, 700));
-          response = await chatCompletions(p, body);
+          response = await chatCompletions(p, { ...body, ...(p.extraBody ?? {}) });
         }
         if (response.ok && response.body) {
           tried.push(`${p.name}=${response.status}`);

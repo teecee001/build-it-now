@@ -40,11 +40,11 @@ export async function chatCompletions(cfg: AiConfig, body: Record<string, unknow
   });
 }
 
-export type AdvisorProvider = AiConfig & { name: string };
+export type AdvisorProvider = AiConfig & { name: string; extraBody?: Record<string, unknown> };
 
 /**
  * Every configured text-chat provider for the Exo advisor, in priority order:
- * xai, openai, lovable, groq, gemini. The caller tries each until one succeeds.
+ * xai, openai, lovable, groq (Qwen first), gemini. The caller tries each until one succeeds.
  * Kept separate from getAiConfig() so vision callers (verify-identity) are unaffected.
  */
 export function getAdvisorProviders(): AdvisorProvider[] {
@@ -64,7 +64,23 @@ export function getAdvisorProviders(): AdvisorProvider[] {
     });
   }
   const groq = env("GROQ_API_KEY");
-  if (groq) out.push({ name: "groq", apiKey: groq, url: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile" });
+  if (groq) {
+    // Per https://console.groq.com/docs/models: qwen/qwen3.8-27b is the only Qwen model listed
+    // (preview), openai/gpt-oss-120b is the strongest production model on the Developer plan.
+    // llama-3.3-70b-versatile is now Enterprise-only. Optional GROQ_MODEL override first.
+    const url = "https://api.groq.com/openai/v1/chat/completions";
+    const models = [env("GROQ_MODEL"), "qwen/qwen3.8-27b", "openai/gpt-oss-120b"].filter(Boolean);
+    for (const model of [...new Set(models)]) {
+      // Only stream the final answer (https://console.groq.com/docs/reasoning): Qwen takes
+      // reasoning_format "hidden"; GPT-OSS rejects reasoning_format and uses include_reasoning.
+      const extraBody = model.includes("gpt-oss")
+        ? { include_reasoning: false }
+        : model.includes("qwen")
+        ? { reasoning_format: "hidden" }
+        : undefined;
+      out.push({ name: `groq:${model}`, apiKey: groq, url, model, extraBody });
+    }
+  }
   const gemini = env("GEMINI_API_KEY");
   if (gemini) {
     // OpenAI-compatible endpoint + Bearer auth per https://ai.google.dev/gemini-api/docs/openai
