@@ -57,7 +57,9 @@ export function getAdvisorAiConfig(): AiConfig | null {
     return {
       apiKey: gemini,
       url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-      model: "gemini-2.0-flash",
+      // gemini-2.0-flash was shut down by Google on 2026-06-01. Use the rolling
+      // Flash alias (overridable via GEMINI_MODEL) so future retirements don't break Exo.
+      model: Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest",
     };
   }
   return null;
