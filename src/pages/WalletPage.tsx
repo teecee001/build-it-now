@@ -1,3 +1,4 @@
+import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -90,28 +91,28 @@ export default function WalletPage() {
   const holdingCodes = Object.keys(holdingsMap).filter(code => holdingsMap[code] > 0);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Wallet className="w-5 h-5 text-warning" />
-            <h1 className="text-2xl font-bold tracking-tight">Crypto Wallet</h1>
+            <h1 className="text-title">Crypto Wallet</h1>
           </div>
-          <Badge variant={isLive ? "default" : "secondary"} className="text-[10px]">
-            {isLive ? "● Live" : "Demo"}
+          <Badge variant={isLive ? "default" : "secondary"} className="gap-1 text-caption">
+            {isLive ? <><LiveDot />Live</> : "Demo"}
           </Badge>
         </div>
       </motion.div>
 
       {/* Portfolio Card */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
-        <Card className="p-5 bg-card border-border relative overflow-hidden">
+        <Card className="p-6 bg-card border-border relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-warning/5 via-transparent to-success/5 pointer-events-none" />
           <div className="relative">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Portfolio Value</p>
             <p className="text-3xl font-bold font-mono">${portfolioValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">USD Balance: ${usdBalance.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground mt-1">USD Balance: ${usdBalance.toFixed(2)}</p>
 
             <div className="grid grid-cols-4 gap-2 mt-4">
               {([
@@ -120,9 +121,9 @@ export default function WalletPage() {
                 { icon: ArrowLeftRight, label: "Swap", color: "bg-accent/10 text-accent", action: () => openTrade("swap", selectedCoin || "BTC") },
                 { icon: ArrowUpRight, label: "Send", color: "bg-warning/10 text-warning", action: () => openTrade("send", selectedCoin || "BTC") },
               ] as const).map((a) => (
-                <button key={a.label} onClick={a.action} className={`flex flex-col items-center gap-1 py-3 rounded-xl ${a.color} transition-colors hover:opacity-80`}>
+                <button key={a.label} onClick={a.action} className={`flex flex-col items-center gap-1 py-3 rounded-card ${a.color} transition-colors hover:opacity-80`}>
                   <a.icon className="w-5 h-5" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider">{a.label}</span>
+                  <span className="text-caption font-semibold uppercase tracking-wider">{a.label}</span>
                 </button>
               ))}
             </div>
@@ -149,7 +150,7 @@ export default function WalletPage() {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Holdings</h2>
           <PieChart className="w-4 h-4 text-muted-foreground" />
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {holdingCodes.length === 0 && !holdingsLoading && (
             <Card className="p-6 bg-card border-border text-center">
               <p className="text-sm text-muted-foreground">No crypto holdings yet. Buy your first coin!</p>
@@ -175,7 +176,7 @@ export default function WalletPage() {
                     <MiniChart code={code} change={getChange(code)} values={getSpark(code)} />
                     <div>
                       <p className="text-sm font-semibold font-mono">${value.toFixed(2)}</p>
-                      <p className="text-[10px] text-muted-foreground">{pct.toFixed(1)}%</p>
+                      <p className="text-caption text-muted-foreground">{pct.toFixed(1)}%</p>
                     </div>
                   </div>
                 </div>
@@ -189,7 +190,7 @@ export default function WalletPage() {
       <AnimatePresence>
         {selectedCoin && !tradeModal && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <AssetLogo symbol={selectedCoin} category="crypto" size={40} />
@@ -211,7 +212,7 @@ export default function WalletPage() {
               <div className="flex items-center justify-between">
                 <div className="flex gap-1">
                   {[{ d: 1, l: "24H" }, { d: 7, l: "7D" }, { d: 30, l: "30D" }, { d: 90, l: "90D" }, { d: 365, l: "1Y" }].map(p => (
-                    <Button key={p.d} variant={chartDays === p.d ? "default" : "ghost"} size="sm" className="text-[10px] h-7 px-2" onClick={() => setChartDays(p.d)}>{p.l}</Button>
+                    <Button key={p.d} variant={chartDays === p.d ? "default" : "ghost"} size="sm" className="text-caption h-7 px-2" onClick={() => setChartDays(p.d)}>{p.l}</Button>
                   ))}
                 </div>
                 <div className="flex gap-1">
@@ -272,15 +273,15 @@ export default function WalletPage() {
             <Input placeholder="Search coins..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 bg-secondary border-border text-sm" />
           </div>
 
-          <TabsContent value="all" className="space-y-1.5 mt-0">
+          <TabsContent value="all" className="space-y-2 mt-0">
             {filteredCryptos.slice(0, 30).map((crypto, i) => (
               <CoinRow key={crypto.code} crypto={crypto} index={i} price={getPrice(crypto.code)} change={getChange(crypto.code)} spark={getSpark(crypto.code)} isFav={favorites.has(crypto.code)} onFav={() => toggleFav(crypto.code)} onSelect={() => setSelectedCoin(crypto.code)} />
             ))}
           </TabsContent>
-          <TabsContent value="trending" className="space-y-1.5 mt-0">
+          <TabsContent value="trending" className="space-y-2 mt-0">
             {TOP_COINS.map((code, i) => { const crypto = CRYPTO_LIST.find(c => c.code === code); if (!crypto) return null; return <CoinRow key={code} crypto={crypto} index={i} price={getPrice(code)} change={getChange(code)} spark={getSpark(code)} isFav={favorites.has(code)} onFav={() => toggleFav(code)} onSelect={() => setSelectedCoin(code)} />; })}
           </TabsContent>
-          <TabsContent value="watchlist" className="space-y-1.5 mt-0">
+          <TabsContent value="watchlist" className="space-y-2 mt-0">
             {Array.from(favorites).map((code, i) => { const crypto = CRYPTO_LIST.find(c => c.code === code); if (!crypto) return null; return <CoinRow key={code} crypto={crypto} index={i} price={getPrice(code)} change={getChange(code)} spark={getSpark(code)} isFav={true} onFav={() => toggleFav(code)} onSelect={() => setSelectedCoin(code)} />; })}
             {favorites.size === 0 && <p className="text-center text-sm text-muted-foreground py-8">Tap the ★ to add coins to your watchlist</p>}
           </TabsContent>
@@ -305,16 +306,16 @@ function CoinRow({ crypto, index, price, change, spark, isFav, onFav, onSelect }
             <AssetLogo symbol={crypto.code} category="crypto" size={32} />
             <div>
               <p className="text-sm font-semibold">{crypto.name}</p>
-              <p className="text-[10px] text-muted-foreground">{crypto.code}</p>
+              <p className="text-caption text-muted-foreground">{crypto.code}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <MiniChart code={crypto.code} change={change} values={spark} />
             <div className="text-right min-w-[70px]">
               <p className="text-sm font-semibold font-mono">${price > 1 ? price.toLocaleString("en-US", { maximumFractionDigits: 2 }) : price.toFixed(6)}</p>
-              <div className="flex items-center justify-end gap-0.5">
+              <div className="flex items-center justify-end gap-1">
                 {isPositive ? <TrendingUp className="w-2.5 h-2.5 text-success" /> : <TrendingDown className="w-2.5 h-2.5 text-destructive" />}
-                <p className={`text-[10px] font-medium ${isPositive ? "text-success" : "text-destructive"}`}>{isPositive ? "+" : ""}{change.toFixed(2)}%</p>
+                <p className={`text-caption font-medium ${isPositive ? "text-success" : "text-destructive"}`}>{isPositive ? "+" : ""}{change.toFixed(2)}%</p>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground/30" />

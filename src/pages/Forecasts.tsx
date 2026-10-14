@@ -119,14 +119,14 @@ function MarketCard({
       <Card className="p-4 h-full hover:border-primary/40 transition-colors flex flex-col">
         <div className="flex items-center gap-2 flex-wrap">
           {m.hot && (
-            <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/30 text-[10px]">
+            <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/30 text-caption">
               <Flame className="h-3 w-3 mr-1" /> Trending
             </Badge>
           )}
-          <Badge variant="outline" className="text-[10px]">{CAT_LABEL[m.category] ?? m.category}</Badge>
-          <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-600 dark:text-amber-400">Model odds</Badge>
+          <Badge variant="outline" className="text-caption">{CAT_LABEL[m.category] ?? m.category}</Badge>
+          <Badge variant="outline" className="text-caption border-amber-500/30 text-amber-600 dark:text-amber-400">Model odds</Badge>
           {m.spotLabel && (
-            <span className="text-[11px] font-mono text-muted-foreground">{m.spotLabel}</span>
+            <span className="text-caption font-mono text-muted-foreground">{m.spotLabel}</span>
           )}
         </div>
         <p className="font-semibold mt-2 leading-snug text-[15px]">{m.question}</p>
@@ -142,7 +142,7 @@ function MarketCard({
           <Sparkline data={m.spark} />
           <div className="flex-1 min-w-0">
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-emerald-500 font-semibold flex items-center gap-0.5">
+              <span className="text-emerald-500 font-semibold flex items-center gap-1">
                 {yes >= 50 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                 {yes}% YES
               </span>
@@ -260,8 +260,8 @@ export default function Forecasts() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Forecasts</h1>
-            <Badge variant="outline" className="border-primary/40 text-primary text-[10px] uppercase tracking-wider">
+            <h1 className="text-title">Forecasts</h1>
+            <Badge variant="outline" className="border-primary/40 text-primary text-caption uppercase tracking-wider">
               Beta
             </Badge>
           </div>
@@ -270,7 +270,7 @@ export default function Forecasts() {
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -285,7 +285,7 @@ export default function Forecasts() {
 
       {isError && (
         <Card className="p-4 flex items-start gap-3 border-destructive/40">
-          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
+          <AlertTriangle className="h-4 w-4 text-destructive mt-1" />
           <div className="text-sm">
             <p className="font-medium">Live market data is unavailable right now.</p>
             <p className="text-muted-foreground">We only list markets backed by real feeds. Try refresh in a moment.</p>
@@ -296,10 +296,10 @@ export default function Forecasts() {
       <FearGreedGauge variant="compact" />
 
       {headline && (
-        <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-5">
+        <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-6">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center">
+              <div className="h-11 w-11 rounded-card bg-primary/15 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -355,11 +355,11 @@ export default function Forecasts() {
 
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search BTC, ETH, EUR, gold, dominance…" className="pl-10 h-11 rounded-xl bg-secondary/30" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search BTC, ETH, EUR, gold, dominance…" className="pl-10 h-11 rounded-card bg-secondary/30" />
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <TabsList className="h-auto flex flex-wrap gap-1 bg-secondary/40 p-1 rounded-xl">
+        <TabsList className="h-auto flex flex-wrap gap-1 bg-secondary/40 p-1 rounded-card">
           <TabsTrigger value="all" className="rounded-lg">All ({counts.all})</TabsTrigger>
           <TabsTrigger value="rates" className="rounded-lg">FX ({counts.rates})</TabsTrigger>
           <TabsTrigger value="crypto" className="rounded-lg">Crypto ({counts.crypto})</TabsTrigger>
@@ -385,7 +385,7 @@ export default function Forecasts() {
       </Tabs>
 
       <div className="flex items-start gap-2 text-xs text-muted-foreground border-t border-border pt-4">
-        <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+        <Info className="h-3.5 w-3.5 mt-1 shrink-0" />
         <p>
           Odds are <strong className="text-foreground">model-implied</strong> from live spots
           (ECB FX, CoinGecko, Fear &amp; Greed) using realized volatility — not an exchange order book.
@@ -409,7 +409,7 @@ export default function Forecasts() {
               <div className="space-y-3 mt-2">
                 <div>
                   <label className="text-xs text-muted-foreground">Amount (USD)</label>
-                  <Input type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1 text-lg font-semibold" />
+                  <Input type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1 text-heading" />
                   <div className="flex gap-2 mt-2">
                     {[5, 10, 25, 50].map((v) => (
                       <Button key={v} size="sm" variant="outline" className="flex-1" onClick={() => setAmount(String(v))}>${v}</Button>
@@ -417,7 +417,7 @@ export default function Forecasts() {
                   </div>
                 </div>
 
-                <Card className="p-3 bg-muted/40 space-y-1.5 text-sm">
+                <Card className="p-3 bg-muted/40 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shares</span>
                     <span className="font-medium">{potentialShares.toFixed(2)}</span>
@@ -441,7 +441,7 @@ export default function Forecasts() {
                   {trading.side === "YES" ? <ArrowUpRight className="h-4 w-4 mr-1" /> : <ArrowDownRight className="h-4 w-4 mr-1" />}
                   Buy {trading.side} — ${investAmount.toFixed(2)}
                 </Button>
-                <p className="text-[11px] text-center text-muted-foreground">
+                <p className="text-caption text-center text-muted-foreground">
                   Paper trading — no real funds move. Each share pays $1 if the outcome resolves {trading.side}.
                 </p>
               </div>

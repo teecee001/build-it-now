@@ -106,11 +106,11 @@ export function NotificationList({
                     {notif.title}
                   </p>
                   {!notif.is_read && (
-                    <span className="mt-1.5 w-2 h-2 rounded-full bg-primary shrink-0" />
+                    <span className="mt-2 w-2 h-2 rounded-full bg-primary shrink-0" />
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{formatHandleInText(formatAmountsInText(notif.message))}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{formatHandleInText(formatAmountsInText(notif.message))}</p>
+                <p className="text-caption text-muted-foreground mt-1">
                   {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
                 </p>
               </div>

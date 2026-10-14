@@ -91,7 +91,7 @@ export default function TermsOfService() {
 
           {sections.map((s) => (
             <section key={s.title} className="space-y-3">
-              <h2 className="text-lg font-semibold">{s.title}</h2>
+              <h2 className="text-heading">{s.title}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">{s.content}</p>
             </section>
           ))}

@@ -13,12 +13,17 @@ import {
   Eye, EyeOff, BarChart3, QrCode, XCircle, Briefcase, Bitcoin, LayoutGrid,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { LiveBadge } from "@/components/ds/LiveBadge";
+import { useMemo, useState } from "react";
 import { useTransactions } from "@/hooks/useTransactions";
 import { TransactionRow } from "@/components/TransactionRow";
 import { PageSkeleton, RowsSkeleton } from "@/components/ui/skeleton";
 import { openAppMenu } from "@/lib/appMenu";
+import { AnimatedNumber } from "@/components/ds/AnimatedNumber";
+import { Sparkline } from "@/components/ds/Sparkline";
+import { QuickActionSheet, type QuickAction } from "@/components/ds/QuickActionSheet";
+import { balanceSeries } from "@/lib/balanceHistory";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -28,6 +33,9 @@ export default function Dashboard() {
   const { isFeatureAvailable } = useGeoVerification();
   const { transactions: recentTx, isLoading: txLoading } = useTransactions(8);
   const recent = recentTx.filter((t) => t.type !== "welcome_bonus").slice(0, 4);
+  const { transactions: historyTx } = useTransactions(50);
+  const isMobile = useIsMobile();
+  const [sheet, setSheet] = useState<QuickAction | null>(null);
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
 
@@ -44,6 +52,14 @@ export default function Dashboard() {
   }, 0);
 
   const savingsInActive = fromUSD(savingsBalance);
+
+  // Sparkline from recorded transactions only; empty (no chart) when history can't support it.
+  const series = useMemo(() => {
+    const walletCodes = new Set(wallets.map((w) => w.currency));
+    return balanceSeries(historyTx, totalInActiveCurrency, (amount, cur) =>
+      walletCodes.has(cur) && rates[cur] ? (amount / rates[cur]) * (rates[activeCurrency] || 1) : null,
+    );
+  }, [historyTx, totalInActiveCurrency, rates, activeCurrency, wallets]);
 
   if (walletLoading) {
     return <PageSkeleton />;
@@ -62,19 +78,20 @@ export default function Dashboard() {
   ];
 
   const quickActions = [
-    { label: "Send", icon: Send, onClick: () => navigate("/send"), primary: true },
-    { label: "Add", icon: ArrowDownLeft, onClick: () => navigate("/deposit") },
-    { label: "Convert", icon: Repeat, onClick: () => navigate("/convert") },
+    { label: "Send", icon: Send, onClick: () => (isMobile ? setSheet("send") : navigate("/send")), primary: true },
+    { label: "Add", icon: ArrowDownLeft, onClick: () => (isMobile ? setSheet("add") : navigate("/deposit")) },
+    { label: "Convert", icon: Repeat, onClick: () => (isMobile ? setSheet("convert") : navigate("/convert")) },
     { label: "More", icon: LayoutGrid, onClick: openAppMenu, mobileOnly: true },
   ];
 
   return (
     <div className="space-y-6">
+      <QuickActionSheet action={sheet} onClose={() => setSheet(null)} />
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-muted-foreground text-sm">Welcome back,</p>
-            <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+            <h1 className="text-title">{displayName}</h1>
             <p className="text-xs text-muted-foreground font-mono">{handle}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -98,18 +115,17 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
       >
-        <Card className="p-6 bg-card border-border shadow-card overflow-hidden relative">
+        <Card className="p-6 overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none" />
           <div className="relative">
             <div className="flex items-center justify-between mb-1">
               <p className="text-sm text-muted-foreground">Total Balance</p>
-              <Badge variant={isLive ? "default" : "secondary"} className="text-xs">
-                {isLive ? "● Live" : "Demo"}
-              </Badge>
+              <LiveBadge isLive={isLive} />
             </div>
-            <h2 className="text-4xl font-bold tracking-tight font-mono">
-              {showBalance ? formatBalance(totalInActiveCurrency) : "••••••"}
+            <h2 className="text-figure font-mono tabular-nums">
+              {showBalance ? <AnimatedNumber value={totalInActiveCurrency} format={formatBalance} /> : "••••••"}
             </h2>
+            {showBalance && series.length > 0 && <Sparkline points={series} className="mt-2 h-8 w-full" />}
 
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className="p-3 rounded-lg bg-secondary/50">
@@ -144,7 +160,7 @@ export default function Dashboard() {
           <button
             key={a.label}
             onClick={a.onClick}
-            className={`flex flex-col items-center gap-1.5 ${a.mobileOnly ? "md:hidden" : ""}`}
+            className={`flex flex-col items-center gap-2 ${a.mobileOnly ? "md:hidden" : ""}`}
           >
             <span
               className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -167,7 +183,7 @@ export default function Dashboard() {
           className="space-y-2 min-w-0"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Activity</h2>
+            <h2 className="text-heading">Activity</h2>
             <button onClick={() => navigate("/activity")} className="text-sm font-medium text-accent">
               See all
             </button>
@@ -204,7 +220,7 @@ export default function Dashboard() {
                   key={sc.label}
                   onClick={() => available && navigate(sc.path)}
                   disabled={!available}
-                  className={`flex items-center gap-3 p-3 rounded-xl border border-border text-left ${
+                  className={`flex items-center gap-3 p-3 rounded-card border border-border text-left ${
                     available ? "bg-card hover:bg-secondary/50" : "bg-muted/20 opacity-60 cursor-not-allowed"
                   }`}
                 >

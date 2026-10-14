@@ -116,7 +116,7 @@ export default function KYCVerification() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-1">
           <Shield className="w-6 h-6 text-success" />
-          <h1 className="text-2xl font-bold tracking-tight">Verify Your Identity</h1>
+          <h1 className="text-title">Verify Your Identity</h1>
         </div>
         <p className="text-muted-foreground text-sm">Required by federal law to access financial services</p>
       </motion.div>
@@ -143,14 +143,14 @@ export default function KYCVerification() {
         </div>
         <div className="flex justify-between mt-2">
           {steps.map((s) => (
-            <span key={s.key} className="text-[10px] text-muted-foreground">{s.label}</span>
+            <span key={s.key} className="text-caption text-muted-foreground">{s.label}</span>
           ))}
         </div>
       </motion.div>
 
       {/* Regulatory Notice */}
       <Card className="p-3 bg-warning/5 border-warning/10 flex items-start gap-2">
-        <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+        <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-1" />
         <p className="text-xs text-warning">
           Required under the USA PATRIOT Act and Bank Secrecy Act. Your information is encrypted and stored securely.
         </p>
@@ -160,7 +160,7 @@ export default function KYCVerification() {
         {/* Step 1: Personal Info */}
         {step === "info" && (
           <motion.div key="info" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <h3 className="text-sm font-semibold">Personal Information</h3>
               <div className="space-y-3">
                 <div>
@@ -210,12 +210,12 @@ export default function KYCVerification() {
         {/* Step 2: ID Upload */}
         {step === "id" && (
           <motion.div key="id" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <h3 className="text-sm font-semibold">Upload Government-Issued ID</h3>
               <p className="text-xs text-muted-foreground">Driver's license, passport, or state ID. Both front and back required for licenses.</p>
               <div
                 onClick={handleIDUpload}
-                className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-accent/50 hover:bg-secondary/30 transition-all"
+                className="border-2 border-dashed border-border rounded-card p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-accent/50 hover:bg-secondary/30 transition-all"
               >
                 {idUploaded ? (
                   <CheckCircle2 className="w-12 h-12 text-success" />
@@ -233,12 +233,12 @@ export default function KYCVerification() {
         {/* Step 3: Selfie */}
         {step === "selfie" && (
           <motion.div key="selfie" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <h3 className="text-sm font-semibold">Take a Selfie</h3>
               <p className="text-xs text-muted-foreground">We'll match your selfie to your ID document to verify your identity.</p>
               <div
                 onClick={handleSelfieCapture}
-                className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-accent/50 hover:bg-secondary/30 transition-all"
+                className="border-2 border-dashed border-border rounded-card p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-accent/50 hover:bg-secondary/30 transition-all"
               >
                 {selfieUploaded ? (
                   <CheckCircle2 className="w-12 h-12 text-success" />
@@ -256,7 +256,7 @@ export default function KYCVerification() {
         {/* Step 4: Review */}
         {step === "review" && (
           <motion.div key="review" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <h3 className="text-sm font-semibold">Review & Submit</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between p-3 rounded-lg bg-secondary/50">

@@ -1,3 +1,4 @@
+import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
 import { FeatureGate } from "@/components/FeatureGate";
 import { motion, AnimatePresence } from "framer-motion";
@@ -79,26 +80,26 @@ function StocksContent() {
   const holdingTickers = Object.keys(holdingsMap).filter(t => holdingsMap[t].shares > 0);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Stocks</h1>
+            <h1 className="text-title">Stocks</h1>
           </div>
-          <Badge variant="default" className="text-[10px]">● Live</Badge>
+          <Badge variant="default" className="gap-1 text-caption"><LiveDot />Live</Badge>
         </div>
       </motion.div>
 
       {/* Portfolio Card */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
-        <Card className="p-5 bg-card border-border relative overflow-hidden">
+        <Card className="p-6 bg-card border-border relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-success/5 pointer-events-none" />
           <div className="relative">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Stock Portfolio</p>
             <p className="text-3xl font-bold font-mono">${portfolioValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}</p>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-1">
               <span className={`text-xs font-semibold ${totalPnL >= 0 ? "text-success" : "text-destructive"}`}>
                 {totalPnL >= 0 ? "+" : ""}${totalPnL.toFixed(2)}
               </span>
@@ -111,9 +112,9 @@ function StocksContent() {
                 { icon: ArrowDownLeft, label: "Buy", color: "bg-success/10 text-success", action: () => openTrade("buy", selectedStock || "AAPL") },
                 { icon: ArrowUpRight, label: "Sell", color: "bg-destructive/10 text-destructive", action: () => openTrade("sell", selectedStock || "AAPL") },
               ] as const).map((a) => (
-                <button key={a.label} onClick={a.action} className={`flex flex-col items-center gap-1 py-3 rounded-xl ${a.color} transition-colors hover:opacity-80`}>
+                <button key={a.label} onClick={a.action} className={`flex flex-col items-center gap-1 py-3 rounded-card ${a.color} transition-colors hover:opacity-80`}>
                   <a.icon className="w-5 h-5" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider">{a.label}</span>
+                  <span className="text-caption font-semibold uppercase tracking-wider">{a.label}</span>
                 </button>
               ))}
             </div>
@@ -139,7 +140,7 @@ function StocksContent() {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Positions</h2>
           <PieChart className="w-4 h-4 text-muted-foreground" />
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {holdingTickers.length === 0 && !holdingsLoading && (
             <Card className="p-6 bg-card border-border text-center">
               <p className="text-sm text-muted-foreground">No stock positions yet. Buy your first share!</p>
@@ -156,7 +157,7 @@ function StocksContent() {
               <Card key={ticker} className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors cursor-pointer" onClick={() => setSelectedStock(ticker)}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-bold">{ticker.slice(0, 3)}</div>
+                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-caption font-bold">{ticker.slice(0, 3)}</div>
                     <div>
                       <p className="text-sm font-semibold">{stock?.name ?? ticker}</p>
                       <p className="text-xs text-muted-foreground">{h.shares.toFixed(4)} shares</p>
@@ -164,7 +165,7 @@ function StocksContent() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold font-mono">${value.toFixed(2)}</p>
-                    <p className={`text-[10px] font-medium ${pnl >= 0 ? "text-success" : "text-destructive"}`}>
+                    <p className={`text-caption font-medium ${pnl >= 0 ? "text-success" : "text-destructive"}`}>
                       {pnl >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
                     </p>
                   </div>
@@ -179,7 +180,7 @@ function StocksContent() {
       <AnimatePresence>
         {selectedStock && !tradeModal && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-sm font-bold">{selectedStock.slice(0, 3)}</div>
@@ -220,7 +221,7 @@ function StocksContent() {
                   { label: "P/E", value: (15 + (selectedStock.charCodeAt(0) % 25)).toFixed(1) },
                 ].map(stat => (
                   <div key={stat.label} className="p-2 bg-secondary/30 rounded-lg">
-                    <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                    <p className="text-caption text-muted-foreground">{stat.label}</p>
                     <p className="text-xs font-semibold font-mono">{stat.value}</p>
                   </div>
                 ))}
@@ -238,7 +239,7 @@ function StocksContent() {
 
               {/* Your position */}
               {holdingsMap[selectedStock] && holdingsMap[selectedStock].shares > 0 && (
-                <div className="p-3 bg-secondary/50 rounded-lg space-y-1.5">
+                <div className="p-3 bg-secondary/50 rounded-lg space-y-2">
                   <p className="text-xs text-muted-foreground font-medium">Your Position</p>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shares</span>
@@ -285,19 +286,19 @@ function StocksContent() {
             <Input placeholder="Search stocks..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 bg-secondary border-border text-sm" />
           </div>
 
-          <TabsContent value="all" className="space-y-1.5 mt-0">
+          <TabsContent value="all" className="space-y-2 mt-0">
             {filteredStocks.slice(0, 30).map((stock, i) => (
               <StockRow key={stock.ticker} stock={stock} index={i} price={getPrice(stock.ticker)} change={getChange(stock.ticker)} isFav={favorites.has(stock.ticker)} onFav={() => toggleFav(stock.ticker)} onSelect={() => setSelectedStock(stock.ticker)} />
             ))}
           </TabsContent>
-          <TabsContent value="trending" className="space-y-1.5 mt-0">
+          <TabsContent value="trending" className="space-y-2 mt-0">
             {TRENDING_STOCKS.map((ticker, i) => {
               const stock = STOCK_LIST.find(s => s.ticker === ticker);
               if (!stock) return null;
               return <StockRow key={ticker} stock={stock} index={i} price={getPrice(ticker)} change={getChange(ticker)} isFav={favorites.has(ticker)} onFav={() => toggleFav(ticker)} onSelect={() => setSelectedStock(ticker)} />;
             })}
           </TabsContent>
-          <TabsContent value="watchlist" className="space-y-1.5 mt-0">
+          <TabsContent value="watchlist" className="space-y-2 mt-0">
             {Array.from(favorites).map((ticker, i) => {
               const stock = STOCK_LIST.find(s => s.ticker === ticker);
               if (!stock) return null;
@@ -323,19 +324,19 @@ function StockRow({ stock, index, price, change, isFav, onFav, onSelect }: {
             <button onClick={(e) => { e.stopPropagation(); onFav(); }} className="shrink-0">
               <Star className={`w-3.5 h-3.5 ${isFav ? "fill-warning text-warning" : "text-muted-foreground/30"}`} />
             </button>
-            <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-bold">{stock.ticker.slice(0, 3)}</div>
+            <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-caption font-bold">{stock.ticker.slice(0, 3)}</div>
             <div>
               <p className="text-sm font-semibold">{stock.name}</p>
-              <p className="text-[10px] text-muted-foreground">{stock.ticker}</p>
+              <p className="text-caption text-muted-foreground">{stock.ticker}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <MiniChart ticker={stock.ticker} />
             <div className="text-right min-w-[70px]">
               <p className="text-sm font-semibold font-mono">${price.toFixed(2)}</p>
-              <div className="flex items-center justify-end gap-0.5">
+              <div className="flex items-center justify-end gap-1">
                 {isPositive ? <TrendingUp className="w-2.5 h-2.5 text-success" /> : <TrendingDown className="w-2.5 h-2.5 text-destructive" />}
-                <p className={`text-[10px] font-medium ${isPositive ? "text-success" : "text-destructive"}`}>{isPositive ? "+" : ""}{change}%</p>
+                <p className={`text-caption font-medium ${isPositive ? "text-success" : "text-destructive"}`}>{isPositive ? "+" : ""}{change}%</p>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground/30" />

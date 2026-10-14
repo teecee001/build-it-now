@@ -61,7 +61,7 @@ export function BetaFeedback({ open, onOpenChange: setOpen }: { open: boolean; o
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6 left-4 right-4 md:left-auto md:right-6 z-[60] md:w-80 rounded-2xl border border-border bg-card shadow-xl overflow-hidden"
+            className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6 left-4 right-4 md:left-auto md:right-6 z-[60] md:w-80 rounded-card border border-border bg-card shadow-xl overflow-hidden"
           >
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div>
@@ -69,7 +69,7 @@ export function BetaFeedback({ open, onOpenChange: setOpen }: { open: boolean; o
                 <p className="text-xs text-muted-foreground">Help us improve Ξ╳oSky</p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] border-accent/30 text-accent">
+                <Badge variant="outline" className="text-caption border-accent/30 text-accent">
                   BETA
                 </Badge>
                 <button onClick={() => setOpen(false)} className="p-1 rounded-md text-muted-foreground" aria-label="Close">
@@ -83,7 +83,7 @@ export function BetaFeedback({ open, onOpenChange: setOpen }: { open: boolean; o
               <div className="flex gap-2">
                 <button
                   onClick={() => setType("feedback")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors ${
                     type === "feedback"
                       ? "bg-accent/10 text-accent border border-accent/30"
                       : "bg-secondary/50 text-muted-foreground border border-transparent hover:bg-secondary"
@@ -94,7 +94,7 @@ export function BetaFeedback({ open, onOpenChange: setOpen }: { open: boolean; o
                 </button>
                 <button
                   onClick={() => setType("bug")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors ${
                     type === "bug"
                       ? "bg-destructive/10 text-destructive border border-destructive/30"
                       : "bg-secondary/50 text-muted-foreground border border-transparent hover:bg-secondary"
@@ -113,13 +113,13 @@ export function BetaFeedback({ open, onOpenChange: setOpen }: { open: boolean; o
                     ? "Describe the bug — what happened and what you expected..."
                     : "What would you like to see improved?"
                 }
-                className="min-h-[100px] bg-secondary/30 border-border text-sm resize-none rounded-xl"
+                className="min-h-[100px] bg-secondary/30 border-border text-sm resize-none rounded-card"
               />
 
               <Button
                 onClick={handleSubmit}
                 disabled={!message.trim() || submitting}
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-xl"
+                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 gap-2 rounded-card"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

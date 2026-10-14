@@ -103,7 +103,7 @@ export function TravelMode() {
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold">Travel Mode</p>
               {location && isAlreadyActive && (
-                <Badge className="bg-success/10 text-success border-0 text-[10px]">Active</Badge>
+                <Badge className="bg-success/10 text-success border-0 text-caption">Active</Badge>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -125,7 +125,7 @@ export function TravelMode() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Plane className="w-4 h-4 text-accent" /> Travel Mode
@@ -213,7 +213,7 @@ export function TravelMode() {
                         const fromSymbol = getCurrencyInfo(activeCurrency)?.symbol || "";
                         const toSymbol = getCurrencyInfo(location.localCurrency)?.symbol || "";
                         return (
-                          <div key={amt} className="p-2.5 rounded-lg bg-secondary/50 text-center">
+                          <div key={amt} className="p-3 rounded-lg bg-secondary/50 text-center">
                             <p className="text-xs text-muted-foreground">
                               {fromSymbol}{amt.toLocaleString()} {activeCurrency}
                             </p>
@@ -231,8 +231,8 @@ export function TravelMode() {
 
                   {/* Current rate */}
                   <div className="p-3 rounded-lg bg-secondary/30 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Live Exchange Rate</p>
-                    <p className="text-sm font-mono font-semibold mt-0.5">
+                    <p className="text-caption text-muted-foreground uppercase tracking-wider">Live Exchange Rate</p>
+                    <p className="text-sm font-mono font-semibold mt-1">
                       1 {activeCurrency} = {((rates[location.localCurrency] || 1) / (rates[activeCurrency] || 1)).toLocaleString("en-US", { maximumFractionDigits: 4 })} {location.localCurrency}
                     </p>
                   </div>

@@ -133,7 +133,7 @@ export default function Auth() {
             <ExoLogo size="lg" variant="mark" />
           </div>
           <Card className="p-8 bg-card border-border">
-            <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-5">
+            <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
               <Mail className="w-7 h-7 text-accent" />
             </div>
             <h2 className="text-xl font-bold mb-2">Check your email</h2>
@@ -187,7 +187,7 @@ export default function Auth() {
               </span>
               oSky
             </h1>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">
+            <span className="px-2 py-1 rounded text-caption font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">
               Beta
             </span>
           </div>
@@ -298,7 +298,7 @@ export default function Auth() {
           </form>
 
           {isSignUp && (
-            <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1.5 bg-secondary/50 rounded-lg p-2.5">
+            <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-2 bg-secondary/50 rounded-lg p-3">
               <Sparkles className="w-3.5 h-3.5 text-accent shrink-0" />
               Demo mode. Paper balances, no real money.
             </p>

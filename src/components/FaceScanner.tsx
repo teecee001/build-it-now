@@ -442,7 +442,7 @@ export function FaceScanner({ onVerified, onFailed, onCancel }: FaceScannerProps
                               <Icon className="w-4 h-4" />
                             )}
                           </div>
-                          <span className="text-[10px] font-medium">{ch.direction === "up" ? "Up" : ch.direction === "left" ? "Left" : "Right"}</span>
+                          <span className="text-caption font-medium">{ch.direction === "up" ? "Up" : ch.direction === "left" ? "Left" : "Right"}</span>
                         </motion.div>
                       );
                     })}

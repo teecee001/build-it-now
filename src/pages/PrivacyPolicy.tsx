@@ -101,10 +101,10 @@ export default function PrivacyPolicy() {
 
           {sections.map((s) => (
             <section key={s.title} className="space-y-3">
-              <h2 className="text-lg font-semibold">{s.title}</h2>
+              <h2 className="text-heading">{s.title}</h2>
               {s.content && <p className="text-sm text-muted-foreground leading-relaxed">{s.content}</p>}
               {s.list && (
-                <ul className="text-sm text-muted-foreground leading-relaxed space-y-1.5 list-disc pl-5">
+                <ul className="text-sm text-muted-foreground leading-relaxed space-y-2 list-disc pl-5">
                   {s.list.map((item, i) => <li key={i}>{item}</li>)}
                 </ul>
               )}

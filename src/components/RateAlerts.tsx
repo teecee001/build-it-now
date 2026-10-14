@@ -54,7 +54,7 @@ export function RateAlerts() {
           <Bell className="w-4 h-4 text-accent" />
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Rate Alerts</h3>
           {activeAlerts.length > 0 && (
-            <Badge variant="secondary" className="text-[10px]">{activeAlerts.length} active</Badge>
+            <Badge variant="secondary" className="text-caption">{activeAlerts.length} active</Badge>
           )}
         </div>
         <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={() => setShowCreate(!showCreate)}>
@@ -66,7 +66,7 @@ export function RateAlerts() {
       <AnimatePresence>
         {showCreate && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold">Create Rate Alert</h4>
                 <button onClick={() => setShowCreate(false)} className="p-1 hover:bg-secondary rounded">
@@ -104,8 +104,8 @@ export function RateAlerts() {
               </div>
 
               {/* Current rate reference */}
-              <div className="p-2.5 rounded-lg bg-secondary/50 text-center">
-                <p className="text-[10px] text-muted-foreground">Current rate</p>
+              <div className="p-3 rounded-lg bg-secondary/50 text-center">
+                <p className="text-caption text-muted-foreground">Current rate</p>
                 <p className="text-sm font-mono font-semibold">1 {fromCurrency} = {currentRate.toFixed(6)} {toCurrency}</p>
               </div>
 
@@ -181,7 +181,7 @@ export function RateAlerts() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] font-mono">{progress.toFixed(0)}%</Badge>
+                    <Badge variant="outline" className="text-caption font-mono">{progress.toFixed(0)}%</Badge>
                     <button
                       onClick={() => deleteAlert.mutateAsync(alert.id).then(() => toast.success("Alert deleted"))}
                       className="p-1 hover:bg-secondary rounded"

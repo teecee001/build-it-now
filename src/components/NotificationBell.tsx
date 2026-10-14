@@ -47,7 +47,7 @@ export function NotificationBell() {
       >
         <Bell className="w-5 h-5 text-muted-foreground" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 min-w-4 h-4 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-caption font-bold flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -55,7 +55,7 @@ export function NotificationBell() {
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-full sm:max-w-[420px] p-0 gap-0 flex flex-col">
-          <SheetHeader className="px-5 py-4 border-b border-border text-left space-y-1">
+          <SheetHeader className="px-6 py-4 border-b border-border text-left space-y-1">
             <div className="flex items-center justify-between pr-8">
               <SheetTitle className="text-lg">Notifications</SheetTitle>
               <div className="flex items-center gap-1">

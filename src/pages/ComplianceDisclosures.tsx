@@ -93,7 +93,7 @@ export default function ComplianceDisclosures() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold">{item.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
                   </div>
                 </div>
               </Card>
@@ -102,7 +102,7 @@ export default function ComplianceDisclosures() {
 
           {sections.map((s) => (
             <section key={s.title} className="space-y-3">
-              <h2 className="text-lg font-semibold">{s.title}</h2>
+              <h2 className="text-heading">{s.title}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">{s.content}</p>
             </section>
           ))}

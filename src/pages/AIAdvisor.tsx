@@ -194,7 +194,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
   return (
     <div className="relative mx-auto flex h-[calc(100dvh-8rem)] w-full max-w-3xl flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/80 px-4 py-2.5 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur-xl">
         <ExoAvatar size={40} online thinking={typing} />
         <div className="min-w-0 flex-1">
           <h1 className="text-base font-semibold leading-tight tracking-tight">Exo</h1>
@@ -214,7 +214,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
           disabled={empty || isLoading}
           aria-label="New chat"
           title="New chat"
-          className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex h-9 items-center gap-2 rounded-full px-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <SquarePen className="h-4 w-4" />
           <span className="hidden sm:inline">New chat</span>
@@ -225,7 +225,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
         <div className="flex items-center gap-2 overflow-x-auto border-b border-border/60 bg-secondary/40 px-4 py-2 text-xs" aria-label="Goals">
           <Target className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
           {goals.map((g) => (
-            <span key={g.id} className="whitespace-nowrap rounded-full bg-background/70 px-2.5 py-1">
+            <span key={g.id} className="whitespace-nowrap rounded-full bg-background/70 px-3 py-1">
               {g.goal}
               {g.target_amount != null && <b className="ml-1 tabular-nums">${Number(g.target_amount).toLocaleString()}</b>}
               {g.target_date && (
@@ -249,7 +249,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
           <div className="flex h-full flex-col items-center justify-center gap-4 px-4 text-center">
             <ExoAvatar size={72} online />
             <div>
-              <p className="text-lg font-semibold">Exo</p>
+              <p className="text-heading">Exo</p>
               <p className="text-sm text-muted-foreground">Ask Exo about markets, budgets, investing, or strategy</p>
             </div>
           </div>
@@ -282,7 +282,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
           >
             <ArrowDown className="h-4 w-4" />
             {unseen > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 h-5 min-w-5 rounded-full bg-accent px-1 text-[11px] font-bold leading-5 text-accent-foreground">{unseen}</span>
+              <span className="absolute -right-1.5 -top-1.5 h-5 min-w-5 rounded-full bg-accent px-1 text-caption font-bold leading-5 text-accent-foreground">{unseen}</span>
             )}
           </motion.button>
         )}
@@ -297,7 +297,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
               type="button"
               onClick={() => sendMessage(s)}
               disabled={isLoading}
-              className="whitespace-nowrap rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs text-foreground/90 transition hover:bg-accent/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="whitespace-nowrap rounded-full border border-accent/30 bg-accent/10 px-3 py-2 text-xs text-foreground/90 transition hover:bg-accent/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {s}
             </button>
@@ -310,7 +310,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-2 flex items-center gap-2 overflow-hidden rounded-xl border-l-[3px] border-accent bg-secondary px-3 py-1.5"
+              className="mb-2 flex items-center gap-2 overflow-hidden rounded-card border-l-[3px] border-accent bg-secondary px-3 py-2"
             >
               <Reply className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
               <div className="min-w-0 flex-1 text-xs">
@@ -352,7 +352,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
                 sendMessage(input);
               }
             }}
-            className="max-h-40 min-h-[44px] flex-1 resize-none rounded-3xl border border-border bg-secondary px-4 py-2.5 text-[15px] leading-6 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="max-h-40 min-h-[44px] flex-1 resize-none rounded-3xl border border-border bg-secondary px-4 py-3 text-[15px] leading-6 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
           <motion.button
             key={sendPulse}

@@ -1,3 +1,4 @@
+import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,8 +48,8 @@ export const CurrencyConverter = ({ onConvert }: CurrencyConverterProps) => {
             <Loader2 className="h-3 w-3 animate-spin" /> Loading rates...
           </Badge>
         ) : (
-          <Badge variant={isLive ? "default" : "secondary"}>
-            {isLive ? "● Live Rates" : "Mock Rates"}
+          <Badge variant={isLive ? "default" : "secondary"} className="gap-1">
+            {isLive ? <><LiveDot />Live Rates</> : "Mock Rates"}
           </Badge>
         )}
       </div>

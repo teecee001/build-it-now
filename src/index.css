@@ -95,6 +95,18 @@
     --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.3), 0 4px 12px hsl(0 0% 0% / 0.2);
   }
 
+  /* Design system tokens: 4/8px spacing grid (Tailwind units), card radius and elevation. */
+  :root {
+    --radius-card: 1rem;
+    --radius-sheet: 1.5rem;
+    --shadow-card-hover: 0 2px 6px hsl(0 0% 0% / 0.1), 0 8px 24px hsl(0 0% 0% / 0.08);
+    --shadow-sheet: 0 -8px 32px hsl(0 0% 0% / 0.12);
+  }
+  .dark {
+    --shadow-card-hover: 0 2px 6px hsl(0 0% 0% / 0.4), 0 8px 24px hsl(0 0% 0% / 0.3);
+    --shadow-sheet: 0 -8px 32px hsl(0 0% 0% / 0.5);
+  }
+
   :root,
   .dark {
     --shadow-accent: 0 0 30px hsl(var(--accent) / 0.25);

@@ -67,7 +67,7 @@ function SavingsContent() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-1">
           <PiggyBank className="w-6 h-6 text-success" />
-          <h1 className="text-2xl font-bold tracking-tight">Savings</h1>
+          <h1 className="text-title">Savings</h1>
           <Badge className="bg-success/10 text-success border-0 text-xs font-semibold">
             {apyRate}% APY
           </Badge>
@@ -86,11 +86,11 @@ function SavingsContent() {
             </h2>
 
             {/* Earnings Breakdown */}
-            <div className="grid grid-cols-3 gap-3 mt-5">
+            <div className="grid grid-cols-3 gap-3 mt-6">
               <div className="p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-1 mb-1">
                   <DollarSign className="w-3 h-3 text-success" />
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Daily</p>
+                  <p className="text-caption text-muted-foreground uppercase tracking-wider">Daily</p>
                 </div>
                 <p className="text-sm font-semibold font-mono text-success">
                   +${dailyEarnings.toFixed(4)}
@@ -99,7 +99,7 @@ function SavingsContent() {
               <div className="p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-1 mb-1">
                   <Calendar className="w-3 h-3 text-success" />
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Monthly</p>
+                  <p className="text-caption text-muted-foreground uppercase tracking-wider">Monthly</p>
                 </div>
                 <p className="text-sm font-semibold font-mono text-success">
                   +${monthlyEarnings.toFixed(2)}
@@ -108,7 +108,7 @@ function SavingsContent() {
               <div className="p-3 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-1 mb-1">
                   <TrendingUp className="w-3 h-3 text-success" />
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Yearly</p>
+                  <p className="text-caption text-muted-foreground uppercase tracking-wider">Yearly</p>
                 </div>
                 <p className="text-sm font-semibold font-mono text-success">
                   +${yearlyEarnings.toFixed(2)}
@@ -121,7 +121,7 @@ function SavingsContent() {
 
       {/* Transfer Section */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-        <Card className="p-5 bg-card border-border space-y-4">
+        <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold">Transfer Funds</h3>
@@ -209,7 +209,7 @@ function SavingsContent() {
 
       {/* Interest Projection Chart */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
-        <Card className="p-5 bg-card border-border space-y-4">
+        <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-success" />
@@ -300,13 +300,13 @@ function SavingsContent() {
           {/* Projection Summary */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-lg bg-secondary/50">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Projected Balance</p>
+              <p className="text-caption text-muted-foreground uppercase tracking-wider">Projected Balance</p>
               <p className="text-sm font-semibold font-mono">
                 {formatMoney(projectedEnd?.balance ?? 0)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-success/5 border border-success/10">
-              <p className="text-[10px] text-success uppercase tracking-wider">Total Interest Earned</p>
+              <p className="text-caption text-success uppercase tracking-wider">Total Interest Earned</p>
               <p className="text-sm font-semibold font-mono text-success">
                 +${totalProjectedInterest.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </p>
@@ -318,8 +318,8 @@ function SavingsContent() {
       {/* FDIC Notice */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
         <Card className="p-3 bg-secondary/30 border-border flex items-start gap-2">
-          <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+          <p className="text-caption text-muted-foreground leading-relaxed">
             Deposits are held at our partner bank and eligible for FDIC insurance up to $250,000. APY is variable and may change. Interest is calculated daily and paid monthly.
           </p>
         </Card>

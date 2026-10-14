@@ -22,10 +22,10 @@ export default function Notifications() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Notifications</h1>
+          <h1 className="text-title">Notifications</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
           </p>
@@ -33,31 +33,31 @@ export default function Notifications() {
         <div className="flex shrink-0 items-center gap-2">
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={() => markAllAsRead.mutate()}>
-              <CheckCheck className="w-4 h-4 mr-1.5" />
+              <CheckCheck className="w-4 h-4 mr-2" />
               Mark read
             </Button>
           )}
           {notifications.length > 0 && (
             <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => clearAll.mutate()}>
-              <Trash2 className="w-4 h-4 mr-1.5" />
+              <Trash2 className="w-4 h-4 mr-2" />
               Clear
             </Button>
           )}
         </div>
       </div>
 
-      <div className="flex gap-1 p-1 rounded-xl bg-secondary/40 w-fit">
+      <div className="flex gap-1 p-1 rounded-card bg-secondary/40 w-fit">
         <button
           type="button"
           onClick={() => setTab("all")}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium ${tab === "all" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+          className={`px-3 py-2 rounded-lg text-sm font-medium ${tab === "all" ? "bg-background shadow-card" : "text-muted-foreground"}`}
         >
           All ({notifications.length})
         </button>
         <button
           type="button"
           onClick={() => setTab("unread")}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium ${tab === "unread" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+          className={`px-3 py-2 rounded-lg text-sm font-medium ${tab === "unread" ? "bg-background shadow-card" : "text-muted-foreground"}`}
         >
           Unread ({unreadCount})
         </button>
@@ -76,7 +76,7 @@ export default function Notifications() {
       </Card>
 
       {notifications.length === 0 && !isLoading && (
-        <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
+        <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-2">
           <Bell className="w-3.5 h-3.5" />
           Alerts for sends, bonuses, and conversions show up here.
         </p>

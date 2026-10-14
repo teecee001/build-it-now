@@ -296,15 +296,15 @@ function MarketsContent() {
     : null;
 
   return (
-    <div className="space-y-5 pb-24">
+    <div className="space-y-6 pb-24">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Markets</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-title">Markets</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Crypto, stocks, forex, commodities & indices — all in one place
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -328,9 +328,9 @@ function MarketsContent() {
                 setSelectedAsset(null);
                 setSearch("");
               }}
-              className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border transition-all ${
+              className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-card border transition-all ${
                 active
-                  ? "bg-secondary border-primary/40 shadow-sm"
+                  ? "bg-secondary border-primary/40 shadow-card"
                   : "bg-card border-border hover:bg-secondary/50"
               }`}
             >
@@ -363,18 +363,18 @@ function MarketsContent() {
 
       {(activeCategory === "commodities" || activeCategory === "indices") &&
         !(activeCategory === "commodities" ? md.commoditiesLive : md.indicesLive) && (
-          <p className="text-[11px] text-muted-foreground px-1">
+          <p className="text-caption text-muted-foreground px-1">
             Loading live feed… reference levels shown until data arrives.
           </p>
         )}
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {items.map((item) => {
           const isUp = item.change >= 0;
           return (
             <Card
               key={item.symbol}
-              className="p-3.5 rounded-2xl hover:bg-secondary/40 transition-colors cursor-pointer border-border/60"
+              className="p-3.5 rounded-card hover:bg-secondary/40 transition-colors cursor-pointer border-border/60"
               onClick={() => setSelectedAsset({ symbol: item.symbol, category: activeCategory })}
             >
               <div className="flex items-center justify-between gap-3">
@@ -382,12 +382,12 @@ function MarketsContent() {
                   <AssetLogo symbol={item.symbol} category={activeCategory} size={36} />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{item.name}</p>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-muted-foreground">{item.symbol}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-caption text-muted-foreground">{item.symbol}</span>
                       {item.tag && (
                         <Badge
                           variant="secondary"
-                          className={`text-[9px] px-1.5 py-0 ${SECTOR_COLORS[item.tag] ?? ""}`}
+                          className={`text-[9px] px-2 py-0 ${SECTOR_COLORS[item.tag] ?? ""}`}
                         >
                           {item.tag}
                         </Badge>
@@ -401,14 +401,14 @@ function MarketsContent() {
                     <p className="text-sm font-semibold font-mono">
                       {formatPrice(item.price, activeCategory)}
                     </p>
-                    <div className="flex items-center justify-end gap-0.5">
+                    <div className="flex items-center justify-end gap-1">
                       {isUp ? (
                         <TrendingUp className="w-2.5 h-2.5 text-success" />
                       ) : (
                         <TrendingDown className="w-2.5 h-2.5 text-destructive" />
                       )}
                       <p
-                        className={`text-[10px] font-medium ${
+                        className={`text-caption font-medium ${
                           isUp ? "text-success" : "text-destructive"
                         }`}
                       >
@@ -436,13 +436,13 @@ function MarketsContent() {
             exit={{ opacity: 0, y: 20 }}
             className="fixed inset-x-0 bottom-0 z-50 p-4 md:p-6 max-h-[85vh] overflow-y-auto"
           >
-            <Card className="p-5 max-w-lg mx-auto space-y-4 shadow-xl border-border">
+            <Card className="p-6 max-w-lg mx-auto space-y-4 shadow-xl border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <AssetLogo symbol={selectedAsset.symbol} category={selectedAsset.category} size={40} />
                   <div>
                     <h3 className="font-semibold">{selectedInfo.name}</h3>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{selectedAsset.symbol}</span>
                       <Badge variant="outline" className="text-[9px]">
                         {selectedAsset.category}
@@ -482,7 +482,7 @@ function MarketsContent() {
                           key={p.d}
                           variant={chartDays === p.d ? "default" : "ghost"}
                           size="sm"
-                          className="text-[10px] h-7 px-2"
+                          className="text-caption h-7 px-2"
                           onClick={() => setChartDays(p.d)}
                         >
                           {p.l}

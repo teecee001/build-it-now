@@ -18,7 +18,7 @@ export default function ExoMarkdown({ content }: { content: string }) {
         b.kind === "md" ? (
           <ReactMarkdown key={i} components={mdComponents}>{b.text}</ReactMarkdown>
         ) : (
-          <div key={i} className="overflow-x-auto rounded-xl border border-border/70">
+          <div key={i} className="overflow-x-auto rounded-card border border-border/70">
             <table className="w-full text-[13px] tabular-nums">
               <thead className="bg-background/50">
                 <tr>
@@ -33,7 +33,7 @@ export default function ExoMarkdown({ content }: { content: string }) {
                 {b.rows.map((r, k) => (
                   <tr key={k} className="border-t border-border/60">
                     {r.map((c, j) => (
-                      <td key={j} className="px-3 py-1.5 whitespace-nowrap">
+                      <td key={j} className="px-3 py-2 whitespace-nowrap">
                         <ReactMarkdown allowedElements={["strong", "em", "code"]} unwrapDisallowed>{c}</ReactMarkdown>
                       </td>
                     ))}

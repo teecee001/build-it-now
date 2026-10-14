@@ -1,3 +1,4 @@
+import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,8 +40,8 @@ export const CryptoChart = () => {
               <Loader2 className="h-3 w-3 animate-spin" /> Loading...
             </Badge>
           ) : (
-            <Badge variant={isLive ? "default" : "secondary"}>
-              {isLive ? "● Live Data" : "Mock Data"}
+            <Badge variant={isLive ? "default" : "secondary"} className="gap-1">
+              {isLive ? <><LiveDot />Live Data</> : "Mock Data"}
             </Badge>
           )}
         </div>

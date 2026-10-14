@@ -87,7 +87,7 @@ export default function RecurringPayments() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Recurring Payments</h1>
+            <h1 className="text-title">Recurring Payments</h1>
             <p className="text-muted-foreground text-sm mt-1">Automate your regular transfers</p>
           </div>
           <Button size="sm" variant="outline" onClick={() => setShowAdd(!showAdd)} className="gap-1">
@@ -116,7 +116,7 @@ export default function RecurringPayments() {
       {/* Add Form */}
       {showAdd && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-5 bg-card border-border space-y-4">
+          <Card className="p-6 bg-card border-border space-y-4">
             <h3 className="text-sm font-semibold">New Recurring Payment</h3>
             <Input placeholder="Recipient (email, handle, or name)" value={recipient} onChange={e => setRecipient(e.target.value)} className="bg-secondary border-border" />
             <div className="flex gap-2">
@@ -171,14 +171,14 @@ export default function RecurringPayments() {
                       <div className="text-right shrink-0 mr-3">
                         <p className="text-sm font-bold font-mono">${Number(p.amount).toFixed(2)}</p>
                         <div className="flex items-center gap-1">
-                          <Badge variant="secondary" className="text-[10px] px-1 py-0 capitalize">{p.frequency}</Badge>
+                          <Badge variant="secondary" className="text-caption px-1 py-0 capitalize">{p.frequency}</Badge>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => handleToggle(p.id, p.is_active)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                        <button onClick={() => handleToggle(p.id, p.is_active)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                           <Pause className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
-                        <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                        <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors">
                           <Trash2 className="w-3.5 h-3.5 text-destructive" />
                         </button>
                       </div>
@@ -207,10 +207,10 @@ export default function RecurringPayments() {
                       <p className="text-xs text-muted-foreground">${Number(p.amount).toFixed(2)} · {p.frequency}</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => handleToggle(p.id, p.is_active)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                      <button onClick={() => handleToggle(p.id, p.is_active)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                         <Play className="w-3.5 h-3.5 text-accent" />
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                      <button onClick={() => handleDelete(p.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors">
                         <Trash2 className="w-3.5 h-3.5 text-destructive" />
                       </button>
                     </div>

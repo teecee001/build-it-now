@@ -72,7 +72,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
-      className={`group relative flex items-end gap-2 ${mine ? "justify-end" : "justify-start"} ${lastInGroup ? "mb-2" : "mb-0.5"} ${msg.reaction ? "pb-3" : ""}`}
+      className={`group relative flex items-end gap-2 ${mine ? "justify-end" : "justify-start"} ${lastInGroup ? "mb-2" : "mb-1"} ${msg.reaction ? "pb-3" : ""}`}
     >
       {!mine && (lastInGroup ? <ExoAvatar size={28} /> : <div className="w-7 flex-shrink-0" />)}
 
@@ -94,7 +94,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
               setMenuOpen((o) => !o);
             }
           }}
-          className={`relative px-3.5 pt-2 pb-1.5 select-text outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background shadow-sm ${radius} ${
+          className={`relative px-3.5 pt-2 pb-1.5 select-text outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background shadow-card ${radius} ${
             mine ? "bg-gradient-accent text-accent-foreground" : "bg-secondary text-foreground"
           }`}
         >
@@ -112,7 +112,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
             <button
               type="button"
               onClick={() => onJumpTo(msg.replyTo!.id)}
-              className={`mb-1.5 block w-full text-left rounded-lg border-l-[3px] px-2 py-1 text-[13px] ${
+              className={`mb-2 block w-full text-left rounded-lg border-l-[3px] px-2 py-1 text-[13px] ${
                 mine ? "border-white/80 bg-white/15" : "border-accent bg-background/50"
               }`}
             >
@@ -129,7 +129,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
             <ExoMarkdown content={msg.content} />
           )}
 
-          <div className={`mt-0.5 flex items-center justify-end gap-1 text-[11px] ${mine ? "text-accent-foreground/80" : "text-muted-foreground"}`}>
+          <div className={`mt-1 flex items-center justify-end gap-1 text-caption ${mine ? "text-accent-foreground/80" : "text-muted-foreground"}`}>
             <time dateTime={new Date(msg.createdAt).toISOString()}>{time(msg.createdAt)}</time>
             {mine &&
               (msg.read ? (
@@ -144,7 +144,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
               type="button"
               onClick={() => onReact(msg, msg.reaction!)}
               aria-label={`Reaction ${msg.reaction}`}
-              className={`absolute -bottom-3.5 ${mine ? "right-3" : "left-3"} rounded-full bg-card border border-border px-1.5 py-0.5 text-sm shadow`}
+              className={`absolute -bottom-3.5 ${mine ? "right-3" : "left-3"} rounded-full bg-card border border-border px-2 py-1 text-sm shadow`}
             >
               {msg.reaction}
             </button>
@@ -153,7 +153,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
 
         {/* Hover actions (desktop) */}
         <div
-          className={`absolute top-1 ${mine ? "-left-24" : "-right-24"} hidden md:flex gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity`}
+          className={`absolute top-1 ${mine ? "-left-24" : "-right-24"} hidden md:flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity`}
         >
           {[
             { label: "Reply", icon: Reply, on: () => onReply(msg) },
@@ -179,7 +179,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
             animate={{ opacity: 1, scale: 1, y: 0 }}
             role="menu"
             aria-label="Message actions"
-            className={`absolute z-30 top-full mt-2 ${mine ? "right-0" : "left-0"} w-56 rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5`}
+            className={`absolute z-30 top-full mt-2 ${mine ? "right-0" : "left-0"} w-56 rounded-card border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-2`}
           >
             <div className="flex justify-between px-1 pb-1.5 border-b border-border/70" role="group" aria-label="React">
               {REACTIONS.map((e) => (
@@ -207,7 +207,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
                 type="button"
                 role="menuitem"
                 onClick={on}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm hover:bg-secondary focus-visible:outline-none focus-visible:bg-secondary"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-card text-sm hover:bg-secondary focus-visible:outline-none focus-visible:bg-secondary"
               >
                 <Icon className="w-4 h-4 text-muted-foreground" /> {label}
               </button>

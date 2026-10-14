@@ -82,11 +82,11 @@ export function AppLayout() {
           <NotificationBell />
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 space-y-1 overflow-y-auto">
           {SECTIONS.map((sec, si) => (
             <div key={si} className={si ? "pt-3" : ""}>
               {sec.title && (
-                <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{sec.title}</p>
+                <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wider text-muted-foreground/70">{sec.title}</p>
               )}
               {sec.items.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -133,7 +133,7 @@ export function AppLayout() {
           )}
         </nav>
 
-        <div className="px-3 py-2 border-t border-border space-y-0.5">
+        <div className="px-3 py-2 border-t border-border space-y-1">
           <button onClick={() => navigate("/terms")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all">
             <FileText className="w-3.5 h-3.5" />
             Terms of Service
@@ -160,7 +160,7 @@ export function AppLayout() {
           </div>
           <button
             onClick={signOut}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
@@ -182,14 +182,14 @@ export function AppLayout() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="app-chrome md:hidden fixed inset-x-0 top-[calc(52px+env(safe-area-inset-top))] bottom-[calc(64px+env(safe-area-inset-bottom))] z-40 bg-card border-b border-border p-4 space-y-0.5 overflow-y-auto overscroll-contain"
+            className="app-chrome md:hidden fixed inset-x-0 top-[calc(52px+env(safe-area-inset-top))] bottom-[calc(64px+env(safe-area-inset-bottom))] z-40 bg-card border-b border-border p-4 space-y-1 overflow-y-auto overscroll-contain"
           >
             {SECTIONS.map((sec, si) => (
               <div key={si} className={si ? "pt-3" : ""}>
                 {sec.title && (
-                  <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{sec.title}</p>
+                  <p className="px-3 pb-1.5 text-caption font-semibold uppercase tracking-wider text-muted-foreground/70">{sec.title}</p>
                 )}
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-2 gap-2">
                   {sec.items.map((item) => {
                     const isActive = location.pathname === item.path;
                     return (
@@ -197,7 +197,7 @@ export function AppLayout() {
                         key={item.path}
                         onClick={() => { navigate(item.path); setMobileOpen(false); }}
                         className={cn(
-                          "flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-medium transition-all",
+                          "flex items-center gap-3 px-3 py-3 rounded-card text-sm font-medium transition-all",
                           isActive ? "bg-accent/10 text-accent" : "bg-secondary/40 text-foreground/90"
                         )}
                       >
@@ -209,7 +209,7 @@ export function AppLayout() {
                   {sec.title === "More" && (
                     <button
                       onClick={() => { setFeedbackOpen(true); setMobileOpen(false); }}
-                      className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-medium bg-secondary/40 text-foreground/90"
+                      className="flex items-center gap-3 px-3 py-3 rounded-card text-sm font-medium bg-secondary/40 text-foreground/90"
                     >
                       <MessageSquare className="w-4 h-4 shrink-0" />
                       <span className="truncate">Feedback</span>
@@ -221,13 +221,13 @@ export function AppLayout() {
             {isAdmin && (
               <button
                 onClick={() => { navigate("/admin"); setMobileOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground"
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground"
               >
                 <Shield className="w-4 h-4" />
                 Admin
               </button>
             )}
-            <div className="border-t border-border pt-2 mt-2 space-y-0.5">
+            <div className="border-t border-border pt-2 mt-2 space-y-1">
               <button onClick={() => { navigate("/terms"); setMobileOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground">
                 <FileText className="w-3.5 h-3.5" />
                 Terms of Service
@@ -243,7 +243,7 @@ export function AppLayout() {
             </div>
             <button
               onClick={() => { signOut(); setMobileOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive mt-2"
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-destructive mt-2"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -289,7 +289,7 @@ export function AppLayout() {
                 onClick={() => { navigate(item.path); setMobileOpen(false); }}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors active:scale-95",
+                  "flex flex-col items-center justify-center gap-1 text-caption font-medium transition-colors active:scale-95",
                   isActive ? "text-accent" : "text-muted-foreground"
                 )}
               >
@@ -302,7 +302,7 @@ export function AppLayout() {
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-expanded={mobileOpen}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors active:scale-95",
+              "flex flex-col items-center justify-center gap-1 text-caption font-medium transition-colors active:scale-95",
               mobileOpen ? "text-accent" : "text-muted-foreground"
             )}
           >

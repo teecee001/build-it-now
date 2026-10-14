@@ -115,7 +115,7 @@ function DeltaBadge({ delta }: { delta: number | null }) {
   if (delta === null) return null;
   if (delta === 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground font-medium">
+      <span className="inline-flex items-center gap-1 text-caption text-muted-foreground font-medium">
         <Minus className="w-3 h-3" /> 0 vs yesterday
       </span>
     );
@@ -123,7 +123,7 @@ function DeltaBadge({ delta }: { delta: number | null }) {
   const up = delta > 0;
   return (
     <span className={cn(
-      "inline-flex items-center gap-0.5 text-[11px] font-semibold",
+      "inline-flex items-center gap-1 text-caption font-semibold",
       up ? "text-emerald-400" : "text-red-400",
     )}>
       {up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -148,7 +148,7 @@ export function FearGreedGauge({ variant = "full", className }: FearGreedGaugePr
         type="button"
         onClick={() => refetch()}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1",
+          "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1",
           tone.bg, tone.text, tone.ring, className,
         )}
         title="Crypto Fear & Greed Index"
@@ -164,7 +164,7 @@ export function FearGreedGauge({ variant = "full", className }: FearGreedGaugePr
       return (
         <Card className={cn("p-3 flex items-center gap-3", className)}>
           <Skeleton className="h-12 w-12 rounded-full" />
-          <div className="space-y-1.5 flex-1">
+          <div className="space-y-2 flex-1">
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-4 w-16" />
           </div>
@@ -178,7 +178,7 @@ export function FearGreedGauge({ variant = "full", className }: FearGreedGaugePr
           {data.current.value}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Fear & Greed</p>
+          <p className="text-caption uppercase tracking-wider text-muted-foreground">Fear & Greed</p>
           <p className={cn("text-sm font-semibold", tone.text)}>{tone.label}</p>
           <DeltaBadge delta={data.delta} />
         </div>
@@ -192,12 +192,12 @@ export function FearGreedGauge({ variant = "full", className }: FearGreedGaugePr
   // full
   if (isLoading) {
     return (
-      <Card className={cn("p-5 space-y-4", className)}>
+      <Card className={cn("p-6 space-y-4", className)}>
         <div className="flex items-center justify-between">
           <Skeleton className="h-4 w-36" />
           <Skeleton className="h-7 w-7 rounded-md" />
         </div>
-        <Skeleton className="h-28 w-full rounded-xl" />
+        <Skeleton className="h-28 w-full rounded-card" />
         <Skeleton className="h-8 w-full" />
       </Card>
     );
@@ -219,13 +219,13 @@ export function FearGreedGauge({ variant = "full", className }: FearGreedGaugePr
   return (
     <Card className={cn("relative overflow-hidden border-border/80", className)}>
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="relative p-5 space-y-4">
+      <div className="relative p-6 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+            <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
               Crypto Fear & Greed
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-1">
               Market sentiment · alternative.me
             </p>
           </div>
@@ -252,21 +252,21 @@ export function FearGreedGauge({ variant = "full", className }: FearGreedGaugePr
             >
               {data.current.value}
             </motion.p>
-            <p className={cn("text-sm font-semibold mt-0.5", tone.text)}>{tone.label}</p>
+            <p className={cn("text-sm font-semibold mt-1", tone.text)}>{tone.label}</p>
             <div className="mt-1">
               <DeltaBadge delta={data.delta} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-1.5 pt-1">
-          <div className="flex justify-between text-[10px] text-muted-foreground uppercase tracking-wide">
+        <div className="space-y-2 pt-1">
+          <div className="flex justify-between text-caption text-muted-foreground uppercase tracking-wide">
             <span>Extreme Fear</span>
             <span>Neutral</span>
             <span>Extreme Greed</span>
           </div>
           <HistoryBars history={data.history} />
-          <p className="text-[10px] text-muted-foreground text-right pt-1">
+          <p className="text-caption text-muted-foreground text-right pt-1">
             14-day history · Updated {updated.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
           </p>
         </div>

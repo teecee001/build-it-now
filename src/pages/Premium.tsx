@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { FeatureGate } from "@/components/FeatureGate";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -42,9 +43,7 @@ function PremiumContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <PageSkeleton />
     );
   }
 
@@ -54,7 +53,7 @@ function PremiumContent() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-1">
           <Crown className="w-6 h-6 text-warning" />
-          <h1 className="text-2xl font-bold tracking-tight">Ξ╳oSky Pro</h1>
+          <h1 className="text-title">Ξ╳oSky Pro</h1>
           {isSubscribed && (
             <Badge className="bg-warning/10 text-warning border-0 text-xs font-semibold">Active</Badge>
           )}
@@ -67,7 +66,7 @@ function PremiumContent() {
       {/* Active Subscription Card */}
       {isSubscribed && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
-          <Card className="p-5 bg-card border-warning/20 relative overflow-hidden">
+          <Card className="p-6 bg-card border-warning/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent pointer-events-none" />
             <div className="relative space-y-3">
               <div className="flex items-center justify-between">
@@ -109,7 +108,7 @@ function PremiumContent() {
               <Badge className="bg-warning/10 text-warning border-0 text-xs">Your Plan</Badge>
             </div>
           )}
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
               <h3 className="text-lg font-bold">{tiers.pro.name}</h3>
               <div className="flex items-baseline gap-1 mt-1">
@@ -154,7 +153,7 @@ function PremiumContent() {
       {/* Free Plan Comparison */}
       {!isSubscribed && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
-          <Card className="p-5 bg-card border-border space-y-4">
+          <Card className="p-6 bg-card border-border space-y-4">
             <div>
               <h3 className="text-sm font-semibold">Free Plan</h3>
               <p className="text-xs text-muted-foreground mt-1">What you currently have</p>
@@ -174,8 +173,8 @@ function PremiumContent() {
       {/* Security Note */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
         <Card className="p-3 bg-secondary/30 border-border flex items-start gap-2">
-          <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+          <p className="text-caption text-muted-foreground leading-relaxed">
             Payments are securely processed by Stripe. Cancel anytime from your subscription settings. No hidden fees.
           </p>
         </Card>
