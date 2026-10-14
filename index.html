@@ -56,9 +56,28 @@
   <meta name="twitter:title" content="Ξ╳oSky Beta — The Everything Finance App">
   <meta property="og:description" content="Send money, trade crypto, earn 6% APY, and get AI financial advice. ExoSky is the all-in-one fintech super app with live exchange rates, multi-currency wallets, and P2P payments.">
   <meta name="twitter:description" content="Send money, trade crypto, earn 6% APY, and get AI financial advice. ExoSky is the all-in-one fintech super app with live exchange rates, multi-currency wallets, and P2P payments.">
+  <!-- Launch splash (X-style): static until JS loads, then animated and removed by src/splash.ts -->
+  <style>
+    #exo-splash{position:fixed;inset:0;z-index:2147483647;background:#0a0a0b;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    #exo-splash img{width:96px;height:96px;display:block;will-change:transform}
+    #exo-splash.go{pointer-events:none;animation:exo-splash-bg 1.2s ease-in forwards}
+    #exo-splash.go img{animation:exo-splash-icon 1.2s forwards}
+    @keyframes exo-splash-icon{
+      0%,25%{transform:scale(1);animation-timing-function:ease-in-out}
+      45%{transform:scale(.85);animation-timing-function:cubic-bezier(.7,0,.84,0)}
+      100%{transform:scale(28)}
+    }
+    @keyframes exo-splash-bg{0%,62%{opacity:1}100%{opacity:0}}
+    @media (prefers-reduced-motion:reduce){
+      #exo-splash.go{animation:exo-splash-bg-rm .25s ease-out forwards}
+      #exo-splash.go img{animation:none}
+      @keyframes exo-splash-bg-rm{from{opacity:1}to{opacity:0}}
+    }
+  </style>
 </head>
 
   <body>
+    <div id="exo-splash" aria-hidden="true"><img src="/favicon.svg" alt="" width="96" height="96" /></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
