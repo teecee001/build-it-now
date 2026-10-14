@@ -40,13 +40,14 @@ const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { Loader2 } from "lucide-react";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { lazy, Suspense, useState } from "react";
 
 const queryClient = new QueryClient();
 
 const PageFallback = () => (
-  <div className="min-h-[50vh] flex items-center justify-center bg-background">
-    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+  <div className="max-w-6xl mx-auto p-4 md:p-8 pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-8">
+    <PageSkeleton />
   </div>
 );
 

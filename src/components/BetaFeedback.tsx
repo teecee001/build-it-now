@@ -10,9 +10,9 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type FeedbackType = "feedback" | "bug";
 
-export function BetaFeedback() {
+/** Feedback sheet, opened from the menu's Feedback item (no floating button). */
+export function BetaFeedback({ open, onOpenChange: setOpen }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
   const [type, setType] = useState<FeedbackType>("feedback");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -40,34 +40,42 @@ export function BetaFeedback() {
 
   return (
     <>
-      {/* Floating trigger */}
-      <motion.button
-        onClick={() => setOpen(!open)}
-        className="app-chrome fixed bottom-[calc(80px+env(safe-area-inset-bottom))] md:bottom-6 right-4 md:right-6 z-50 w-12 h-12 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/25 flex items-center justify-center hover:scale-105 transition-transform"
-        whileTap={{ scale: 0.95 }}
-        aria-label="Send feedback"
-      >
-        {open ? <X className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
-      </motion.button>
-
       {/* Panel */}
       <AnimatePresence>
         {open && (
           <motion.div
+            key="feedback-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] bg-background/60 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          />
+        )}
+        {open && (
+          <motion.div
+            key="feedback-panel"
+            role="dialog"
+            aria-modal="true"
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-[calc(136px+env(safe-area-inset-bottom))] md:bottom-20 right-4 md:right-6 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card shadow-xl overflow-hidden"
+            className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] md:bottom-6 left-4 right-4 md:left-auto md:right-6 z-[60] md:w-80 rounded-2xl border border-border bg-card shadow-xl overflow-hidden"
           >
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold">Beta Feedback</h3>
                 <p className="text-xs text-muted-foreground">Help us improve Ξ╳oSky</p>
               </div>
-              <Badge variant="outline" className="text-[10px] border-accent/30 text-accent">
-                BETA
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] border-accent/30 text-accent">
+                  BETA
+                </Badge>
+                <button onClick={() => setOpen(false)} className="p-1 rounded-md text-muted-foreground" aria-label="Close">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="p-4 space-y-3">

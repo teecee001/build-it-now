@@ -8,14 +8,17 @@ import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { TravelMode } from "@/components/TravelMode";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   ArrowDownLeft, Repeat, Send, Bot, CreditCard, Landmark, PiggyBank,
-  Eye, EyeOff, Loader2, BarChart3, QrCode, XCircle, Briefcase, Bitcoin,
+  Eye, EyeOff, BarChart3, QrCode, XCircle, Briefcase, Bitcoin, LayoutGrid,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useTransactions } from "@/hooks/useTransactions";
+import { TransactionRow } from "@/components/TransactionRow";
+import { PageSkeleton, RowsSkeleton } from "@/components/ui/skeleton";
+import { openAppMenu } from "@/lib/appMenu";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -23,6 +26,8 @@ export default function Dashboard() {
   const { activeCurrency, activeBalance, formatBalance, fromUSD, wallets } = useActiveCurrency();
   const { rates, isLive } = useExchangeRates();
   const { isFeatureAvailable } = useGeoVerification();
+  const { transactions: recentTx, isLoading: txLoading } = useTransactions(8);
+  const recent = recentTx.filter((t) => t.type !== "welcome_bonus").slice(0, 4);
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
 
@@ -41,12 +46,27 @@ export default function Dashboard() {
   const savingsInActive = fromUSD(savingsBalance);
 
   if (walletLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageSkeleton />;
   }
+
+  // Existing feature shortcuts (same labels/subtitles as before), shown compactly.
+  const shortcuts = [
+    { label: "Markets", sub: "Live prices", icon: BarChart3, tint: "text-accent", path: "/markets" },
+    { label: "Cards", sub: "Virtual & metal", icon: CreditCard, tint: "text-primary", path: "/card" },
+    { label: "Savings", sub: `${apyRate}% APY`, icon: PiggyBank, tint: "text-success", path: "/savings" },
+    { label: "QR Pay", sub: "Scan & pay", icon: QrCode, tint: "text-muted-foreground", path: "/qr" },
+    { label: "Pay Bills", sub: "Utilities & more", icon: Landmark, tint: "text-primary", path: "/bills", feature: "features_bill_pay" },
+    { label: "Exo", sub: "Exo Intelligence", icon: Bot, tint: "text-accent", path: "/advisor" },
+    { label: "Crypto", sub: "Trade digital assets", icon: Bitcoin, tint: "text-warning", path: "/wallet", feature: "features_crypto" },
+    { label: "Stocks", sub: "Invest in markets", icon: Briefcase, tint: "text-success", path: "/stocks", feature: "features_stocks" },
+  ];
+
+  const quickActions = [
+    { label: "Send", icon: Send, onClick: () => navigate("/send"), primary: true },
+    { label: "Add", icon: ArrowDownLeft, onClick: () => navigate("/deposit") },
+    { label: "Convert", icon: Repeat, onClick: () => navigate("/convert") },
+    { label: "More", icon: LayoutGrid, onClick: openAppMenu, mobileOnly: true },
+  ];
 
   return (
     <div className="space-y-6">
@@ -109,151 +129,103 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex gap-2 mt-4">
-              <Button size="sm" className="flex-1 gap-1.5" onClick={() => navigate("/send")}>
-                <Send className="w-3.5 h-3.5" /> Send
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="flex-1 gap-1.5"
-                onClick={() => navigate("/deposit")}
-              >
-                <ArrowDownLeft className="w-3.5 h-3.5" /> Add
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="flex-1 gap-1.5"
-                onClick={() => navigate("/convert")}
-              >
-                <Repeat className="w-3.5 h-3.5" /> Convert
-              </Button>
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Quick actions (Revolut-style round buttons) */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+        className="grid grid-cols-4 md:flex md:gap-6 gap-2"
+      >
+        {quickActions.map((a) => (
+          <button
+            key={a.label}
+            onClick={a.onClick}
+            className={`flex flex-col items-center gap-1.5 ${a.mobileOnly ? "md:hidden" : ""}`}
+          >
+            <span
+              className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                a.primary ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20" : "bg-secondary text-foreground"
+              }`}
+            >
+              <a.icon className="w-5 h-5" />
+            </span>
+            <span className="text-xs font-medium">{a.label}</span>
+          </button>
+        ))}
+      </motion.div>
+
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        {/* Recent activity */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="space-y-2 min-w-0"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">Activity</h2>
+            <button onClick={() => navigate("/activity")} className="text-sm font-medium text-accent">
+              See all
+            </button>
+          </div>
+          {txLoading ? (
+            <RowsSkeleton rows={3} />
+          ) : recent.length ? (
+            <div className="space-y-2">
+              {recent.map((tx) => (
+                <button key={tx.id} onClick={() => navigate("/activity")} className="block w-full min-w-0 text-left">
+                  <TransactionRow tx={tx} />
+                </button>
+              ))}
             </div>
-          </div>
-        </Card>
-      </motion.div>
+          ) : (
+            <Card className="p-4 bg-card border-border text-sm text-muted-foreground">
+              Your transaction history will appear here once you make your first deposit, send money, or trade.
+            </Card>
+          )}
+        </motion.section>
 
-      <TravelMode />
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-      >
-        <Card
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/markets")}
+        {/* Feature shortcuts */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.16 }}
+          className="space-y-3 min-w-0"
         >
-          <BarChart3 className="w-5 h-5 text-accent mb-2" />
-          <p className="text-sm font-semibold">Markets</p>
-          <p className="text-xs text-muted-foreground">Live prices</p>
-        </Card>
-        <Card
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/card")}
-        >
-          <CreditCard className="w-5 h-5 text-primary mb-2" />
-          <p className="text-sm font-semibold">Cards</p>
-          <p className="text-xs text-muted-foreground">Virtual & metal</p>
-        </Card>
-        <Card
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/savings")}
-        >
-          <PiggyBank className="w-5 h-5 text-success mb-2" />
-          <p className="text-sm font-semibold">Savings</p>
-          <p className="text-xs text-muted-foreground">{apyRate}% APY</p>
-        </Card>
-        <Card
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/qr")}
-        >
-          <QrCode className="w-5 h-5 text-muted-foreground mb-2" />
-          <p className="text-sm font-semibold">QR Pay</p>
-          <p className="text-xs text-muted-foreground">Scan & pay</p>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="grid grid-cols-2 sm:grid-cols-3 gap-3"
-      >
-        <Card
-          className={`p-4 border-border transition-all ${
-            isFeatureAvailable("features_bill_pay")
-              ? "bg-card cursor-pointer hover:bg-secondary/50"
-              : "bg-muted/20 cursor-not-allowed opacity-60"
-          }`}
-          onClick={() => isFeatureAvailable("features_bill_pay") && navigate("/bills")}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Landmark
-              className={`w-5 h-5 ${
-                isFeatureAvailable("features_bill_pay") ? "text-primary" : "text-muted-foreground"
-              }`}
-            />
-            {!isFeatureAvailable("features_bill_pay") && (
-              <XCircle className="w-3 h-3 text-muted-foreground ml-auto" />
-            )}
+          <div className="grid grid-cols-2 gap-2">
+            {shortcuts.map((sc) => {
+              const available = !sc.feature || isFeatureAvailable(sc.feature as Parameters<typeof isFeatureAvailable>[0]);
+              return (
+                <button
+                  key={sc.label}
+                  onClick={() => available && navigate(sc.path)}
+                  disabled={!available}
+                  className={`flex items-center gap-3 p-3 rounded-xl border border-border text-left ${
+                    available ? "bg-card hover:bg-secondary/50" : "bg-muted/20 opacity-60 cursor-not-allowed"
+                  }`}
+                >
+                  <span className="w-9 h-9 rounded-full bg-secondary/70 flex items-center justify-center shrink-0">
+                    {available ? (
+                      <sc.icon className={`w-4 h-4 ${sc.tint}`} />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold truncate">{sc.label}</span>
+                    <span className="block text-xs text-muted-foreground truncate">{sc.sub}</span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <p className="text-sm font-semibold">Pay Bills</p>
-          <p className="text-xs text-muted-foreground">Utilities & more</p>
-        </Card>
-        <Card
-          className="p-4 bg-card border-border cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate("/advisor")}
-        >
-          <Bot className="w-5 h-5 text-accent mb-2" />
-          <p className="text-sm font-semibold">Exo</p>
-          <p className="text-xs text-muted-foreground">Exo Intelligence</p>
-        </Card>
-        <Card
-          className={`p-4 border-border transition-all ${
-            isFeatureAvailable("features_crypto")
-              ? "bg-card cursor-pointer hover:bg-secondary/50"
-              : "bg-muted/20 cursor-not-allowed opacity-60"
-          }`}
-          onClick={() => isFeatureAvailable("features_crypto") && navigate("/wallet")}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Bitcoin
-              className={`w-5 h-5 ${
-                isFeatureAvailable("features_crypto") ? "text-warning" : "text-muted-foreground"
-              }`}
-            />
-            {!isFeatureAvailable("features_crypto") && (
-              <XCircle className="w-3 h-3 text-muted-foreground ml-auto" />
-            )}
-          </div>
-          <p className="text-sm font-semibold">Crypto</p>
-          <p className="text-xs text-muted-foreground">Trade digital assets</p>
-        </Card>
-        <Card
-          className={`p-4 border-border transition-all ${
-            isFeatureAvailable("features_stocks")
-              ? "bg-card cursor-pointer hover:bg-secondary/50"
-              : "bg-muted/20 cursor-not-allowed opacity-60"
-          }`}
-          onClick={() => isFeatureAvailable("features_stocks") && navigate("/stocks")}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Briefcase
-              className={`w-5 h-5 ${
-                isFeatureAvailable("features_stocks") ? "text-success" : "text-muted-foreground"
-              }`}
-            />
-            {!isFeatureAvailable("features_stocks") && (
-              <XCircle className="w-3 h-3 text-muted-foreground ml-auto" />
-            )}
-          </div>
-          <p className="text-sm font-semibold">Stocks</p>
-          <p className="text-xs text-muted-foreground">Invest in markets</p>
-        </Card>
-      </motion.div>
+          <TravelMode />
+        </motion.section>
+      </div>
     </div>
   );
 }

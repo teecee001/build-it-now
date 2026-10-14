@@ -190,3 +190,34 @@
     font-size: 16px !important;
   }
 }
+
+/* Skeleton shimmer */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.06), transparent);
+  animation: exo-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes exo-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Press feedback on buttons and tappable tiles */
+button:not(:disabled), [role="button"], .press {
+  transition-property: transform, background-color, color, border-color, opacity, box-shadow;
+  transition-duration: 150ms;
+}
+button:not(:disabled):active, [role="button"]:active, .press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after { animation: none; }
+  button:not(:disabled):active, [role="button"]:active, .press:active { transform: none; }
+}

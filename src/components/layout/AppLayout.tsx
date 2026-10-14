@@ -4,7 +4,7 @@ import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Target, Bot, LogOut, X,
   Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase,
-  FileText, Lock, Scale, Loader2
+  FileText, Lock, Scale, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -13,8 +13,10 @@ import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { Suspense, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Suspense, useEffect, useState } from "react";
+import { PageSkeleton } from "@/components/ui/skeleton";
+import { OPEN_MENU_EVENT } from "@/lib/appMenu";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 /* Exo Intelligence nav */
 const NAV_ITEMS = [
@@ -40,12 +42,32 @@ const NAV_ITEMS = [
 const TAB_PATHS = ["/dashboard", "/wallet", "/send", "/activity"];
 const TAB_ITEMS = TAB_PATHS.map((p) => NAV_ITEMS.find((i) => i.path === p)!);
 
+/* Menu sections (labels reuse NAV_ITEMS; section titles are short neutral headings). */
+const MENU_SECTIONS: { title?: string; paths: string[] }[] = [
+  { paths: ["/dashboard", "/activity", "/advisor"] },
+  { title: "Money", paths: ["/send", "/qr", "/deposit", "/savings", "/card", "/bills"] },
+  { title: "Invest", paths: ["/wallet", "/stocks", "/markets", "/forecasts"] },
+  { title: "More", paths: ["/rewards", "/referrals", "/premium", "/settings"] },
+];
+const SECTIONS = MENU_SECTIONS.map((sec) => ({
+  title: sec.title,
+  items: sec.paths.map((p) => NAV_ITEMS.find((i) => i.path === p)!).filter(Boolean),
+}));
+
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const isAdmin = useIsAdmin();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const open = () => setMobileOpen(true);
+    window.addEventListener(OPEN_MENU_EVENT, open);
+    return () => window.removeEventListener(OPEN_MENU_EVENT, open);
+  }, []);
 
   const { profile } = useProfile();
   const displayName = profile?.full_name?.trim() || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
@@ -55,30 +77,46 @@ export function AppLayout() {
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4">
         <div className="flex items-center justify-between px-3 py-4 mb-6">
-          <ExoLogo size="md" />
+          <ExoLogo size="md" variant="word" />
           <ThemeToggle />
           <NotificationBell />
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all",
-                  isActive
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </button>
-            );
-          })}
+          {SECTIONS.map((sec, si) => (
+            <div key={si} className={si ? "pt-3" : ""}>
+              {sec.title && (
+                <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{sec.title}</p>
+              )}
+              {sec.items.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                      isActive
+                        ? "bg-secondary text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                    )}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+              {sec.title === "More" && (
+                <button
+                  onClick={() => setFeedbackOpen(true)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Feedback
+                </button>
+              )}
+            </div>
+          ))}
           {isAdmin && (
             <button
               onClick={() => navigate("/admin")}
@@ -131,13 +169,10 @@ export function AppLayout() {
       </aside>
 
       <div className="app-chrome md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] bg-card/80 backdrop-blur-xl border-b border-border">
-        <ExoLogo size="sm" />
+        <ExoLogo size="md" variant="word" />
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <NotificationBell />
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2" aria-label="Menu" aria-expanded={mobileOpen}>
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
       </div>
 
@@ -149,22 +184,40 @@ export function AppLayout() {
             exit={{ opacity: 0, y: -10 }}
             className="app-chrome md:hidden fixed inset-x-0 top-[calc(52px+env(safe-area-inset-top))] bottom-[calc(64px+env(safe-area-inset-bottom))] z-40 bg-card border-b border-border p-4 space-y-0.5 overflow-y-auto overscroll-contain"
           >
-            {NAV_ITEMS.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => { navigate(item.path); setMobileOpen(false); }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
-                    isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+            {SECTIONS.map((sec, si) => (
+              <div key={si} className={si ? "pt-3" : ""}>
+                {sec.title && (
+                  <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{sec.title}</p>
+                )}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {sec.items.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <button
+                        key={item.path}
+                        onClick={() => { navigate(item.path); setMobileOpen(false); }}
+                        className={cn(
+                          "flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-medium transition-all",
+                          isActive ? "bg-accent/10 text-accent" : "bg-secondary/40 text-foreground/90"
+                        )}
+                      >
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                  {sec.title === "More" && (
+                    <button
+                      onClick={() => { setFeedbackOpen(true); setMobileOpen(false); }}
+                      className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-medium bg-secondary/40 text-foreground/90"
+                    >
+                      <MessageSquare className="w-4 h-4 shrink-0" />
+                      <span className="truncate">Feedback</span>
+                    </button>
                   )}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              );
-            })}
+                </div>
+              </div>
+            ))}
             {isAdmin && (
               <button
                 onClick={() => { navigate("/admin"); setMobileOpen(false); }}
@@ -202,19 +255,24 @@ export function AppLayout() {
       <main className="flex-1 overflow-y-auto overscroll-none md:pt-0 pt-[calc(52px+env(safe-area-inset-top))] pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-0">
         <div className="max-w-6xl mx-auto p-4 md:p-8">
           <Suspense
-            fallback={
-              <div className="min-h-[50vh] flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            }
+            fallback={<PageSkeleton />}
           >
-            <Outlet />
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
+                transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
           </Suspense>
         </div>
       </main>
 
-      {/* Hidden on /advisor: the floating button overlaps the chat composer's send button. */}
-      {location.pathname !== "/advisor" && <BetaFeedback />}
+      <BetaFeedback open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <OnboardingTutorial />
 
       {/* Mobile bottom tab bar (existing nav labels); Menu opens the existing menu sheet. */}
