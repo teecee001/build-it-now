@@ -86,6 +86,9 @@ function liveForexPrice(symbol: string, rates: Record<string, number>): number |
   return null;
 }
 
+/** Guards against Infinity/NaN while data loads (e.g. a 0 previous price). */
+const fmtPct = (n: number) => (Number.isFinite(n) ? `${n.toFixed(2)}%` : "—");
+
 function formatPrice(price: number, category: MarketCategory) {
   if (!price || !Number.isFinite(price)) return "—";
   if (category === "forex") {
@@ -410,7 +413,7 @@ function MarketsContent() {
                         }`}
                       >
                         {isUp ? "+" : ""}
-                        {item.change.toFixed(2)}%
+                        {fmtPct(item.change)}
                       </p>
                     </div>
                   </div>
@@ -461,7 +464,7 @@ function MarketsContent() {
                   }`}
                 >
                   {selectedInfo.change >= 0 ? "+" : ""}
-                  {selectedInfo.change.toFixed(2)}%
+                  {fmtPct(selectedInfo.change)}
                 </span>
               </div>
               {selectedAsset.category === "crypto" && (

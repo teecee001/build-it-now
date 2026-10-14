@@ -26,9 +26,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-
     const unauthenticated = () =>
       new Response(JSON.stringify({ subscribed: false, product_id: null, subscription_end: null }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -49,6 +46,17 @@ serve(async (req) => {
     }
     const user = userData.user;
     logStep("User authenticated", { email: user.email });
+
+    // Stripe secret keys start with sk_ (or rk_ for restricted keys). Anything else (e.g. a
+    // key *ID* like mk_...) can never work: report "not subscribed" instead of a 500.
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+    if (!/^(sk|rk)_(test|live)_/.test(stripeKey)) {
+      logStep("Stripe not configured: STRIPE_SECRET_KEY missing or not a secret key (expected sk_/rk_)");
+      return new Response(JSON.stringify({ subscribed: false, product_id: null, subscription_end: null, billing_configured: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -91,8 +99,9 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    logStep("ERROR", { message: errorMessage.replace(/\b(sk|rk|mk|pk)_[A-Za-z0-9_*]+/g, "[key]") });
+    // Don't echo provider errors (they can include key fragments) to the browser.
+    return new Response(JSON.stringify({ error: "Subscription status unavailable" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

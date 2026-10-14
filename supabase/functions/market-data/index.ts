@@ -151,10 +151,71 @@ async function fetchYahooMap(
   return out;
 }
 
-async function fetchCrypto(): Promise<Record<string, Quote>> {
+// Extra coins used only for the app's wallet conversion rates (class "crypto_rates").
+const EXTRA_CRYPTO_CODE: Record<string, string> = {
+  "monero": "XMR",
+  "ethereum-classic": "ETC",
+  "eos": "EOS",
+  "klay-token": "KLAY",
+  "flow": "FLOW",
+  "chiliz": "CHZ",
+  "enjincoin": "ENJ",
+  "zcash": "ZEC",
+  "dash": "DASH",
+  "neo": "NEO",
+  "iota": "IOTA",
+  "pancakeswap-token": "CAKE",
+  "1inch": "1INCH",
+  "basic-attention-token": "BAT",
+  "zilliqa": "ZIL",
+  "holotoken": "HOT",
+  "icon": "ICX",
+  "omisego": "OMG",
+  "compound-governance-token": "COMP",
+  "havven": "SNX",
+  "yearn-finance": "YFI",
+  "curve-dao-token": "CRV",
+  "sushi": "SUSHI",
+  "balancer": "BAL",
+  "republic-protocol": "REN",
+  "uma": "UMA",
+  "loopring": "LRC",
+  "qtum": "QTUM",
+  "waves": "WAVES",
+  "ontology": "ONT",
+  "0x": "ZRX",
+  "celo": "CELO",
+  "kava": "KAVA",
+  "reserve-rights-token": "RSR",
+  "ankr": "ANKR",
+  "skale": "SKL",
+  "storj": "STORJ",
+  "band-protocol": "BAND",
+  "ocean-protocol": "OCEAN",
+  "numeraire": "NMR",
+  "kyber-network-crystal": "KNC",
+  "augur": "REP",
+  "ravencoin": "RVN",
+  "decred": "DCR",
+  "siacoin": "SC",
+  "digibyte": "DGB",
+  "nem": "XEM",
+  "lisk": "LSK",
+  "steem": "STEEM",
+  "dent": "DENT",
+  "waltonchain": "WTC",
+  "ardor": "ARDR",
+  "stratis": "STRAT",
+  "bitshares": "BTS",
+  "syscoin": "SYS",
+  "power-ledger": "POWR",
+  "golem": "GNT",
+};
+
+async function fetchCrypto(extended = false): Promise<Record<string, Quote>> {
   const key = Deno.env.get("COINGECKO_DEMO_API_KEY");
   const url =
-    `https://api.coingecko.com/api/v3/simple/price?ids=${CRYPTO_IDS}&vs_currencies=usd&include_24hr_change=true` +
+    `https://api.coingecko.com/api/v3/simple/price?ids=${extended ? `${CRYPTO_IDS},${Object.keys(EXTRA_CRYPTO_CODE).join(",")}` : CRYPTO_IDS}&vs_currencies=usd&include_24hr_change=true` +
     (key ? `&x_cg_demo_api_key=${key}` : "");
   const headers: Record<string, string> = { Accept: "application/json" };
   if (key) headers["x-cg-demo-api-key"] = key;
@@ -164,7 +225,7 @@ async function fetchCrypto(): Promise<Record<string, Quote>> {
   const data = await res.json();
   const out: Record<string, Quote> = {};
   for (const [id, row] of Object.entries(data as Record<string, { usd?: number; usd_24h_change?: number }>)) {
-    const code = CRYPTO_CODE[id];
+    const code = CRYPTO_CODE[id] ?? (extended ? EXTRA_CRYPTO_CODE[id] : undefined);
     if (!code || row.usd == null) continue;
     const change = typeof row.usd_24h_change === "number" ? row.usd_24h_change : 0;
     const n = 14;
@@ -251,6 +312,16 @@ Deno.serve(async (req) => {
     if (need("crypto")) {
       try {
         payload.crypto = await fetchCrypto();
+        (payload.sources as Record<string, string>).crypto = "CoinGecko";
+      } catch (e) {
+        payload.crypto = {};
+        (payload.sources as Record<string, string>).crypto = `error:${String(e)}`;
+      }
+    }
+
+    if (cls === "crypto_rates") {
+      try {
+        payload.crypto = await fetchCrypto(true);
         (payload.sources as Record<string, string>).crypto = "CoinGecko";
       } catch (e) {
         payload.crypto = {};

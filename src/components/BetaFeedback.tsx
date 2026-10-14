@@ -43,7 +43,7 @@ export function BetaFeedback() {
       {/* Floating trigger */}
       <motion.button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/25 flex items-center justify-center hover:scale-105 transition-transform"
+        className="app-chrome fixed bottom-[calc(80px+env(safe-area-inset-bottom))] md:bottom-6 right-4 md:right-6 z-50 w-12 h-12 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/25 flex items-center justify-center hover:scale-105 transition-transform"
         whileTap={{ scale: 0.95 }}
         aria-label="Send feedback"
       >
@@ -58,7 +58,7 @@ export function BetaFeedback() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-20 right-6 z-50 w-80 rounded-2xl border border-border bg-card shadow-xl overflow-hidden"
+            className="fixed bottom-[calc(136px+env(safe-area-inset-bottom))] md:bottom-20 right-4 md:right-6 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-card shadow-xl overflow-hidden"
           >
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div>

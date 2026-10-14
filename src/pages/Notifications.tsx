@@ -23,14 +23,14 @@ export default function Notifications() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Notifications</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={() => markAllAsRead.mutate()}>
               <CheckCheck className="w-4 h-4 mr-1.5" />
