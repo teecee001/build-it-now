@@ -5,6 +5,7 @@ import { type AccountData, type Quote, accountSummary, detectIntent, ruleAnswer,
 import { type CallResult, runAgent } from "./agent.ts";
 import type { GoalsDb } from "./tools.ts";
 import { sanitizeMessages } from "./history.ts";
+import { appendSources, collectHeadlines } from "./sources.ts";
 
 // Exo-internal system instructions (not app UI copy).
 const EXO_DATA_RULES = [
@@ -224,7 +225,8 @@ serve(async (req) => {
           console.error(`Exo fact-check failed on ${p.name}: unsupported ${result.unsupported.join(", ").slice(0, 200)}`);
           return builtIn({ ...meta, "X-Exo-Factcheck": "failed-built-in" });
         }
-        return sseAnswer(result.text, { ...meta, "X-Exo-Source": "ai", "X-Exo-Factcheck": result.factcheck });
+        const text = appendSources(result.text, collectHeadlines(result.newsResults ?? []));
+        return sseAnswer(text, { ...meta, "X-Exo-Source": "ai", "X-Exo-Factcheck": result.factcheck });
       } catch (e) {
         console.error(`Exo provider ${p.name} threw: ${e instanceof Error ? e.name + ": " + e.message.slice(0, 200) : "unknown"}`);
         tried.push(`${p.name}=error`);
