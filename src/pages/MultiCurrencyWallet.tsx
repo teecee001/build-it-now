@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
+import { slotLimitMessage, useMultiCurrencyWallet } from "@/hooks/useMultiCurrencyWallet";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { CURRENCIES } from "@/constants/currencies";
 import { RateAlerts } from "@/components/RateAlerts";
@@ -162,9 +162,17 @@ export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {})
         <Button
           size="sm"
           variant="outline"
-          onClick={() => { setShowAddCurrency(!showAddCurrency); setShowConvert(false); }}
-          disabled={slotsRemaining <= 0}
-          className="gap-1 h-9 flex-1"
+          onClick={() => {
+            // When every slot is used, explain why instead of a silently disabled button.
+            if (slotsRemaining <= 0) {
+              toast.error(slotLimitMessage(tier, maxCurrencies));
+              return;
+            }
+            setShowAddCurrency(!showAddCurrency);
+            setShowConvert(false);
+          }}
+          aria-disabled={slotsRemaining <= 0}
+          className={`gap-1 h-9 flex-1 ${slotsRemaining <= 0 ? "opacity-50" : ""}`}
         >
           <Plus className="w-3.5 h-3.5" /> Add currency
         </Button>
