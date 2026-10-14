@@ -8,6 +8,8 @@ export default tseslint.config(
   {
     ignores: [
       "dist",
+      // Native Expo app has its own lint config (mobile/eslint.config.js).
+      "mobile/**",
       // Auto-generated bundle (Lovable MCP plugin regenerates it from
       // src/lib/mcp; manual edits would be overwritten).
       "supabase/functions/mcp/index.ts",

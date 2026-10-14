@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "ExoSky",
+    "slug": "exosky",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "exosky",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#09090B",
+    "ios": {
+      "bundleIdentifier": "com.exosky.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "ExoSky uses Face ID to unlock the app.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.exosky.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0B",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#09090B",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120,
+          "dark": { "backgroundColor": "#09090B", "image": "./assets/images/splash-icon.png" }
+        }
+      ],
+      "expo-secure-store",
+      ["expo-local-authentication", { "faceIDPermission": "ExoSky uses Face ID to unlock the app." }],
+      ["expo-notifications", { "color": "#22C55E" }],
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
