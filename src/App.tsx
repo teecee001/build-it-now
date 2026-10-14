@@ -3,46 +3,52 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import LandingPage from "./pages/LandingPage";
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ActiveCurrencyProvider } from "@/hooks/useActiveCurrency";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useGeoVerification } from "@/hooks/useGeoVerification";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { CountryOnboarding } from "@/components/CountryOnboarding";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import WalletPage from "./pages/WalletPage";
-import SendMoney from "./pages/SendMoney";
-import Markets from "./pages/Markets";
-import Forecasts from "./pages/Forecasts";
-import AIAdvisor from "./pages/AIAdvisor";
-import Rewards from "./pages/Rewards";
-import Activity from "./pages/Activity";
-import CardPage from "./pages/CardPage";
-import Deposit from "./pages/Deposit";
-import BillPay from "./pages/BillPay";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import ComplianceDisclosures from "./pages/ComplianceDisclosures";
-import KYCVerification from "./pages/KYCVerification";
-import Savings from "./pages/Savings";
-import Referrals from "./pages/Referrals";
-import Premium from "./pages/Premium";
-import Settings from "./pages/Settings";
-import SpendingAnalytics from "./pages/SpendingAnalytics";
-import QRPayments from "./pages/QRPayments";
-import RecurringPayments from "./pages/RecurringPayments";
-import MultiCurrencyWallet from "./pages/MultiCurrencyWallet";
-import StocksPage from "./pages/StocksPage";
-import Admin from "./pages/Admin";
-import OAuthConsent from "./pages/OAuthConsent";
-import Notifications from "./pages/Notifications";
-import NotFound from "./pages/NotFound";
+const Auth = lazy(() => import("./pages/Auth"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const WalletPage = lazy(() => import("./pages/WalletPage"));
+const SendMoney = lazy(() => import("./pages/SendMoney"));
+const Markets = lazy(() => import("./pages/Markets"));
+const Forecasts = lazy(() => import("./pages/Forecasts"));
+const AIAdvisor = lazy(() => import("./pages/AIAdvisor"));
+const Rewards = lazy(() => import("./pages/Rewards"));
+const Activity = lazy(() => import("./pages/Activity"));
+const CardPage = lazy(() => import("./pages/CardPage"));
+const Deposit = lazy(() => import("./pages/Deposit"));
+const BillPay = lazy(() => import("./pages/BillPay"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const ComplianceDisclosures = lazy(() => import("./pages/ComplianceDisclosures"));
+const KYCVerification = lazy(() => import("./pages/KYCVerification"));
+const Savings = lazy(() => import("./pages/Savings"));
+const Referrals = lazy(() => import("./pages/Referrals"));
+const Premium = lazy(() => import("./pages/Premium"));
+const Settings = lazy(() => import("./pages/Settings"));
+const SpendingAnalytics = lazy(() => import("./pages/SpendingAnalytics"));
+const QRPayments = lazy(() => import("./pages/QRPayments"));
+const RecurringPayments = lazy(() => import("./pages/RecurringPayments"));
+const MultiCurrencyWallet = lazy(() => import("./pages/MultiCurrencyWallet"));
+const StocksPage = lazy(() => import("./pages/StocksPage"));
+const Admin = lazy(() => import("./pages/Admin"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 const queryClient = new QueryClient();
+
+const PageFallback = () => (
+  <div className="min-h-[50vh] flex items-center justify-center bg-background">
+    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+  </div>
+);
 
 const BYPASS_AUTH = false;
 
@@ -88,6 +94,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<LandingPage />} />
@@ -141,6 +148,7 @@ const App = () => (
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

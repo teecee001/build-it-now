@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { EXCHANGE_RATES } from "@/constants/currencies";
 import { COINGECKO_IDS } from "@/constants/cryptoIds";
@@ -20,25 +21,28 @@ type CryptoPayload = {
   changes: Record<string, number>;
 };
 
+/** Crypto prices via our market-data edge function (server-side CoinGecko, cached),
+ * so the browser never calls CoinGecko directly (CORS/rate-limit errors). */
 async function fetchCryptoRates(): Promise<CryptoPayload> {
-  const ids = CRYPTO_CODES.map((c) => COINGECKO_IDS[c]).filter(Boolean).join(",");
-  const res = await fetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
-  );
-  if (!res.ok) throw new Error("Failed to fetch crypto rates");
-  const data = await res.json();
-
+  const load = async (cls: string) => {
+    const { data, error } = await supabase.functions.invoke("market-data", { body: { class: cls } });
+    if (error) throw error;
+    return (data?.crypto ?? {}) as Record<string, { price?: number; changePct?: number }>;
+  };
+  // "crypto_rates" covers every wallet coin; fall back to the core list if it is empty.
+  let quotes = await load("crypto_rates").catch(() => ({}));
+  if (!Object.keys(quotes).length) quotes = await load("crypto");
   const rates: Record<string, number> = {};
   const changes: Record<string, number> = {};
   for (const code of CRYPTO_CODES) {
-    const geckoId = COINGECKO_IDS[code];
-    if (geckoId && data[geckoId]?.usd != null) {
-      rates[code] = 1 / data[geckoId].usd;
-      if (typeof data[geckoId].usd_24h_change === "number") {
-        changes[code] = data[geckoId].usd_24h_change;
-      }
+    const q = quotes[code];
+    const price = Number(q?.price);
+    if (q && Number.isFinite(price) && price > 0) {
+      rates[code] = 1 / price;
+      if (typeof q.changePct === "number" && Number.isFinite(q.changePct)) changes[code] = q.changePct;
     }
   }
+  if (!Object.keys(rates).length) throw new Error("Failed to fetch crypto rates");
   return { rates, changes };
 }
 

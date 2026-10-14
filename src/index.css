@@ -107,6 +107,11 @@
     @apply border-border;
   }
 
+  html, body {
+    overscroll-behavior: none; /* no rubber-band/pull-to-refresh on the app shell */
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -159,5 +164,29 @@
   }
   .glow-green {
     box-shadow: 0 0 20px hsl(142 71% 45% / 0.2), 0 0 60px hsl(142 71% 45% / 0.1);
+  }
+}
+
+/* Native-app feel (no wording changes) */
+@layer base {
+  /* UI chrome isn't selectable text; content and inputs still are. */
+  button, [role="button"], [role="tab"], nav, header, .app-chrome, label {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* Hide scrollbars on horizontal chip/tab rows while keeping them scrollable. */
+  .overflow-x-auto, .overflow-x-scroll {
+    scrollbar-width: none;
+  }
+  .overflow-x-auto::-webkit-scrollbar, .overflow-x-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 16px inputs on phones stop iOS Safari zooming in on focus (beats text-sm utilities). */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea {
+    font-size: 16px !important;
   }
 }

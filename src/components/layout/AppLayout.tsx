@@ -4,7 +4,7 @@ import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { 
   LayoutDashboard, Wallet, Send, TrendingUp, Target, Bot, LogOut, X,
   Menu, CreditCard, Gift, Activity, Landmark, Receipt, Shield, PiggyBank, Users, Crown, Settings, QrCode, Briefcase,
-  FileText, Lock, Scale
+  FileText, Lock, Scale, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -13,7 +13,7 @@ import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* Exo Intelligence nav */
@@ -36,6 +36,9 @@ const NAV_ITEMS = [
   { path: "/premium", icon: Crown, label: "Pro" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
+
+const TAB_PATHS = ["/dashboard", "/wallet", "/send", "/activity"];
+const TAB_ITEMS = TAB_PATHS.map((p) => NAV_ITEMS.find((i) => i.path === p)!);
 
 export function AppLayout() {
   const location = useLocation();
@@ -127,12 +130,12 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-card/80 backdrop-blur-xl border-b border-border">
+      <div className="app-chrome md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] bg-card/80 backdrop-blur-xl border-b border-border">
         <ExoLogo size="sm" />
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <NotificationBell />
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2">
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2" aria-label="Menu" aria-expanded={mobileOpen}>
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
@@ -144,7 +147,7 @@ export function AppLayout() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden fixed inset-x-0 top-[52px] z-40 bg-card border-b border-border p-4 space-y-0.5 max-h-[80vh] overflow-y-auto"
+            className="app-chrome md:hidden fixed inset-x-0 top-[calc(52px+env(safe-area-inset-top))] bottom-[calc(64px+env(safe-area-inset-bottom))] z-40 bg-card border-b border-border p-4 space-y-0.5 overflow-y-auto overscroll-contain"
           >
             {NAV_ITEMS.map((item) => {
               const isActive = location.pathname === item.path;
@@ -196,15 +199,60 @@ export function AppLayout() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 overflow-y-auto md:pt-0 pt-[52px]">
+      <main className="flex-1 overflow-y-auto overscroll-none md:pt-0 pt-[calc(52px+env(safe-area-inset-top))] pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-0">
         <div className="max-w-6xl mx-auto p-4 md:p-8">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="min-h-[50vh] flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </div>
       </main>
 
       {/* Hidden on /advisor: the floating button overlaps the chat composer's send button. */}
       {location.pathname !== "/advisor" && <BetaFeedback />}
       <OnboardingTutorial />
+
+      {/* Mobile bottom tab bar (existing nav labels); Menu opens the existing menu sheet. */}
+      <nav
+        aria-label="Primary"
+        className="app-chrome md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/90 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="grid grid-cols-5 h-16">
+          {TAB_ITEMS.map((item) => {
+            const isActive = !mobileOpen && location.pathname === item.path;
+            return (
+              <button
+                key={item.path}
+                onClick={() => { navigate(item.path); setMobileOpen(false); }}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors active:scale-95",
+                  isActive ? "text-accent" : "text-muted-foreground"
+                )}
+              >
+                <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.4 : 2} />
+                {item.label}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-expanded={mobileOpen}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors active:scale-95",
+              mobileOpen ? "text-accent" : "text-muted-foreground"
+            )}
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            Menu
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
