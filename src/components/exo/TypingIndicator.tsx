@@ -11,7 +11,7 @@ export default function TypingIndicator() {
       role="status"
       aria-label="Exo is typing..."
     >
-      <ExoAvatar size={28} />
+      <ExoAvatar size={28} thinking />
       <div className="relative bg-secondary rounded-[20px] rounded-bl-md px-4 py-3.5 flex gap-1.5">
         {[0, 1, 2].map((i) => (
           <motion.span

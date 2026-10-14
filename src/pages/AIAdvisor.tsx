@@ -195,7 +195,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
     <div className="relative mx-auto flex h-[calc(100dvh-8rem)] w-full max-w-3xl flex-col">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/80 px-4 py-2.5 backdrop-blur-xl">
-        <ExoAvatar size={40} online />
+        <ExoAvatar size={40} online thinking={typing} />
         <div className="min-w-0 flex-1">
           <h1 className="text-base font-semibold leading-tight tracking-tight">Exo</h1>
           <p className="truncate text-xs leading-tight" aria-live="polite">
