@@ -50,7 +50,7 @@ export function TransactionRow({ tx }: { tx: Transaction }) {
             >
               {amount.text}
             </p>
-            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+            <Badge variant="secondary" className="text-caption px-1 py-0">
               {tx.status}
             </Badge>
           </div>

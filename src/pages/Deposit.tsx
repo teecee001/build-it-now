@@ -1,3 +1,5 @@
+import { Check } from "lucide-react";
+import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,10 +50,8 @@ export default function Deposit() {
   if (done) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", duration: 0.5 }}>
-          <CheckCircle2 className="w-20 h-20 text-success" />
-        </motion.div>
-        <h2 className="text-2xl font-bold">Deposit Complete!</h2>
+        <SuccessCheck />
+        <h2 className="text-title">Deposit Complete!</h2>
         <p className="text-muted-foreground text-center">${amount} has been added to your wallet</p>
         <Button variant="outline" onClick={() => { setDone(false); setAmount(""); setMethod(null); }}>
           Make Another Deposit
@@ -63,7 +63,7 @@ export default function Deposit() {
   return (
     <div className="space-y-6 max-w-lg mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Deposit Funds</h1>
+        <h1 className="text-title">Deposit Funds</h1>
         <p className="text-muted-foreground text-sm mt-1">Add money to your Ξ╳oSky wallet</p>
       </motion.div>
 
@@ -109,7 +109,7 @@ export default function Deposit() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold">{m.title}</p>
-                    {m.badge && <Badge className="bg-success/10 text-success border-0 text-[10px]">{m.badge}</Badge>}
+                    {m.badge && <Badge className="bg-success/10 text-success border-0 text-caption">{m.badge}</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground">{m.desc}</p>
                 </div>
@@ -122,7 +122,7 @@ export default function Deposit() {
       {/* Direct Deposit Info */}
       {method === "direct" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-5 bg-card border-border shadow-card space-y-4">
+          <Card className="p-6 bg-card border-border shadow-card space-y-4">
             <h3 className="text-sm font-semibold">Direct Deposit Details</h3>
             <p className="text-xs text-muted-foreground">Share these details with your employer to set up direct deposit</p>
             <div className="space-y-3">
@@ -146,7 +146,7 @@ export default function Deposit() {
               </div>
             </div>
             <div className="p-3 rounded-lg bg-success/5 border border-success/10">
-              <p className="text-xs text-success">✓ Deposits arrive within 1-2 business days. Earn 6.00% APY on your entire balance.</p>
+              <p className="text-xs text-success flex items-center gap-1"><Check className="w-3 h-3 shrink-0" aria-hidden />Deposits arrive within 1-2 business days. Earn 6.00% APY on your entire balance.</p>
             </div>
           </Card>
         </motion.div>
@@ -155,7 +155,7 @@ export default function Deposit() {
       {/* Amount Entry for bank/card */}
       {(method === "bank" || method === "card") && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-5 bg-card border-border shadow-card space-y-4">
+          <Card className="p-6 bg-card border-border shadow-card space-y-4">
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground font-medium">Amount</label>
               <Input

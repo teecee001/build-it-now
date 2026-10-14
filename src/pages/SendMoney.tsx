@@ -1,3 +1,4 @@
+import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -110,10 +111,8 @@ function SendMoneyContent() {
   if (sent) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", duration: 0.5 }}>
-          <CheckCircle2 className="w-20 h-20 text-success" />
-        </motion.div>
-        <h2 className="text-2xl font-bold">Payment Sent!</h2>
+        <SuccessCheck />
+        <h2 className="text-title">Payment Sent!</h2>
         <p className="text-muted-foreground text-center">{formatBalance(parsedAmount)} was sent to {recipient}</p>
         <Button variant="outline" onClick={() => { setSent(false); setRecipient(""); setAmount(""); }}>Send Another</Button>
       </div>
@@ -123,7 +122,7 @@ function SendMoneyContent() {
   return (
     <div className="space-y-6 max-w-lg mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Send Money</h1>
+        <h1 className="text-title">Send Money</h1>
         <p className="text-muted-foreground text-sm mt-1">Transfer funds to anyone, anywhere in the world</p>
       </motion.div>
 
@@ -153,7 +152,7 @@ function SendMoneyContent() {
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
 
-        <Card className="p-6 bg-card border-border shadow-card space-y-5">
+        <Card className="p-6 bg-card border-border shadow-card space-y-6">
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground font-medium">Recipient</label>
             <div className="relative">

@@ -81,7 +81,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
         <Card className="p-6 bg-card border-border text-center space-y-4">
           <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
-          <h3 className="text-lg font-semibold">Order Filled!</h3>
+          <h3 className="text-heading">Order Filled!</h3>
           <p className="text-sm text-muted-foreground">Your portfolio has been updated.</p>
           <Button onClick={onClose} className="w-full">Done</Button>
         </Card>
@@ -91,7 +91,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-      <Card className="p-5 bg-card border-border space-y-4">
+      <Card className="p-6 bg-card border-border space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon className={`w-5 h-5 ${type === "buy" ? "text-success" : "text-destructive"}`} />
@@ -116,13 +116,13 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
         <div className="flex bg-secondary/50 rounded-lg p-0.5">
           <button
             onClick={() => { setOrderType("dollars"); setAmount(""); }}
-            className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${orderType === "dollars" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${orderType === "dollars" ? "bg-background shadow-card" : "text-muted-foreground"}`}
           >
             Dollars
           </button>
           <button
             onClick={() => { setOrderType("shares"); setAmount(""); }}
-            className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${orderType === "shares" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${orderType === "shares" ? "bg-background shadow-card" : "text-muted-foreground"}`}
           >
             Shares
           </button>

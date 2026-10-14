@@ -83,13 +83,13 @@ export function CountryOnboarding({ onComplete }: Props) {
           <div className="inline-flex items-center justify-center mb-3">
             <ExoLogo size="lg" variant="mark" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Where are you based?</h1>
+          <h1 className="text-title">Where are you based?</h1>
           <p className="text-muted-foreground text-sm mt-1">
             One step — sets your currency and local experience
           </p>
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-5 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-2 mb-6 text-xs text-muted-foreground">
           <CheckCircle2 className="w-3.5 h-3.5 text-success" />
           <span>Account created</span>
           <span className="text-border">·</span>
@@ -125,7 +125,7 @@ export function CountryOnboarding({ onComplete }: Props) {
                 <div className="max-h-[380px] overflow-y-auto space-y-4 pr-1">
                   {Object.entries(groupedCountries).map(([region, regionCountries]) => (
                     <div key={region}>
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+                      <p className="text-caption font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
                         {region}
                       </p>
                       <div className="space-y-1">
@@ -137,7 +137,7 @@ export function CountryOnboarding({ onComplete }: Props) {
                               type="button"
                               onClick={() => finishWithCountry(c.code)}
                               disabled={saving}
-                              className={`w-full flex items-center justify-between p-2.5 rounded-lg transition-colors text-left ${
+                              className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left ${
                                 active
                                   ? "bg-primary/10 border border-primary/20"
                                   : "hover:bg-secondary/50"
@@ -147,7 +147,7 @@ export function CountryOnboarding({ onComplete }: Props) {
                                 <span className="text-lg">{getFlagEmoji(c.code)}</span>
                                 <div>
                                   <p className="text-sm font-medium">{c.name}</p>
-                                  <p className="text-[10px] text-muted-foreground">
+                                  <p className="text-caption text-muted-foreground">
                                     {c.currency_code} · local rates
                                   </p>
                                 </div>
@@ -172,7 +172,7 @@ export function CountryOnboarding({ onComplete }: Props) {
               )}
 
               <div className="pt-2 border-t border-border">
-                <p className="text-[10px] text-muted-foreground text-center flex items-center justify-center gap-1">
+                <p className="text-caption text-muted-foreground text-center flex items-center justify-center gap-1">
                   <Shield className="w-3 h-3" /> Demo beta · no real money · data protected
                 </p>
               </div>

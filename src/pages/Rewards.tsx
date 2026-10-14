@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,16 +40,14 @@ export default function Rewards() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <PageSkeleton />
     );
   }
 
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Rewards</h1>
+        <h1 className="text-title">Rewards</h1>
         <p className="text-muted-foreground text-sm mt-1">Cashback, APY interest, and bonuses</p>
       </motion.div>
 
@@ -80,7 +79,7 @@ export default function Rewards() {
 
       {/* APY Card */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-        <Card className="p-5 bg-gradient-to-r from-success/10 to-success/5 border-success/20">
+        <Card className="p-6 bg-gradient-to-r from-success/10 to-success/5 border-success/20">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
@@ -138,7 +137,7 @@ export default function Rewards() {
                         <p className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                         </p>
-                        <Badge variant="secondary" className="text-[10px] px-1 py-0">{item.type.replace("_", " ")}</Badge>
+                        <Badge variant="secondary" className="text-caption px-1 py-0">{item.type.replace("_", " ")}</Badge>
                       </div>
                     </div>
                   </div>

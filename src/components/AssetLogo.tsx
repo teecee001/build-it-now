@@ -1,3 +1,4 @@
+import { Coins, Droplet, Flame, Hexagon, Gem, Diamond, Wheat, Sprout, type LucideIcon } from "lucide-react";
 import { useState, useMemo } from "react";
 
 function seedHash(s: string) {
@@ -103,17 +104,17 @@ const COMMODITY_DOMAIN: Record<string, string> = {
 
 // Commodity glyphs: exchange/org favicons (CME, ICE, ...) were generic
 // placeholders, and several returned blank tiles.
-const COMMODITY_GLYPH: Record<string, { glyph: string; bg: string }> = {
-  GOLD: { glyph: "🥇", bg: "bg-amber-400/20" },
-  SILVER: { glyph: "🥈", bg: "bg-slate-300/20" },
-  OIL: { glyph: "🛢️", bg: "bg-zinc-500/25" },
-  BRENT: { glyph: "🛢️", bg: "bg-stone-500/25" },
-  NATGAS: { glyph: "🔥", bg: "bg-sky-500/20" },
-  COPPER: { glyph: "🔶", bg: "bg-orange-500/20" },
-  PLAT: { glyph: "💍", bg: "bg-slate-400/20" },
-  PALL: { glyph: "💎", bg: "bg-indigo-400/20" },
-  WHEAT: { glyph: "🌾", bg: "bg-yellow-500/20" },
-  CORN: { glyph: "🌽", bg: "bg-lime-500/20" },
+const COMMODITY_GLYPH: Record<string, { icon: LucideIcon; bg: string; fg: string }> = {
+  GOLD: { icon: Coins, bg: "bg-amber-400/20", fg: "text-amber-500" },
+  SILVER: { icon: Coins, bg: "bg-slate-300/20", fg: "text-slate-400" },
+  OIL: { icon: Droplet, bg: "bg-zinc-500/25", fg: "text-zinc-400" },
+  BRENT: { icon: Droplet, bg: "bg-stone-500/25", fg: "text-stone-400" },
+  NATGAS: { icon: Flame, bg: "bg-sky-500/20", fg: "text-sky-500" },
+  COPPER: { icon: Hexagon, bg: "bg-orange-500/20", fg: "text-orange-500" },
+  PLAT: { icon: Gem, bg: "bg-slate-400/20", fg: "text-slate-400" },
+  PALL: { icon: Diamond, bg: "bg-indigo-400/20", fg: "text-indigo-400" },
+  WHEAT: { icon: Wheat, bg: "bg-yellow-500/20", fg: "text-yellow-500" },
+  CORN: { icon: Sprout, bg: "bg-lime-500/20", fg: "text-lime-500" },
 };
 
 const FOREX_FLAG: Record<string, string> = {
@@ -237,11 +238,11 @@ export function AssetLogo({
     return (
       <div
         className={`rounded-full flex items-center justify-center shrink-0 ${commodity.bg} ${className}`}
-        style={{ ...dim, fontSize: Math.round(size * 0.5) }}
+        style={dim}
         title={symbol}
         aria-label={symbol}
       >
-        <span aria-hidden>{commodity.glyph}</span>
+        <commodity.icon className={commodity.fg} style={{ width: size * 0.5, height: size * 0.5 }} aria-hidden />
       </div>
     );
   }
@@ -272,7 +273,7 @@ export function AssetLogo({
 
   return (
     <div
-      className={`rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${palette} ${className}`}
+      className={`rounded-full flex items-center justify-center text-caption font-bold shrink-0 ${palette} ${className}`}
       style={dim}
       title={symbol}
     >

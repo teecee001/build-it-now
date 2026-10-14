@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { FeatureGate } from "@/components/FeatureGate";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -325,9 +326,7 @@ function CardPageContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <PageSkeleton />
     );
   }
 
@@ -367,7 +366,7 @@ function CardPageContent() {
     const design = getDesignForCard(c);
     return (
       <div
-        className={`relative rounded-2xl p-${compact ? "4" : "6"} overflow-hidden ${compact ? "aspect-[2/1]" : "aspect-[1.586/1]"} flex flex-col justify-between ${c.is_frozen ? "opacity-60" : ""}`}
+        className={`relative rounded-card p-${compact ? "4" : "6"} overflow-hidden ${compact ? "aspect-[2/1]" : "aspect-[1.586/1]"} flex flex-col justify-between ${c.is_frozen ? "opacity-60" : ""}`}
         style={{
           background: design.bg,
           border: `1px solid ${design.border}`,
@@ -389,7 +388,7 @@ function CardPageContent() {
           <div className="flex items-center gap-1">
             {c.is_frozen && <Snowflake className="w-3 h-3 text-blue-400" />}
             {isVirtual ? (
-              <Badge className="bg-blue-500/10 text-blue-400 border-0 text-[9px] px-1.5 py-0">VIRTUAL</Badge>
+              <Badge className="bg-blue-500/10 text-blue-400 border-0 text-[9px] px-2 py-0">VIRTUAL</Badge>
             ) : (
               <span className="text-[9px] font-medium text-white/50">METAL</span>
             )}
@@ -428,7 +427,7 @@ function CardPageContent() {
   const CardDesignPreview = ({ design, selected, onClick }: { design: typeof CARD_DESIGNS[0]; selected: boolean; onClick: () => void }) => (
     <button
       onClick={onClick}
-      className={`relative rounded-xl overflow-hidden aspect-[1.6/1] transition-all ${
+      className={`relative rounded-card overflow-hidden aspect-[1.6/1] transition-all ${
         selected ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : "ring-1 ring-border hover:ring-accent/50"
       }`}
     >
@@ -444,7 +443,7 @@ function CardPageContent() {
         </div>
       )}
       <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
-        <p className="text-[10px] font-medium text-white/90">{design.name}</p>
+        <p className="text-caption font-medium text-white/90">{design.name}</p>
       </div>
     </button>
   );
@@ -502,10 +501,10 @@ function CardPageContent() {
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">Cards</h1>
+                <h1 className="text-title">Cards</h1>
                 <p className="text-muted-foreground text-sm mt-1">Manage your virtual & physical cards</p>
               </div>
-              <button onClick={() => setView("tiers")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+              <button onClick={() => setView("tiers")} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                 <Crown className={`w-3.5 h-3.5 ${tierColors[tier]}`} />
                 <span className={`text-xs font-semibold ${tierColors[tier]}`}>{config.label}</span>
               </button>
@@ -514,15 +513,15 @@ function CardPageContent() {
             <Card className="p-4 bg-card border-border">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Per Transaction</p>
+                  <p className="text-caption text-muted-foreground uppercase tracking-wider">Per Transaction</p>
                   <p className="text-sm font-bold font-mono">${limits.single.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Daily Limit</p>
+                  <p className="text-caption text-muted-foreground uppercase tracking-wider">Daily Limit</p>
                   <p className="text-sm font-bold font-mono">${limits.daily.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Monthly</p>
+                  <p className="text-caption text-muted-foreground uppercase tracking-wider">Monthly</p>
                   <p className="text-sm font-bold font-mono">${limits.monthly.toLocaleString()}</p>
                 </div>
               </div>
@@ -537,14 +536,14 @@ function CardPageContent() {
                   <div className="flex items-center justify-between mt-2 px-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium">{c.card_name || "Card"}</p>
-                      {c.is_frozen && <Badge className="bg-blue-500/10 text-blue-400 border-0 text-[10px]">Frozen</Badge>}
+                      {c.is_frozen && <Badge className="bg-blue-500/10 text-blue-400 border-0 text-caption">Frozen</Badge>}
                       {c.card_format === "physical" && c.shipping_status && (
-                        <Badge className="bg-warning/10 text-warning border-0 text-[10px] gap-1">
+                        <Badge className="bg-warning/10 text-warning border-0 text-caption gap-1">
                           <Truck className="w-3 h-3" /> {c.shipping_status}
                         </Badge>
                       )}
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); openSettings(c); }} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                    <button onClick={(e) => { e.stopPropagation(); openSettings(c); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                       <Settings className="w-4 h-4 text-muted-foreground" />
                     </button>
                   </div>
@@ -574,7 +573,7 @@ function CardPageContent() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">{selectedCard.card_name || "Card"}</h1>
+                <h1 className="text-title">{selectedCard.card_name || "Card"}</h1>
                 <p className="text-muted-foreground text-sm">•••• {selectedCard.card_number_last4}</p>
               </div>
             </div>
@@ -643,7 +642,7 @@ function CardPageContent() {
                     <KeyRound className="w-4 h-4" /> {selectedCard && getCardPinHash(selectedCard.id) ? "Verify PIN" : "Set PIN"}
                   </Button>
                 </Card>
-                <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
+                <p className="text-caption text-center text-muted-foreground flex items-center justify-center gap-1">
                   <ShieldCheck className="w-3 h-3" /> Secured by PIN verification
                 </p>
               </motion.div>
@@ -664,67 +663,67 @@ function CardPageContent() {
                 </div>
 
                 {/* Full Card Details */}
-                <Card className="p-5 bg-card border-border space-y-4">
+                <Card className="p-6 bg-card border-border space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold">Card Details</h3>
                     <Button variant="ghost" size="sm" className="h-7 px-2 gap-1" onClick={() => setShowNumber(!showNumber)}>
                       {showNumber ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      <span className="text-[10px]">{showNumber ? "Hide" : "Show"}</span>
+                      <span className="text-caption">{showNumber ? "Hide" : "Show"}</span>
                     </Button>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Card Number</p>
-                        <p className="text-sm font-mono font-medium mt-0.5">
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Card Number</p>
+                        <p className="text-sm font-mono font-medium mt-1">
                           {showNumber ? `4532 8721 0${selectedCard.card_number_last4.slice(0, 2)}9 ${selectedCard.card_number_last4}` : `•••• •••• •••• ${selectedCard.card_number_last4}`}
                         </p>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Card number copied"); }} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                      <button onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Card number copied"); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                         <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                       </button>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Expiry</p>
-                        <p className="text-sm font-mono font-medium mt-0.5">{String(selectedCard.expiry_month).padStart(2, "0")}/{String(selectedCard.expiry_year).slice(-2)}</p>
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Expiry</p>
+                        <p className="text-sm font-mono font-medium mt-1">{String(selectedCard.expiry_month).padStart(2, "0")}/{String(selectedCard.expiry_year).slice(-2)}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">CVV</p>
-                        <p className="text-sm font-mono font-medium mt-0.5">{showNumber ? selectedCard.card_number_last4.slice(-3) : "•••"}</p>
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">CVV</p>
+                        <p className="text-sm font-mono font-medium mt-1">{showNumber ? selectedCard.card_number_last4.slice(-3) : "•••"}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Network</p>
-                        <p className="text-sm font-medium mt-0.5">VISA</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cardholder</p>
-                        <p className="text-sm font-medium mt-0.5 truncate">{selectedCard.card_name || handle}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Format</p>
-                        <p className="text-sm font-medium mt-0.5 capitalize">{selectedCard.card_format}</p>
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Network</p>
+                        <p className="text-sm font-medium mt-1">VISA</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Status</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Cardholder</p>
+                        <p className="text-sm font-medium mt-1 truncate">{selectedCard.card_name || handle}</p>
+                      </div>
+                      <div>
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Format</p>
+                        <p className="text-sm font-medium mt-1 capitalize">{selectedCard.card_format}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Status</p>
+                        <div className="flex items-center gap-2 mt-1">
                           <div className={`w-2 h-2 rounded-full ${selectedCard.is_frozen ? "bg-blue-400" : selectedCard.is_active ? "bg-accent" : "bg-destructive"}`} />
                           <p className="text-sm font-medium">{selectedCard.is_frozen ? "Frozen" : selectedCard.is_active ? "Active" : "Inactive"}</p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Card Type</p>
-                        <p className="text-sm font-medium mt-0.5 capitalize">{selectedCard.card_type}</p>
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Card Type</p>
+                        <p className="text-sm font-medium mt-1 capitalize">{selectedCard.card_type}</p>
                       </div>
                     </div>
                     {selectedCard.card_format === "physical" && selectedCard.shipping_status && (
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Shipping</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="text-caption text-muted-foreground uppercase tracking-wider">Shipping</p>
+                        <div className="flex items-center gap-2 mt-1">
                           <Truck className="w-3.5 h-3.5 text-warning" />
                           <p className="text-sm font-medium capitalize">{selectedCard.shipping_status}</p>
                         </div>
@@ -737,7 +736,7 @@ function CardPageContent() {
                 <div className="grid grid-cols-4 gap-2">
                   <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Full number copied"); }}>
                     <Copy className="w-4 h-4" />
-                    <span className="text-[10px]">Copy</span>
+                    <span className="text-caption">Copy</span>
                   </Button>
                   <Button
                     variant={selectedCard.is_frozen ? "default" : "outline"}
@@ -745,7 +744,7 @@ function CardPageContent() {
                     onClick={() => handleFreezeToggle(selectedCard)}
                   >
                     <Snowflake className="w-4 h-4" />
-                    <span className="text-[10px]">{selectedCard.is_frozen ? "Unfreeze" : "Freeze"}</span>
+                    <span className="text-caption">{selectedCard.is_frozen ? "Unfreeze" : "Freeze"}</span>
                   </Button>
                   <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => {
                     setShowResetPin(true);
@@ -756,11 +755,11 @@ function CardPageContent() {
                     setResetPinError("");
                   }}>
                     <KeyRound className="w-4 h-4" />
-                    <span className="text-[10px]">Reset PIN</span>
+                    <span className="text-caption">Reset PIN</span>
                   </Button>
                   <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => openSettings(selectedCard)}>
                     <Settings className="w-4 h-4" />
-                    <span className="text-[10px]">Settings</span>
+                    <span className="text-caption">Settings</span>
                   </Button>
                 </div>
 
@@ -777,7 +776,7 @@ function CardPageContent() {
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.95, opacity: 0 }}
-                        className="w-full max-w-sm bg-card border border-border rounded-2xl p-6 space-y-5 shadow-xl"
+                        className="w-full max-w-sm bg-card border border-border rounded-card p-6 space-y-6 shadow-xl"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -786,7 +785,7 @@ function CardPageContent() {
                               {resetPinStep === "verify" ? "Verify Current PIN" : resetPinStep === "new" ? "Set New PIN" : "Confirm New PIN"}
                             </h3>
                           </div>
-                          <button onClick={() => setShowResetPin(false)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                          <button onClick={() => setShowResetPin(false)} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                             <X className="w-4 h-4" />
                           </button>
                         </div>
@@ -868,12 +867,12 @@ function CardPageContent() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">Card Settings</h1>
+                <h1 className="text-title">Card Settings</h1>
                 <p className="text-muted-foreground text-sm">•••• {selectedCard.card_number_last4} · {selectedCard.card_format}</p>
               </div>
             </div>
 
-            <Card className="p-5 bg-card border-border space-y-3">
+            <Card className="p-6 bg-card border-border space-y-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-accent" />
                 <h3 className="text-sm font-semibold">Transaction Controls</h3>
@@ -894,7 +893,7 @@ function CardPageContent() {
               ))}
             </Card>
 
-            <Card className="p-5 bg-card border-border space-y-3">
+            <Card className="p-6 bg-card border-border space-y-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-warning" />
                 <h3 className="text-sm font-semibold">Alerts</h3>
@@ -932,7 +931,7 @@ function CardPageContent() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">
+                <h1 className="text-title">
                   {addStep === "format" ? "Add Card" : addStep === "design" ? "Choose Design" : "Set PIN"}
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -959,7 +958,7 @@ function CardPageContent() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setNewCardFormat("virtual")}
-                    className={`p-5 rounded-xl border-2 text-left transition-all ${
+                    className={`p-6 rounded-card border-2 text-left transition-all ${
                       newCardFormat === "virtual" ? "border-accent bg-accent/5" : "border-border bg-card"
                     }`}
                   >
@@ -969,7 +968,7 @@ function CardPageContent() {
                   </button>
                   <button
                     onClick={() => setNewCardFormat("physical")}
-                    className={`p-5 rounded-xl border-2 text-left transition-all ${
+                    className={`p-6 rounded-card border-2 text-left transition-all ${
                       newCardFormat === "physical" ? "border-accent bg-accent/5" : "border-border bg-card"
                     }`}
                   >
@@ -979,7 +978,7 @@ function CardPageContent() {
                   </button>
                 </div>
 
-                <Card className="p-5 bg-card border-border space-y-3">
+                <Card className="p-6 bg-card border-border space-y-3">
                   <label className="text-xs text-muted-foreground">Card Name</label>
                   <Input
                     value={newCardName}
@@ -992,7 +991,7 @@ function CardPageContent() {
 
                 {newCardFormat === "physical" && (
                   <Card className="p-4 bg-warning/5 border-warning/10 flex items-start gap-2">
-                    <Package className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                    <Package className="w-4 h-4 text-warning shrink-0 mt-1" />
                     <p className="text-xs text-warning">
                       Physical cards are shipped via express mail. You'll receive tracking information once shipped.
                     </p>
@@ -1029,7 +1028,7 @@ function CardPageContent() {
             {/* Step 3: PIN Setup */}
             {addStep === "pin" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <Card className="p-5 bg-card border-border space-y-4">
+                <Card className="p-6 bg-card border-border space-y-4">
                   <div className="text-center space-y-2">
                     <div className="w-14 h-14 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
                       <KeyRound className="w-7 h-7 text-accent" />
@@ -1092,32 +1091,32 @@ function CardPageContent() {
               <button onClick={() => setView("list")} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold tracking-tight">Account Tiers</h1>
+              <h1 className="text-title">Account Tiers</h1>
             </div>
 
             {(["personal", "pro", "business", "bank"] as AccountTierType[]).map((t) => {
               const tc = TIER_CONFIG[t];
               const isCurrent = t === tier;
               return (
-                <Card key={t} className={`p-5 border-border space-y-2 ${isCurrent ? "border-accent bg-accent/5" : "bg-card"}`}>
+                <Card key={t} className={`p-6 border-border space-y-2 ${isCurrent ? "border-accent bg-accent/5" : "bg-card"}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Crown className={`w-4 h-4 ${tierColors[t]}`} />
                       <h3 className={`text-sm font-bold ${tierColors[t]}`}>{tc.label}</h3>
                     </div>
-                    {isCurrent && <Badge className="bg-accent/20 text-accent border-0 text-[10px]">Current</Badge>}
+                    {isCurrent && <Badge className="bg-accent/20 text-accent border-0 text-caption">Current</Badge>}
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Per Tx</p>
+                      <p className="text-caption text-muted-foreground">Per Tx</p>
                       <p className="text-xs font-bold font-mono">${tc.single.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Daily</p>
+                      <p className="text-caption text-muted-foreground">Daily</p>
                       <p className="text-xs font-bold font-mono">${tc.daily.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Cards</p>
+                      <p className="text-caption text-muted-foreground">Cards</p>
                       <p className="text-xs font-bold font-mono">{tc.maxCards}</p>
                     </div>
                   </div>

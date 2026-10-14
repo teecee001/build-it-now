@@ -1,4 +1,7 @@
+import { LiveDot } from "@/components/ds/LiveBadge";
+import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { useState, useEffect } from "react";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -18,7 +21,7 @@ import { getErrorMessage } from "@/lib/errors";
 
 const AVAILABLE_CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "NGN", "KES", "ZAR", "INR", "BRL", "MXN", "CNY", "KRW", "SGD", "HKD", "SEK", "NOK", "DKK", "BTC", "ETH"];
 
-export default function MultiCurrencyWallet() {
+export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {}) {
   const {
     wallets, isLoading: walletsLoading, addCurrency, convertCurrency,
     maxCurrencies, slotsUsed, slotsRemaining, tier
@@ -26,16 +29,23 @@ export default function MultiCurrencyWallet() {
   const { rates, isLive, isLoading: ratesLoading } = useExchangeRates();
 
   const location = useLocation();
-  const [showConvert, setShowConvert] = useState(location.pathname === "/convert");
+  const isConvertView = mode === "convert" || location.pathname === "/convert";
+  const [showConvert, setShowConvert] = useState(isConvertView);
   useEffect(() => {
-    if (location.pathname === "/convert") setShowConvert(true);
-  }, [location.pathname]);
+    if (isConvertView) setShowConvert(true);
+  }, [isConvertView]);
   const [showAddCurrency, setShowAddCurrency] = useState(false);
   const [newCurrency, setNewCurrency] = useState("");
   const [fromCurrency, setFromCurrency] = useState("");
   const [toCurrency, setToCurrency] = useState("");
   const [convertAmount, setConvertAmount] = useState("");
   const [isConverting, setIsConverting] = useState(false);
+  const [justConverted, setJustConverted] = useState(false);
+  useEffect(() => {
+    if (!justConverted) return;
+    const t = setTimeout(() => setJustConverted(false), 1800);
+    return () => clearTimeout(t);
+  }, [justConverted]);
 
   const getCurrencySymbol = (code: string) => {
     const c = CURRENCIES.find(c => c.code === code);
@@ -92,6 +102,7 @@ export default function MultiCurrencyWallet() {
       toast.success(`Converted ${amt} ${fromCurrency} → ${result.convertedAmount.toFixed(4)} ${toCurrency}`);
       setConvertAmount("");
       setShowConvert(false);
+      setJustConverted(true);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Conversion failed");
     } finally {
@@ -101,34 +112,37 @@ export default function MultiCurrencyWallet() {
 
   if (walletsLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <PageSkeleton />
     );
   }
 
   return (
     <div className="space-y-6 max-w-lg mx-auto">
+      {justConverted && (
+        <div className="flex justify-center" role="status">
+          <SuccessCheck className="w-16 h-16" />
+        </div>
+      )}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {location.pathname === "/convert" ? "Convert" : "Multi-Currency"}
+            <h1 className="text-title">
+              {isConvertView ? "Convert" : "Multi-Currency"}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              {location.pathname === "/convert"
+              {isConvertView
                 ? "Move value between your currency wallets"
                 : "Hold, convert and spend in any currency"}
             </p>
           </div>
-          <Badge variant={isLive ? "default" : "secondary"} className="text-xs">
-            {isLive ? "● Live" : "Demo"}
+          <Badge variant={isLive ? "default" : "secondary"} className="gap-1 text-xs">
+            {isLive ? <><LiveDot />Live</> : "Demo"}
           </Badge>
         </div>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
-        <Card className="p-5 bg-card border-border">
+        <Card className="p-6 bg-card border-border">
           <div className="flex items-center gap-2 mb-1">
             <Globe className="w-4 h-4 text-accent" />
             <p className="text-xs text-muted-foreground">Total value (USD)</p>
@@ -165,7 +179,7 @@ export default function MultiCurrencyWallet() {
 
       {showAddCurrency && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-5 bg-card border-border space-y-3">
+          <Card className="p-6 bg-card border-border space-y-3">
             <h3 className="text-sm font-semibold">Add currency wallet</h3>
             <Select value={newCurrency} onValueChange={setNewCurrency}>
               <SelectTrigger className="bg-secondary border-border">
@@ -186,7 +200,7 @@ export default function MultiCurrencyWallet() {
 
       {showConvert && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-5 bg-card border-border space-y-4">
+          <Card className="p-6 bg-card border-border space-y-4">
             <h3 className="text-sm font-semibold flex items-center gap-2">
               <ArrowLeftRight className="w-4 h-4 text-accent" /> Convert Currency
             </h3>
@@ -261,7 +275,7 @@ export default function MultiCurrencyWallet() {
                   {" → "}
                   {getCurrencySymbol(toCurrency)}{convertedPreview.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {toCurrency}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-caption text-muted-foreground">
                   Rate: 1 {fromCurrency} = {convRate.toFixed(6)} {toCurrency}
                 </p>
               </div>

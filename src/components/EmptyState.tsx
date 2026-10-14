@@ -21,7 +21,7 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, action
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-16 px-6 text-center"
     >
-      <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-5">
+      <div className="w-16 h-16 rounded-card bg-secondary flex items-center justify-center mb-6">
         <Icon className="w-7 h-7 text-muted-foreground" />
       </div>
       <h3 className="text-lg font-bold mb-2">{title}</h3>
@@ -29,7 +29,7 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, action
       {actionLabel && (
         <Button
           onClick={onAction || (actionPath ? () => navigate(actionPath) : undefined)}
-          className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl"
+          className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-card"
         >
           {actionLabel}
         </Button>

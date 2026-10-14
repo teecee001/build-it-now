@@ -27,7 +27,7 @@ export function FeatureGate({ feature, featureLabel, children }: FeatureGateProp
           className="w-full max-w-md"
         >
           <Card className="p-8 text-center border-destructive/20 bg-card">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-5">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-6">
               <ShieldX className="w-8 h-8 text-destructive" />
             </div>
 
@@ -39,7 +39,7 @@ export function FeatureGate({ feature, featureLabel, children }: FeatureGateProp
               This feature is not available in <span className="font-semibold text-foreground">{countryName}</span> due to local regulations.
             </p>
 
-            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-6">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-6">
               <MapPin className="w-3.5 h-3.5" />
               <span>Region: {geoStatus?.country?.region || "Unknown"}</span>
             </div>

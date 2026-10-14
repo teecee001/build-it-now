@@ -254,7 +254,7 @@ export default function QRPayments() {
   return (
     <div className="space-y-6 max-w-lg mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">QR Payments</h1>
+        <h1 className="text-title">QR Payments</h1>
         <p className="text-muted-foreground text-sm mt-1">Send & receive money instantly with QR codes</p>
       </motion.div>
 
@@ -272,12 +272,12 @@ export default function QRPayments() {
                 onClick={() => setView("receive")}
                 className="flex-col h-auto py-8 gap-3 bg-foreground text-background hover:bg-foreground/90"
               >
-                <div className="w-14 h-14 rounded-2xl bg-background/10 flex items-center justify-center">
+                <div className="w-14 h-14 rounded-card bg-background/10 flex items-center justify-center">
                   <QrCode className="w-7 h-7" />
                 </div>
                 <div>
                   <p className="text-sm font-bold">My QR Code</p>
-                  <p className="text-[10px] opacity-70">Receive payments</p>
+                  <p className="text-caption opacity-70">Receive payments</p>
                 </div>
               </Button>
               <Button
@@ -285,19 +285,19 @@ export default function QRPayments() {
                 variant="outline"
                 className="flex-col h-auto py-8 gap-3"
               >
-                <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center">
+                <div className="w-14 h-14 rounded-card bg-secondary flex items-center justify-center">
                   <Camera className="w-7 h-7 text-accent" />
                 </div>
                 <div>
                   <p className="text-sm font-bold">Scan & Pay</p>
-                  <p className="text-[10px] text-muted-foreground">Send money</p>
+                  <p className="text-caption text-muted-foreground">Send money</p>
                 </div>
               </Button>
             </div>
 
             <Card className="p-4 bg-accent/5 border-accent/10">
               <div className="flex items-start gap-3">
-                <QrCode className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                <QrCode className="w-5 h-5 text-accent shrink-0 mt-1" />
                 <div>
                   <p className="text-sm font-semibold">Instant P2P Transfers</p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -311,15 +311,15 @@ export default function QRPayments() {
 
         {/* Receive - Show QR */}
         {view === "receive" && (
-          <motion.div key="receive" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="space-y-5">
-            <Card className="p-6 bg-card border-border text-center space-y-5">
+          <motion.div key="receive" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+            <Card className="p-6 bg-card border-border text-center space-y-6">
               <div>
                 <p className="text-sm text-muted-foreground">Your payment QR code</p>
                 <p className="text-base font-bold font-mono mt-1">{handle}</p>
               </div>
 
               {/* Real QR Code */}
-              <div className="mx-auto w-64 h-64 rounded-2xl bg-white p-3 flex items-center justify-center shadow-lg">
+              <div className="mx-auto w-64 h-64 rounded-card bg-white p-3 flex items-center justify-center shadow-lg">
                 {qrImageUrl ? (
                   <img src={qrImageUrl} alt="Payment QR Code" className="w-full h-full" />
                 ) : (
@@ -327,7 +327,7 @@ export default function QRPayments() {
                 )}
               </div>
 
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Scannable by any QR reader — opens Ξ╳oSky payment
               </p>
 
@@ -381,9 +381,9 @@ export default function QRPayments() {
 
         {/* Scan */}
         {view === "scan" && (
-          <motion.div key="scan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="space-y-5">
+          <motion.div key="scan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="space-y-6">
             {/* Live Camera Scanner */}
-            <Card className="bg-secondary border-border rounded-2xl overflow-hidden relative">
+            <Card className="bg-secondary border-border rounded-card overflow-hidden relative">
               <div
                 ref={scannerContainerRef}
                 className="w-full aspect-square"
@@ -407,7 +407,7 @@ export default function QRPayments() {
             </Card>
 
             {/* Manual entry fallback */}
-            <Card className="p-5 bg-card border-border space-y-4">
+            <Card className="p-6 bg-card border-border space-y-4">
               <h3 className="text-sm font-bold">Or enter manually</h3>
               <div className="space-y-3">
                 <div>
@@ -463,8 +463,8 @@ export default function QRPayments() {
 
         {/* Confirm Payment */}
         {view === "confirm" && (
-          <motion.div key="confirm" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-5">
-            <Card className="p-6 bg-card border-border space-y-5">
+          <motion.div key="confirm" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+            <Card className="p-6 bg-card border-border space-y-6">
               <div className="text-center space-y-2">
                 <div className="w-16 h-16 rounded-full bg-accent/10 mx-auto flex items-center justify-center">
                   <DollarSign className="w-8 h-8 text-accent" />

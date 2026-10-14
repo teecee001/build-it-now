@@ -138,13 +138,13 @@ export function StatementExport({ open, onClose }: StatementExportProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-md p-6 bg-card border-border space-y-5 shadow-xl">
+      <Card className="w-full max-w-md p-6 bg-card border-border space-y-6 shadow-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-accent" />
             <h3 className="text-lg font-bold">Export Statement</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-secondary transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -176,7 +176,7 @@ export function StatementExport({ open, onClose }: StatementExportProps) {
               <FileSpreadsheet className={`w-4 h-4 ${exportFormat === "csv" ? "text-accent" : "text-muted-foreground"}`} />
               <div className="text-left">
                 <p className="text-sm font-medium">CSV</p>
-                <p className="text-[10px] text-muted-foreground">Spreadsheet format</p>
+                <p className="text-caption text-muted-foreground">Spreadsheet format</p>
               </div>
             </button>
             <button
@@ -188,7 +188,7 @@ export function StatementExport({ open, onClose }: StatementExportProps) {
               <FileText className={`w-4 h-4 ${exportFormat === "pdf" ? "text-accent" : "text-muted-foreground"}`} />
               <div className="text-left">
                 <p className="text-sm font-medium">PDF</p>
-                <p className="text-[10px] text-muted-foreground">Printable statement</p>
+                <p className="text-caption text-muted-foreground">Printable statement</p>
               </div>
             </button>
           </div>

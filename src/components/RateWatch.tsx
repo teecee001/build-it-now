@@ -103,7 +103,7 @@ export function RateWatch({ currency }: RateWatchProps) {
             <Timer className="w-4 h-4 text-primary" />
             <span className="text-sm font-semibold">Rate Watch</span>
           </div>
-          <Badge variant="outline" className="text-[10px] uppercase tracking-wider border-primary/40 text-primary">
+          <Badge variant="outline" className="text-caption uppercase tracking-wider border-primary/40 text-primary">
             Live
           </Badge>
         </div>
@@ -122,9 +122,9 @@ export function RateWatch({ currency }: RateWatchProps) {
 
         <div className="flex items-start gap-2 text-xs">
           {better ? (
-            <TrendingUp className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
+            <TrendingUp className="w-3.5 h-3.5 text-success mt-1 shrink-0" />
           ) : (
-            <TrendingDown className="w-3.5 h-3.5 text-destructive mt-0.5 shrink-0" />
+            <TrendingDown className="w-3.5 h-3.5 text-destructive mt-1 shrink-0" />
           )}
           <p className="text-muted-foreground">
             {better
@@ -135,10 +135,10 @@ export function RateWatch({ currency }: RateWatchProps) {
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => navigate("/forecasts")}>
+          <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={() => navigate("/forecasts")}>
             Open Forecasts <ArrowUpRight className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" className="flex-1 gap-1.5" onClick={openAlert}>
+          <Button variant="ghost" size="sm" className="flex-1 gap-2" onClick={openAlert}>
             <BellRing className="w-3.5 h-3.5" /> Set a rate alert
           </Button>
 

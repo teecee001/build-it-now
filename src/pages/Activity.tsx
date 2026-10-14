@@ -38,10 +38,10 @@ export default function Activity() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Activity</h1>
+            <h1 className="text-title">Activity</h1>
             <p className="text-sm text-muted-foreground">All wallet movements</p>
           </div>
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowExport(true)}>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowExport(true)}>
             <Download className="w-3.5 h-3.5" /> Export
           </Button>
         </div>
@@ -57,7 +57,7 @@ export default function Activity() {
             className="pl-9 bg-secondary border-border"
           />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto">
           {["all", "deposit", "send", "receive", "conversion", "welcome_bonus"].map((f) => (
             <Button
               key={f}

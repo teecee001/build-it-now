@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -178,7 +179,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
         <Card className="p-6 bg-card border-border text-center space-y-4">
           <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
-          <h3 className="text-lg font-semibold">{type === "send" ? "Crypto Sent!" : "Trade Complete!"}</h3>
+          <h3 className="text-heading">{type === "send" ? "Crypto Sent!" : "Trade Complete!"}</h3>
           <p className="text-sm text-muted-foreground">Your holdings have been updated.</p>
           <Button onClick={onClose} className="w-full">Done</Button>
         </Card>
@@ -188,7 +189,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-      <Card className="p-5 bg-card border-border space-y-4">
+      <Card className="p-6 bg-card border-border space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon className={`w-5 h-5 ${colors[type]}`} />
@@ -255,9 +256,9 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
               <p className="text-xs text-destructive">{addressValidation.error}</p>
             )}
             {walletAddress && addressValidation.valid && (
-              <p className="text-xs text-success">✓ Valid {network.label} address</p>
+              <p className="text-xs text-success flex items-center gap-1"><Check className="w-3 h-3" aria-hidden />Valid {network.label} address</p>
             )}
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               Only send {code} to a compatible {network.label} wallet
             </p>
           </div>

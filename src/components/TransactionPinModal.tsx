@@ -40,14 +40,14 @@ export function TransactionPinModal({ open, onVerified, onCancel, verifyPin, amo
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-full max-w-sm bg-card border border-border rounded-2xl p-6 space-y-5 shadow-xl"
+          className="w-full max-w-sm bg-card border border-border rounded-card p-6 space-y-6 shadow-xl"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-accent" />
               <h3 className="text-lg font-bold">Transaction PIN</h3>
             </div>
-            <button onClick={onCancel} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+            <button onClick={onCancel} className="p-2 rounded-lg hover:bg-secondary transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>

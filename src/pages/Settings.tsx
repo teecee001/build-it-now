@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { resetOnboarding } from "@/components/OnboardingTutorial";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -106,7 +107,7 @@ export default function Settings() {
     (handle !== null && handle !== (profile?.handle ?? ""));
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
+    return <PageSkeleton />;
   }
 
   return (
@@ -115,7 +116,7 @@ export default function Settings() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-1">
           <User className="w-6 h-6 text-accent" />
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <h1 className="text-title">Settings</h1>
         </div>
         <p className="text-muted-foreground text-sm">Manage your profile, security, and preferences</p>
       </motion.div>
@@ -123,7 +124,7 @@ export default function Settings() {
       {/* Avatar & Profile Card */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
         <Card className="p-6 bg-card border-border">
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-6">
             <div className="relative group">
               <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden border-2 border-border">
                 {profile?.avatar_url ? (
@@ -155,7 +156,7 @@ export default function Settings() {
 
       {/* Edit Profile */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-        <Card className="p-5 bg-card border-border space-y-4">
+        <Card className="p-6 bg-card border-border space-y-4">
           <h3 className="text-sm font-semibold">Profile Details</h3>
           <div className="space-y-3">
             <div>
@@ -169,7 +170,7 @@ export default function Settings() {
             <div>
               <label className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" /> Email</label>
               <Input value={user?.email || ""} disabled className="mt-1 bg-secondary/50 border-border text-muted-foreground" />
-              <p className="text-[10px] text-muted-foreground mt-1">Email cannot be changed</p>
+              <p className="text-caption text-muted-foreground mt-1">Email cannot be changed</p>
             </div>
           </div>
           <Button onClick={handleSave} disabled={isSaving || !hasChanges} className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2">
@@ -180,7 +181,7 @@ export default function Settings() {
 
       {/* Transaction PIN */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-        <Card className="p-5 bg-card border-border space-y-4">
+        <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold flex items-center gap-2">
               <KeyRound className="w-4 h-4 text-warning" /> Transaction PIN
@@ -245,7 +246,7 @@ export default function Settings() {
 
       {/* Trusted Devices */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Card className="p-5 bg-card border-border space-y-4">
+        <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-accent" /> Trusted Devices
@@ -284,7 +285,7 @@ export default function Settings() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium">{device.name}</p>
                       {device.id === currentDeviceId && (
-                        <Badge className="bg-accent/10 text-accent border-0 text-[10px]">This device</Badge>
+                        <Badge className="bg-accent/10 text-accent border-0 text-caption">This device</Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -292,7 +293,7 @@ export default function Settings() {
                     </p>
                   </div>
                 </div>
-                <button onClick={() => { removeDevice(device.id); toast.success("Device removed"); }} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                <button onClick={() => { removeDevice(device.id); toast.success("Device removed"); }} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors">
                   <Trash2 className="w-3.5 h-3.5 text-destructive" />
                 </button>
               </div>
@@ -306,7 +307,7 @@ export default function Settings() {
 
       {/* Preferences */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-        <Card className="p-5 bg-card border-border space-y-4">
+        <Card className="p-6 bg-card border-border space-y-4">
           <h3 className="text-sm font-semibold">Preferences</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
@@ -345,7 +346,7 @@ export default function Settings() {
 
       {/* Quick Links */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-        <Card className="p-5 bg-card border-border space-y-2">
+        <Card className="p-6 bg-card border-border space-y-2">
           <h3 className="text-sm font-semibold mb-2">Account</h3>
           <button onClick={() => navigate("/verify")} className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
             <div className="flex items-center gap-3">

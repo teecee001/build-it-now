@@ -280,7 +280,7 @@ function BillPayContent() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Pay Bills</h1>
+            <h1 className="text-title">Pay Bills</h1>
             <p className="text-muted-foreground text-sm mt-1">Pay utilities, subscriptions, and more</p>
           </div>
           <Button size="sm" variant="outline" onClick={() => setShowAdd(!showAdd)} className="gap-1">
@@ -372,12 +372,12 @@ function BillPayContent() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="text-sm font-semibold">{bill.biller_name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <Badge variant="secondary" className="text-[10px] px-1 py-0">{bill.category}</Badge>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-caption px-1 py-0">{bill.category}</Badge>
                           <p className="text-xs text-muted-foreground">Due {format(new Date(bill.due_date), "MMM d")}</p>
                         </div>
                         {bill.account_number && (
-                          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                          <p className="text-caption text-muted-foreground font-mono mt-1">
                             Acct: •••• {bill.account_number.slice(-4)}
                           </p>
                         )}
@@ -410,7 +410,7 @@ function BillPayContent() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="text-sm font-semibold">{bill.biller_name}</p>
-                        <Badge variant="secondary" className="text-[10px] px-1 py-0">{bill.category}</Badge>
+                        <Badge variant="secondary" className="text-caption px-1 py-0">{bill.category}</Badge>
                       </div>
                       <div className="flex items-center gap-3">
                         <p className="text-sm font-bold font-mono">${Number(bill.amount).toFixed(2)}</p>
@@ -453,7 +453,7 @@ function BillPayContent() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Category</span>
-                <Badge variant="secondary" className="text-[10px]">{confirmBill.category}</Badge>
+                <Badge variant="secondary" className="text-caption">{confirmBill.category}</Badge>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Amount</span>
@@ -464,7 +464,7 @@ function BillPayContent() {
                 <span className="text-success font-mono">+${(confirmBill.amount * 0.01).toFixed(2)}</span>
               </div>
               <div className="border-t border-border pt-2 mt-2">
-                <p className="text-[10px] text-muted-foreground text-center">
+                <p className="text-caption text-muted-foreground text-center">
                   By confirming, you authorize this payment from your Ξ╳oSky wallet.
                 </p>
               </div>

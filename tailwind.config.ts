@@ -19,7 +19,12 @@ export default {
         display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
+      // Design system type scale (one scale for app pages): caption < body (text-sm) < heading < title < figure (balances).
       fontSize: {
+        caption: ['0.6875rem', { lineHeight: '1rem' }],
+        heading: ['1.125rem', { lineHeight: '1.5rem', letterSpacing: '-0.01em', fontWeight: '600' }],
+        title: ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.025em', fontWeight: '700' }],
+        figure: ['2.25rem', { lineHeight: '2.5rem', letterSpacing: '-0.03em', fontWeight: '700' }],
         'display-xl': ['clamp(2.75rem, 5.5vw, 4.25rem)', { lineHeight: '1.03', letterSpacing: '-0.035em', fontWeight: '700' }],
         'display-lg': ['clamp(2rem, 3.6vw, 3rem)', { lineHeight: '1.08', letterSpacing: '-0.03em', fontWeight: '700' }],
         'display-md': ['clamp(1.5rem, 2.4vw, 2rem)', { lineHeight: '1.15', letterSpacing: '-0.025em', fontWeight: '600' }],
@@ -74,12 +79,16 @@ export default {
         'gradient-surface': 'var(--gradient-surface)',
       },
       boxShadow: {
+        'card-hover': 'var(--shadow-card-hover)',
+        'sheet': 'var(--shadow-sheet)',
         'glow': 'var(--shadow-glow)',
         'card': 'var(--shadow-card)',
         'accent': 'var(--shadow-accent)',
         'accent-strong': 'var(--shadow-accent-strong)',
       },
       borderRadius: {
+        card: "var(--radius-card)",
+        sheet: "var(--radius-sheet)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",

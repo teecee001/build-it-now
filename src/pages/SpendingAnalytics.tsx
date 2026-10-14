@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -92,16 +93,14 @@ export default function SpendingAnalytics() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <PageSkeleton />
     );
   }
 
   return (
     <div className="space-y-6 max-w-lg mx-auto">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold tracking-tight">Spending Analytics</h1>
+        <h1 className="text-title">Spending Analytics</h1>
         <p className="text-muted-foreground text-sm mt-1">Understand where your money goes</p>
       </motion.div>
 
@@ -111,7 +110,7 @@ export default function SpendingAnalytics() {
           <button
             key={r}
             onClick={() => setRange(r)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
               range === r ? "bg-foreground text-background" : "bg-secondary text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -168,7 +167,7 @@ export default function SpendingAnalytics() {
       {categoryData.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Spending by Category</h3>
-          <Card className="p-5 bg-card border-border">
+          <Card className="p-6 bg-card border-border">
             <div className="flex items-center gap-6">
               <div className="w-32 h-32 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -201,7 +200,7 @@ export default function SpendingAnalytics() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono font-medium">${cat.value.toFixed(2)}</span>
-                        <Badge className="bg-secondary text-muted-foreground border-0 text-[10px] px-1.5 py-0">{pct}%</Badge>
+                        <Badge className="bg-secondary text-muted-foreground border-0 text-caption px-2 py-0">{pct}%</Badge>
                       </div>
                     </div>
                   );
@@ -215,7 +214,7 @@ export default function SpendingAnalytics() {
       {/* Weekly Trend */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Weekly Trend</h3>
-        <Card className="p-5 bg-card border-border">
+        <Card className="p-6 bg-card border-border">
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyData} barGap={4}>

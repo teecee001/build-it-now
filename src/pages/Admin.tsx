@@ -123,7 +123,7 @@ export default function Admin() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-card bg-accent/10 flex items-center justify-center">
             <Shield className="w-6 h-6 text-accent animate-pulse" />
           </div>
           <p className="text-sm text-muted-foreground">Verifying admin access…</p>
@@ -198,7 +198,7 @@ export default function Admin() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <ExoLogo size="sm" />
-            <Badge className="bg-accent/10 text-accent border-accent/20 text-[10px] font-bold tracking-wider uppercase">
+            <Badge className="bg-accent/10 text-accent border-accent/20 text-caption font-bold tracking-wider uppercase">
               <ShieldCheck className="w-3 h-3 mr-1" /> Admin
             </Badge>
           </div>
@@ -218,17 +218,17 @@ export default function Admin() {
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-          <TabsList className="h-auto flex flex-wrap gap-1 bg-secondary/40 p-1 rounded-xl">
-            <TabsTrigger value="overview" className="rounded-lg gap-1.5"><LayoutDashboard className="w-3.5 h-3.5" /> Overview</TabsTrigger>
-            <TabsTrigger value="waitlist" className="rounded-lg gap-1.5"><Mail className="w-3.5 h-3.5" /> Waitlist {pending > 0 && <span className="ml-1 text-amber-500">({pending})</span>}</TabsTrigger>
-            <TabsTrigger value="users" className="rounded-lg gap-1.5"><Users className="w-3.5 h-3.5" /> Users</TabsTrigger>
-            <TabsTrigger value="activity" className="rounded-lg gap-1.5"><Activity className="w-3.5 h-3.5" /> Activity</TabsTrigger>
-            <TabsTrigger value="feedback" className="rounded-lg gap-1.5"><MessageSquare className="w-3.5 h-3.5" /> Feedback</TabsTrigger>
+          <TabsList className="h-auto flex flex-wrap gap-1 bg-secondary/40 p-1 rounded-card">
+            <TabsTrigger value="overview" className="rounded-lg gap-2"><LayoutDashboard className="w-3.5 h-3.5" /> Overview</TabsTrigger>
+            <TabsTrigger value="waitlist" className="rounded-lg gap-2"><Mail className="w-3.5 h-3.5" /> Waitlist {pending > 0 && <span className="ml-1 text-amber-500">({pending})</span>}</TabsTrigger>
+            <TabsTrigger value="users" className="rounded-lg gap-2"><Users className="w-3.5 h-3.5" /> Users</TabsTrigger>
+            <TabsTrigger value="activity" className="rounded-lg gap-2"><Activity className="w-3.5 h-3.5" /> Activity</TabsTrigger>
+            <TabsTrigger value="feedback" className="rounded-lg gap-2"><MessageSquare className="w-3.5 h-3.5" /> Feedback</TabsTrigger>
           </TabsList>
 
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search email, name, handle…" className="pl-10 h-11 bg-secondary/30 border-border/50 rounded-xl" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search email, name, handle…" className="pl-10 h-11 bg-secondary/30 border-border/50 rounded-card" />
           </div>
 
           <TabsContent value="overview" className="space-y-6">
@@ -239,20 +239,20 @@ export default function Admin() {
                 { label: "Users", value: ov?.users_total ?? users.length, icon: Users, color: "text-foreground" },
                 { label: "Transactions", value: ov?.tx_total ?? txs.length, icon: Activity, color: "text-foreground" },
               ].map((s) => (
-                <Card key={s.label} className="p-5 bg-card border-border/50">
+                <Card key={s.label} className="p-6 bg-card border-border/50">
                   <s.icon className={`w-4 h-4 mb-3 ${s.color}`} />
                   <p className="text-2xl font-black tracking-tight">{s.value}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
                 </Card>
               ))}
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
-              <Card className="p-5 bg-card border-border/50">
+              <Card className="p-6 bg-card border-border/50">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">USD on platform</p>
                 <p className="text-2xl font-black">{money(ov?.usd_balance ?? 0)}</p>
                 <p className="text-xs text-muted-foreground mt-1">Savings {money(ov?.usd_savings ?? 0)}</p>
               </Card>
-              <Card className="p-5 bg-card border-border/50 flex flex-col justify-between">
+              <Card className="p-6 bg-card border-border/50 flex flex-col justify-between">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">Quick actions</p>
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" className="rounded-lg" disabled={!pending || action === "all"} onClick={approveAll}>
@@ -270,7 +270,7 @@ export default function Admin() {
             <Card className="p-4 bg-card border-border/50">
               <p className="text-sm font-semibold mb-3">Add or approve an email</p>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="friend@email.com" className="h-10 rounded-xl" />
+                <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="friend@email.com" className="h-10 rounded-card" />
                 <Button className="rounded-lg h-10" onClick={addEmail} disabled={!newEmail || action === "add"}>
                   {action === "add" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   {approveOnAdd ? "Add & approve" : "Add pending"}
@@ -297,13 +297,13 @@ export default function Admin() {
             ) : filteredWait.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-16">No waitlist emails match.</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {filteredWait.map((entry) => (
-                  <Card key={entry.id} className="p-4 bg-card/60 border-border/40 rounded-xl">
+                  <Card key={entry.id} className="p-4 bg-card/60 border-border/40 rounded-card">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold break-all">{entry.email}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-1">
                           <Calendar className="w-3 h-3 inline mr-1" />
                           {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
                         </p>
@@ -340,11 +340,11 @@ export default function Admin() {
             ) : filteredUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-16">No users yet. Approve waitlist, then they Sign Up.</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {filteredUsers.map((u) => {
                   const banned = !!u.banned_until && new Date(u.banned_until) > new Date();
                   return (
-                    <Card key={u.id} className="p-4 bg-card/60 border-border/40 rounded-xl">
+                    <Card key={u.id} className="p-4 bg-card/60 border-border/40 rounded-card">
                       <div className="flex flex-col lg:flex-row lg:items-center gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold break-all">{u.email}</p>
@@ -352,7 +352,7 @@ export default function Admin() {
                             {u.full_name || "No name"} {u.handle ? `· ${u.handle}` : ""} · {money(u.usd_balance)} + {money(u.usd_savings)} savings
                           </p>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-2">
                           {u.is_admin && <Badge className="bg-accent/10 text-accent border-accent/20">Admin</Badge>}
                           {u.email_confirmed ? (
                             <Badge variant="outline" className="text-accent border-accent/30">Confirmed</Badge>
@@ -387,9 +387,9 @@ export default function Admin() {
             {txs.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-16">No transactions yet.</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {txs.filter((t) => !search || (t.user_email || "").toLowerCase().includes(search.toLowerCase()) || (t.description || "").toLowerCase().includes(search.toLowerCase())).map((t) => (
-                  <Card key={t.id} className="p-4 bg-card/60 border-border/40 rounded-xl flex flex-col sm:flex-row sm:items-center gap-2">
+                  <Card key={t.id} className="p-4 bg-card/60 border-border/40 rounded-card flex flex-col sm:flex-row sm:items-center gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold">{t.type} · {money(t.amount)} {t.currency}</p>
                       <p className="text-xs text-muted-foreground break-all">{t.user_email} {t.description ? `· ${t.description}` : ""} {t.recipient ? `→ ${t.recipient}` : ""}</p>
@@ -406,9 +406,9 @@ export default function Admin() {
             {feedback.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-16">No beta feedback yet.</p>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {feedback.map((f) => (
-                  <Card key={f.id} className="p-4 bg-card/60 border-border/40 rounded-xl">
+                  <Card key={f.id} className="p-4 bg-card/60 border-border/40 rounded-card">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline">{f.type}</Badge>
                       <span className="text-xs text-muted-foreground">{f.user_email}</span>

@@ -64,7 +64,7 @@ export default function Referrals() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-1">
           <Users className="w-6 h-6 text-warning" />
-          <h1 className="text-2xl font-bold tracking-tight">Refer & Earn</h1>
+          <h1 className="text-title">Refer & Earn</h1>
         </div>
         <p className="text-muted-foreground text-sm">Invite friends and you both earn $10</p>
       </motion.div>
@@ -75,24 +75,24 @@ export default function Referrals() {
           <Card className="p-4 bg-card border-border text-center">
             <UserPlus className="w-5 h-5 text-accent mx-auto mb-2" />
             <p className="text-2xl font-bold font-mono">{completedCount}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Referred</p>
+            <p className="text-caption text-muted-foreground uppercase tracking-wider">Referred</p>
           </Card>
           <Card className="p-4 bg-card border-border text-center">
             <DollarSign className="w-5 h-5 text-success mx-auto mb-2" />
             <p className="text-2xl font-bold font-mono text-success">${totalEarned}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Earned</p>
+            <p className="text-caption text-muted-foreground uppercase tracking-wider">Earned</p>
           </Card>
           <Card className="p-4 bg-card border-border text-center">
             <Trophy className="w-5 h-5 text-warning mx-auto mb-2" />
             <p className="text-2xl font-bold font-mono">{pendingCount}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Pending</p>
+            <p className="text-caption text-muted-foreground uppercase tracking-wider">Pending</p>
           </Card>
         </div>
       </motion.div>
 
       {/* Your Referral Code */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-        <Card className="p-5 bg-card border-border space-y-4 relative overflow-hidden">
+        <Card className="p-6 bg-card border-border space-y-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent pointer-events-none" />
           <div className="relative">
             <h3 className="text-sm font-semibold mb-3">Your Referral Code</h3>
@@ -123,7 +123,7 @@ export default function Referrals() {
 
       {/* Redeem Code */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
-        <Card className="p-5 bg-card border-border space-y-3">
+        <Card className="p-6 bg-card border-border space-y-3">
           <div className="flex items-center gap-2">
             <Gift className="w-4 h-4 text-success" />
             <h3 className="text-sm font-semibold">Have a Referral Code?</h3>
@@ -149,7 +149,7 @@ export default function Referrals() {
 
       {/* Milestones */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-        <Card className="p-5 bg-card border-border space-y-3">
+        <Card className="p-6 bg-card border-border space-y-3">
           <h3 className="text-sm font-semibold">Referral Milestones</h3>
           <div className="space-y-2">
             {milestones.map((m) => {

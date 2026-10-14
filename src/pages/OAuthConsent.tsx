@@ -97,13 +97,13 @@ export default function OAuthConsent() {
               <h1 className="text-xl font-bold mb-1">
                 Connect {details.client?.name ?? "an app"} to ExoSky
               </h1>
-              <p className="text-sm text-muted-foreground mb-5">
+              <p className="text-sm text-muted-foreground mb-6">
                 {details.client?.name ?? "This client"} will be able to call ExoSky's enabled tools
                 while you are signed in — reading your profile, wallet balances, transactions, and
                 notifications as you.
               </p>
-              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg p-3 mb-5">
-                <ShieldCheck className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg p-3 mb-6">
+                <ShieldCheck className="w-4 h-4 text-accent mt-1 shrink-0" />
                 <span>
                   This does not bypass ExoSky's permissions. Access is scoped to your account only.
                 </span>
