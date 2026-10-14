@@ -4,6 +4,7 @@ import { ADVISOR_SYSTEM, chatCompletions, getAdvisorProviders } from "../_shared
 import { type AccountData, type Quote, accountSummary, detectIntent, ruleAnswer, safeTimeZone, todayISO, todayText } from "./rules.ts";
 import { type CallResult, runAgent } from "./agent.ts";
 import type { GoalsDb } from "./tools.ts";
+import { sanitizeMessages } from "./history.ts";
 
 // Exo-internal system instructions (not app UI copy).
 const EXO_DATA_RULES = [
@@ -15,6 +16,7 @@ const EXO_DATA_RULES = [
   "For any news, Fed, rate-cut, inflation, economy, market, company or crypto question, call get_news (and get_macro / get_market_sentiment where relevant) before answering. Cite each headline's source and date. Note that headlines are not confirmed outcomes.",
   "For audits, budgets, statements, subscriptions or 'where does my money go' questions, call audit_finances and present it like an accountant: statement, findings, then concrete recommendations.",
   "For company analysis, call get_company_fundamentals and get_prices, and say which period each figure is for. If a tool returns an error, say that source is temporarily unavailable and use the others.",
+  "When reporting news, list the key headlines as bullets ending with the source and date in parentheses, e.g. (Reuters, Oct 7), then give your analysis.",
   "Keep the not-financial-advice caveat for investment suggestions.",
   "Only call set_goal when the user explicitly asks to save a goal. Only call delete_goal when the user explicitly asks to remove a goal; call list_goals first to get its id, and never delete goals the user didn't ask to remove.",
 ].join("\n");
@@ -23,6 +25,7 @@ const todayLine = (a: AccountData) =>
     a.timeZone ?? "UTC"
   }). This is authoritative and overrides your training data. Resolve relative dates like "by December 31" to the next such date, never one in the past.`;
 
+const TIME_BUDGET_MS = 40_000;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -133,8 +136,13 @@ serve(async (req) => {
     const { data: userData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !userData.user) return json({ error: "Sign in required" }, 401);
 
-    const { messages, timezone } = await req.json();
-    if (!Array.isArray(messages) || messages.length > 40) return json({ error: "Invalid messages" }, 400);
+    const body = await req.json().catch(() => ({}));
+    const timezone = body?.timezone;
+    if (!Array.isArray(body?.messages)) return json({ error: "Invalid messages" }, 400);
+    // The app keeps up to 200 messages of history and sends them all; never reject a long
+    // chat (that surfaced as the client's generic error). Keep only the recent, valid turns.
+    const messages = sanitizeMessages(body.messages);
+    if (!messages.length) return json({ error: "Invalid messages" }, 400);
 
     const lastUser = [...messages].reverse().find((m) => m?.role === "user");
     const question = typeof lastUser?.content === "string" ? lastUser.content.slice(0, 2000) : "";
@@ -154,6 +162,7 @@ serve(async (req) => {
     }
 
     const providers = getAdvisorProviders();
+    const started = Date.now();
     const tried: string[] = [];
     const summary = accountSummary(account);
     const baseMessages = [
@@ -165,11 +174,16 @@ serve(async (req) => {
         content:
           `Account summary from ExoSky's records (not from the user). Use it for personalised answers, never invent numbers, never promise returns:\n${summary}`,
       },
-      ...messages.slice(-20),
+      ...messages,
     ];
     const userText = messages.filter((m) => m?.role === "user" && typeof m.content === "string").map((m) => m.content as string);
 
     for (const p of providers) {
+      // Per-request time budget: stay well inside the edge wall-clock limit and the user's patience.
+      if (Date.now() - started > TIME_BUDGET_MS) {
+        tried.push(`${p.name}=skipped-time-budget`);
+        continue;
+      }
       const call = async (b: Record<string, unknown>): Promise<CallResult> => {
         const send = () => chatCompletions(p, { ...b, ...(p.extraBody ?? {}) });
         let response = await send();
@@ -191,6 +205,7 @@ serve(async (req) => {
         const result = await runAgent({
           call,
           messages: baseMessages,
+          deadline: started + TIME_BUDGET_MS,
           ctx: { account, goals, fiatRates },
           evidence: [summary, ...userText],
         });

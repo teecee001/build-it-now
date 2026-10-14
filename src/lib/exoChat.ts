@@ -77,7 +77,8 @@ export async function askExo(history: ChatMessage[]): Promise<AdvisorResult> {
         apikey: SUPABASE_PUBLISHABLE_KEY,
       },
       body: JSON.stringify({
-        messages: toApiMessages(history),
+        // Only recent turns are useful to the model; long histories used to be rejected.
+        messages: toApiMessages(history.slice(-20)),
         timezone: (() => {
           try {
             return Intl.DateTimeFormat().resolvedOptions().timeZone;

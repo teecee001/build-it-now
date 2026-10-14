@@ -4,6 +4,7 @@ import { unsupportedFigures } from "./factcheck.ts";
 import { runTool, type ToolCtx, toolDefs } from "./tools.ts";
 
 export const MAX_TOOL_ROUNDS = 5;
+export const TOOL_TIMEOUT_MS = 12_000;
 
 type Msg = Record<string, unknown>;
 export type CallResult = { ok: boolean; status: number; json?: unknown; text?: string };
@@ -29,6 +30,7 @@ export async function runAgent(opts: {
   messages: Msg[]; // system prompts + conversation
   ctx: ToolCtx;
   evidence: string[]; // account summary + user messages
+  deadline?: number; // epoch ms; after it, no more tool rounds
 }): Promise<AgentResult> {
   const { call, ctx } = opts;
   const evidence = [...opts.evidence];
@@ -44,7 +46,8 @@ export async function runAgent(opts: {
       const body: Record<string, unknown> = { messages: convo, stream: false };
       if (useTools) {
         body.tools = tools;
-        body.tool_choice = round >= maxRounds ? "none" : "auto";
+        const late = opts.deadline !== undefined && Date.now() > opts.deadline - 12_000;
+        body.tool_choice = round >= maxRounds || late ? "none" : "auto";
       }
       const res = await call(body);
       if (!res.ok) {
@@ -58,7 +61,7 @@ export async function runAgent(opts: {
       const msg = firstMessage(res.json);
       if (!msg) return { error: { ok: false, status: 502, text: "empty completion" } };
       const calls = (msg.tool_calls as { id: string; function: { name: string; arguments: string } }[] | undefined) ?? [];
-      if (!useTools || calls.length === 0 || round >= maxRounds) {
+      if (!useTools || calls.length === 0 || body.tool_choice === "none") {
         return { text: stripThink(String(msg.content ?? "")) };
       }
       convo.push(msg); // keep provider fields (e.g. Gemini thought signatures) intact
@@ -70,7 +73,14 @@ export async function runAgent(opts: {
         const name = c.function?.name ?? "";
         let result: unknown;
         try {
-          result = await runTool(name, args, ctx);
+          // A slow or failing tool must never sink the answer: cap it and return an error object.
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          result = await Promise.race([
+            runTool(name, args, ctx),
+            new Promise((resolve) => {
+              timer = setTimeout(() => resolve({ error: `${name} timed out; source temporarily unavailable` }), TOOL_TIMEOUT_MS);
+            }),
+          ]).finally(() => clearTimeout(timer));
         } catch (e) {
           result = { error: e instanceof Error ? e.message.slice(0, 120) : "tool failed" };
         }
