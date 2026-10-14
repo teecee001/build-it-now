@@ -21,6 +21,10 @@ const CURRENCY_SLOTS: Record<AccountTierType, number> = {
   bank: 100, // effectively unlimited
 };
 
+/** Shown when every currency slot for the tier is used (same copy as before). */
+export const slotLimitMessage = (tier: string, maxCurrencies: number) =>
+  `Your ${tier} account supports up to ${maxCurrencies} currencies. Upgrade to add more.`;
+
 export function useMultiCurrencyWallet() {
   const { user } = useAuth();
   const { tier } = useAccountTier();
@@ -67,7 +71,7 @@ export function useMultiCurrencyWallet() {
       if (existing) throw new Error(`You already have a ${currency} wallet`);
       // Check tier limit
       if (wallets.length >= maxCurrencies) {
-        throw new Error(`Your ${tier} account supports up to ${maxCurrencies} currencies. Upgrade to add more.`);
+        throw new Error(slotLimitMessage(tier, maxCurrencies));
       }
       const { error } = await supabase.from("wallets").insert({
         user_id: user.id,
@@ -101,7 +105,7 @@ export function useMultiCurrencyWallet() {
       if (fromWallet.balance < amount) throw new Error(`Insufficient ${fromCurrency} balance`);
 
       if (!wallets.find(w => w.currency === toCurrency) && wallets.length >= maxCurrencies) {
-        throw new Error(`Your ${tier} account supports up to ${maxCurrencies} currencies. Upgrade to add more.`);
+        throw new Error(slotLimitMessage(tier, maxCurrencies));
       }
 
       const { invokeWalletOp } = await import("@/hooks/useWallet");
