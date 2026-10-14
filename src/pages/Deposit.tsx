@@ -1,3 +1,4 @@
+import { haptic } from "@/lib/haptics";
 import { Check } from "lucide-react";
 import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { motion } from "framer-motion";
@@ -26,6 +27,7 @@ export default function Deposit() {
   const accountNumber = "9876543210";
 
   const handleDeposit = async () => {
+    haptic("confirm");
     const depositAmount = parseFloat(amount);
     if (!depositAmount || depositAmount <= 0) {
       toast.error("Enter a valid amount");

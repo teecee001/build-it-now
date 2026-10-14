@@ -144,7 +144,7 @@ export function TravelMode() {
 
               {error && (
                 <div className="text-center py-4 space-y-2">
-                  <p className="text-sm text-destructive">{error}</p>
+                  <p role="alert" className="text-sm text-warning rounded-md bg-warning/10 border border-warning/30 px-3 py-2">{error}</p>
                   <Button size="sm" variant="outline" onClick={detectLocation}>
                     Try Again
                   </Button>

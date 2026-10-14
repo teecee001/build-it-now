@@ -1,3 +1,4 @@
+import { EASE } from "@/lib/motion";
 import { useEffect, useRef, useState } from "react";
 import { animate, useReducedMotion } from "framer-motion";
 
@@ -13,7 +14,7 @@ export function AnimatedNumber({ value, format }: { value: number; format: (n: n
       setShown(value);
       return;
     }
-    const controls = animate(from, value, { duration: 0.8, ease: "easeOut", onUpdate: setShown });
+    const controls = animate(from, value, { duration: 0.8, ease: EASE, onUpdate: setShown });
     return () => controls.stop();
   }, [value, reduce]);
   return <>{format(shown)}</>;

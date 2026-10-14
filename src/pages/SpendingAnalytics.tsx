@@ -1,3 +1,4 @@
+import { chartAnim } from "@/lib/motion";
 import { motion } from "framer-motion";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
@@ -172,7 +173,7 @@ export default function SpendingAnalytics() {
               <div className="w-32 h-32 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
+                    <Pie {...chartAnim()}
                       data={categoryData}
                       cx="50%"
                       cy="50%"
@@ -230,8 +231,8 @@ export default function SpendingAnalytics() {
                   }}
                   labelStyle={{ color: "hsl(0 0% 95%)" }}
                 />
-                <Bar dataKey="earned" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} name="Earned" />
-                <Bar dataKey="spent" fill="hsl(0, 72%, 51%)" radius={[4, 4, 0, 0]} name="Spent" />
+                <Bar {...chartAnim()} dataKey="earned" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} name="Earned" />
+                <Bar {...chartAnim()} dataKey="spent" fill="hsl(0, 72%, 51%)" radius={[4, 4, 0, 0]} name="Spent" />
               </BarChart>
             </ResponsiveContainer>
           </div>

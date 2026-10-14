@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LiveBadge } from "@/components/ds/LiveBadge";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { haptic } from "@/lib/haptics";
+import { formatAmount } from "@/lib/formatTransaction";
+import { EASE } from "@/lib/motion";
 import { useTransactions } from "@/hooks/useTransactions";
 import { TransactionRow } from "@/components/TransactionRow";
 import { PageSkeleton, RowsSkeleton } from "@/components/ui/skeleton";
@@ -25,10 +28,15 @@ import { QuickActionSheet, type QuickAction } from "@/components/ds/QuickActionS
 import { balanceSeries } from "@/lib/balanceHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const STAGGER_ITEM = {
+  hidden: { opacity: 0, y: 8, scale: 0.98 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: EASE } },
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { savingsBalance, isLoading: walletLoading } = useWallet();
-  const { activeCurrency, activeBalance, formatBalance, fromUSD, wallets } = useActiveCurrency();
+  const { activeCurrency, formatBalance, fromUSD, wallets } = useActiveCurrency();
   const { rates, isLive } = useExchangeRates();
   const { isFeatureAvailable } = useGeoVerification();
   const { transactions: recentTx, isLoading: txLoading } = useTransactions(8);
@@ -37,7 +45,18 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const [sheet, setSheet] = useState<QuickAction | null>(null);
   const navigate = useNavigate();
-  const [showBalance, setShowBalance] = useState(true);
+  // Hide-balance preference, persisted on this device.
+  const [showBalance, setShowBalanceState] = useState(() => {
+    try { return localStorage.getItem("exo.hideBalance") !== "1"; } catch { return true; }
+  });
+  const setShowBalance = (v: boolean) => {
+    haptic("tap");
+    setShowBalanceState(v);
+    try { localStorage.setItem("exo.hideBalance", v ? "0" : "1"); } catch { /* private mode */ }
+  };
+  const mask = (node: React.ReactNode) => (
+    <span className="balance-mask inline-block" data-hidden={!showBalance} aria-hidden={!showBalance}>{node}</span>
+  );
 
   const { profile } = useProfile();
   const displayName = profile?.full_name?.trim() || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
@@ -52,6 +71,21 @@ export default function Dashboard() {
   }, 0);
 
   const savingsInActive = fromUSD(savingsBalance);
+
+  const walletCards = [...wallets].sort((a, b) => (a.currency === activeCurrency ? -1 : b.currency === activeCurrency ? 1 : 0));
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [slide, setSlide] = useState(0);
+  // Start at the active wallet whenever the wallet list (re)loads.
+  useEffect(() => {
+    carouselRef.current?.scrollTo({ left: 0 });
+    setSlide(0);
+  }, [wallets.length, activeCurrency]);
+  const onCarouselScroll = () => {
+    const el = carouselRef.current;
+    const first = el?.firstElementChild as HTMLElement | null;
+    if (!el || !first) return;
+    setSlide(Math.round(el.scrollLeft / (first.offsetWidth + 12)));
+  };
 
   // Sparkline from recorded transactions only; empty (no chart) when history can't support it.
   const series = useMemo(() => {
@@ -123,27 +157,44 @@ export default function Dashboard() {
               <LiveBadge isLive={isLive} />
             </div>
             <h2 className="text-figure font-mono tabular-nums">
-              {showBalance ? <AnimatedNumber value={totalInActiveCurrency} format={formatBalance} /> : "••••••"}
+              {mask(<AnimatedNumber value={totalInActiveCurrency} format={formatBalance} />)}
             </h2>
-            {showBalance && series.length > 0 && <Sparkline points={series} className="mt-2 h-8 w-full" />}
-
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="p-3 rounded-lg bg-secondary/50">
-                <p className="text-xs text-muted-foreground">{activeCurrency} Wallet</p>
-                <p className="text-sm font-semibold font-mono">
-                  {showBalance ? formatBalance(activeBalance) : "••••"}
-                </p>
+            {series.length > 0 && (
+              <div className="balance-mask" data-hidden={!showBalance}>
+                <Sparkline points={series} className="mt-2 h-8 w-full" />
               </div>
+            )}
+
+            {/* Swipe/snap carousel of currency wallets (active first), then Savings. */}
+            <div ref={carouselRef} onScroll={onCarouselScroll} className="snap-carousel -mx-6 mt-4 flex gap-3 overflow-x-auto px-6 pb-1">
+              {walletCards.map((w) => (
+                <div
+                  key={w.currency}
+                  className={`w-[46%] shrink-0 p-3 rounded-lg transition-colors ${w.currency === activeCurrency ? "bg-secondary" : "bg-secondary/50"}`}
+                >
+                  <p className="text-xs text-muted-foreground">{w.currency} Wallet</p>
+                  <p className="text-sm font-semibold font-mono">
+                    {mask(<AnimatedNumber value={w.balance} format={(n) => (w.currency === activeCurrency ? formatBalance(n) : formatAmount(n, w.currency))} />)}
+                  </p>
+                </div>
+              ))}
               <div
-                className="p-3 rounded-lg bg-secondary/50 cursor-pointer hover:bg-secondary transition-colors"
+                className="w-[46%] shrink-0 p-3 rounded-lg bg-secondary/50 cursor-pointer hover:bg-secondary transition-colors"
                 onClick={() => navigate("/savings")}
               >
                 <p className="text-xs text-muted-foreground">Savings</p>
                 <p className="text-sm font-semibold font-mono">
-                  {showBalance ? formatBalance(savingsInActive) : "••••"}
+                  {mask(formatBalance(savingsInActive))}
                 </p>
               </div>
             </div>
+            {walletCards.length + 1 > 2 && (
+              <div className="mt-2 flex justify-center gap-1" aria-hidden="true">
+                {[...walletCards.map((w) => w.currency), "savings"].map((k, i) => (
+                  <span key={k} className={`h-1 rounded-full transition-all duration-base ${i === slide ? "w-4 bg-foreground/70" : "w-1 bg-foreground/25"}`} />
+                ))}
+              </div>
+            )}
 
           </div>
         </Card>
@@ -212,12 +263,18 @@ export default function Dashboard() {
           transition={{ delay: 0.16 }}
           className="space-y-3 min-w-0"
         >
-          <div className="grid grid-cols-2 gap-2">
+          <motion.div
+            className="grid grid-cols-2 gap-2"
+            initial="hidden"
+            animate="show"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04, delayChildren: 0.12 } } }}
+          >
             {shortcuts.map((sc) => {
               const available = !sc.feature || isFeatureAvailable(sc.feature as Parameters<typeof isFeatureAvailable>[0]);
               return (
-                <button
+                <motion.button
                   key={sc.label}
+                  variants={STAGGER_ITEM}
                   onClick={() => available && navigate(sc.path)}
                   disabled={!available}
                   className={`flex items-center gap-3 p-3 rounded-card border border-border text-left ${
@@ -235,10 +292,10 @@ export default function Dashboard() {
                     <span className="block text-sm font-semibold truncate">{sc.label}</span>
                     <span className="block text-xs text-muted-foreground truncate">{sc.sub}</span>
                   </span>
-                </button>
+                </motion.button>
               );
             })}
-          </div>
+          </motion.div>
           <TravelMode />
         </motion.section>
       </div>

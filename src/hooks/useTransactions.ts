@@ -46,7 +46,13 @@ export function useTransactions(limit?: number) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${user.id}` },
-        () => queryClient.invalidateQueries({ queryKey: ["transactions"] })
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          // A new receive/deposit row also means new balances: refresh them so the
+          // dashboard balance rolls up even if the wallets realtime event is missed.
+          queryClient.invalidateQueries({ queryKey: ["multi-wallets"] });
+          queryClient.invalidateQueries({ queryKey: ["wallet"] });
+        }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
