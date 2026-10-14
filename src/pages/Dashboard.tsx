@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useActiveCurrency } from "@/hooks/useActiveCurrency";
@@ -10,14 +10,14 @@ import { TravelMode } from "@/components/TravelMode";
 import { Card } from "@/components/ui/card";
 import {
   ArrowDownLeft, Repeat, Send, Bot, CreditCard, Landmark, PiggyBank,
-  Eye, EyeOff, BarChart3, QrCode, XCircle, Briefcase, Bitcoin, LayoutGrid,
+  Eye, EyeOff, X, BarChart3, QrCode, XCircle, Briefcase, Bitcoin, LayoutGrid,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LiveBadge } from "@/components/ds/LiveBadge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { haptic } from "@/lib/haptics";
 import { formatAmount } from "@/lib/formatTransaction";
-import { EASE } from "@/lib/motion";
+import { ENTER, EXIT, COMPLEX, STAGGER } from "@/lib/motion";
 import { useTransactions } from "@/hooks/useTransactions";
 import { TransactionRow } from "@/components/TransactionRow";
 import { PageSkeleton, RowsSkeleton } from "@/components/ui/skeleton";
@@ -30,7 +30,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const STAGGER_ITEM = {
   hidden: { opacity: 0, y: 8, scale: 0.98 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: EASE } },
+  show: { opacity: 1, y: 0, scale: 1, transition: ENTER },
 };
 
 export default function Dashboard() {
@@ -75,6 +75,14 @@ export default function Dashboard() {
   const walletCards = [...wallets].sort((a, b) => (a.currency === activeCurrency ? -1 : b.currency === activeCurrency ? 1 : 0));
   const carouselRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setExpanded(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expanded]);
+  const fmtWallet = (cur: string) => (n: number) => (cur === activeCurrency ? formatBalance(n) : formatAmount(n, cur));
   // Start at the active wallet whenever the wallet list (re)loads.
   useEffect(() => {
     carouselRef.current?.scrollTo({ left: 0 });
@@ -118,8 +126,74 @@ export default function Dashboard() {
     { label: "More", icon: LayoutGrid, onClick: openAppMenu, mobileOnly: true },
   ];
 
+  const expandedWallet = walletCards.find((w) => w.currency === expanded);
+  const expandedTx = expanded
+    ? historyTx.filter((t) => (t.currency || "USD").toUpperCase() === expanded && t.type !== "welcome_bonus").slice(0, 5)
+    : [];
+
   return (
-    <div className="space-y-6">
+    <>
+    {/* Shared-element expansion: the tapped wallet card grows into its full view. */}
+    <AnimatePresence>
+      {expandedWallet && (
+        <>
+          <motion.div
+            key="wallet-backdrop"
+            className="fixed inset-0 z-[55] bg-background/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: ENTER }}
+            exit={{ opacity: 0, transition: EXIT }}
+            onClick={() => setExpanded(null)}
+          />
+          <motion.div
+            key="wallet-full"
+            layoutId={`wallet-card-${expandedWallet.currency}`}
+            transition={COMPLEX}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wallet-full-title"
+            className="fixed inset-x-4 top-[calc(72px+env(safe-area-inset-top))] z-[56] mx-auto max-w-md rounded-card border border-border bg-card p-6 shadow-card-hover md:top-24"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <motion.p layoutId={`wallet-label-${expandedWallet.currency}`} id="wallet-full-title" className="text-sm text-muted-foreground">
+                  {expandedWallet.currency} Wallet
+                </motion.p>
+                <motion.p layoutId={`wallet-amt-${expandedWallet.currency}`} className="text-figure font-mono tabular-nums">
+                  {mask(<AnimatedNumber value={expandedWallet.balance} format={fmtWallet(expandedWallet.currency)} />)}
+                </motion.p>
+              </div>
+              <button onClick={() => setExpanded(null)} className="rounded-lg p-2 hover:bg-secondary" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <motion.div
+              className="mt-4 space-y-2"
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: STAGGER, delayChildren: 0.12 } } }}
+            >
+              {expandedTx.map((tx) => (
+                <motion.div key={tx.id} variants={STAGGER_ITEM}>
+                  <TransactionRow tx={tx} />
+                </motion.div>
+              ))}
+              <motion.div variants={STAGGER_ITEM} className="flex justify-end pt-1">
+                <button onClick={() => navigate("/activity")} className="text-sm font-medium text-accent">
+                  See all
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+    <motion.div
+      className="space-y-6"
+      animate={expanded ? { opacity: 0.35, y: 16, scale: 0.99 } : { opacity: 1, y: 0, scale: 1 }}
+      transition={expanded ? COMPLEX : ENTER}
+      aria-hidden={expanded ? true : undefined}
+    >
       <QuickActionSheet action={sheet} onClose={() => setSheet(null)} />
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
@@ -147,7 +221,7 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
+        transition={{ delay: 0.025 }}
       >
         <Card className="p-6 overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none" />
@@ -168,15 +242,19 @@ export default function Dashboard() {
             {/* Swipe/snap carousel of currency wallets (active first), then Savings. */}
             <div ref={carouselRef} onScroll={onCarouselScroll} className="snap-carousel -mx-6 mt-4 flex gap-3 overflow-x-auto px-6 pb-1">
               {walletCards.map((w) => (
-                <div
+                <motion.button
+                  type="button"
                   key={w.currency}
-                  className={`w-[46%] shrink-0 p-3 rounded-lg transition-colors ${w.currency === activeCurrency ? "bg-secondary" : "bg-secondary/50"}`}
+                  layoutId={`wallet-card-${w.currency}`}
+                  onClick={() => setExpanded(w.currency)}
+                  style={{ visibility: expanded === w.currency ? "hidden" : "visible" }}
+                  className={`w-[46%] shrink-0 p-3 rounded-lg text-left transition-colors ${w.currency === activeCurrency ? "bg-secondary" : "bg-secondary/50"}`}
                 >
-                  <p className="text-xs text-muted-foreground">{w.currency} Wallet</p>
-                  <p className="text-sm font-semibold font-mono">
-                    {mask(<AnimatedNumber value={w.balance} format={(n) => (w.currency === activeCurrency ? formatBalance(n) : formatAmount(n, w.currency))} />)}
-                  </p>
-                </div>
+                  <motion.p layoutId={`wallet-label-${w.currency}`} className="text-xs text-muted-foreground">{w.currency} Wallet</motion.p>
+                  <motion.p layoutId={`wallet-amt-${w.currency}`} className="text-sm font-semibold font-mono">
+                    {mask(<AnimatedNumber value={w.balance} format={fmtWallet(w.currency)} />)}
+                  </motion.p>
+                </motion.button>
               ))}
               <div
                 className="w-[46%] shrink-0 p-3 rounded-lg bg-secondary/50 cursor-pointer hover:bg-secondary transition-colors"
@@ -204,7 +282,7 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.08 }}
+        transition={{ delay: 0.05 }}
         className="grid grid-cols-4 md:flex md:gap-6 gap-2"
       >
         {quickActions.map((a) => (
@@ -230,7 +308,7 @@ export default function Dashboard() {
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12 }}
+          transition={{ delay: 0.075 }}
           className="space-y-2 min-w-0"
         >
           <div className="flex items-center justify-between">
@@ -242,13 +320,18 @@ export default function Dashboard() {
           {txLoading ? (
             <RowsSkeleton rows={3} />
           ) : recent.length ? (
-            <div className="space-y-2">
+            <motion.div
+              className="space-y-2"
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: STAGGER, delayChildren: 0.06 } } }}
+            >
               {recent.map((tx) => (
-                <button key={tx.id} onClick={() => navigate("/activity")} className="block w-full min-w-0 text-left">
+                <motion.button variants={STAGGER_ITEM} key={tx.id} onClick={() => navigate("/activity")} className="block w-full min-w-0 text-left">
                   <TransactionRow tx={tx} />
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
           ) : (
             <Card className="p-4 bg-card border-border text-sm text-muted-foreground">
               Your transaction history will appear here once you make your first deposit, send money, or trade.
@@ -260,14 +343,14 @@ export default function Dashboard() {
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.16 }}
+          transition={{ delay: 0.1 }}
           className="space-y-3 min-w-0"
         >
           <motion.div
             className="grid grid-cols-2 gap-2"
             initial="hidden"
             animate="show"
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04, delayChildren: 0.12 } } }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: STAGGER, delayChildren: 0.08 } } }}
           >
             {shortcuts.map((sc) => {
               const available = !sc.feature || isFeatureAvailable(sc.feature as Parameters<typeof isFeatureAvailable>[0]);
@@ -299,6 +382,7 @@ export default function Dashboard() {
           <TravelMode />
         </motion.section>
       </div>
-    </div>
+    </motion.div>
+    </>
   );
 }

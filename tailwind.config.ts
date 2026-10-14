@@ -87,15 +87,16 @@ export default {
         'accent-strong': 'var(--shadow-accent-strong)',
       },
       transitionTimingFunction: {
-        DEFAULT: "cubic-bezier(0.22, 1, 0.36, 1)",
-        fintech: "cubic-bezier(0.22, 1, 0.36, 1)",
-        out: "cubic-bezier(0.22, 1, 0.36, 1)",
+        DEFAULT: "var(--ease-fintech)",
+        fintech: "var(--ease-fintech)",
+        out: "var(--ease-fintech)",
         "in-out": "cubic-bezier(0.65, 0, 0.35, 1)",
       },
       transitionDuration: {
-        DEFAULT: "250ms",
+        DEFAULT: "240ms",
+        exit: "180ms",
         fast: "200ms",
-        base: "250ms",
+        base: "240ms",
         slow: "350ms",
       },
       borderRadius: {
@@ -132,8 +133,8 @@ export default {
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "accordion-down": "accordion-down 300ms cubic-bezier(0.34, 1.3, 0.64, 1)",
+        "accordion-up": "accordion-up 180ms cubic-bezier(0.2, 0, 0, 1)",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "slide-up": "slide-up 0.3s ease-out",
         "exo-breathe": "exo-breathe 3s ease-in-out infinite",

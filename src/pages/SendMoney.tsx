@@ -1,3 +1,5 @@
+import { SpringCollapse } from "@/components/ds/SpringCollapse";
+import { SwipeToConfirm } from "@/components/ds/SwipeToConfirm";
 import { haptic } from "@/lib/haptics";
 import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { useRef, useState } from "react";
@@ -53,8 +55,9 @@ function SendMoneyContent() {
   const parsedAmount = parseFloat(amount || "0");
   const usdAmount = toUSD(parsedAmount);
 
-  const executeSend = async () => {
-    if (!user || sendInFlight.current) return;
+  const executeSend = async (): Promise<boolean> => {
+    if (!user || sendInFlight.current) return false;
+    let ok = false;
     sendInFlight.current = true;
     setIsSending(true);
     // One key per send attempt: the server treats a repeat of the same key as the
@@ -79,8 +82,10 @@ function SendMoneyContent() {
       if (!result || result.success !== true || !result.transaction_id) {
         throw new Error("Transfer could not be confirmed. Check your activity before trying again.");
       }
-      setSent(true);
+      ok = true;
       toast.success(`${formatBalance(parsedAmount)} sent to ${recipient.trim()}`);
+      // Let the slider's checkmark land before the success screen replaces it.
+      setTimeout(() => setSent(true), 450);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Transfer failed");
     } finally {
@@ -91,23 +96,24 @@ function SendMoneyContent() {
       sendInFlight.current = false;
       setIsSending(false);
     }
+    return ok;
   };
 
-  const handleSend = async () => {
+  const handleSend = async (): Promise<boolean> => {
     haptic("confirm");
     if (!recipient || !amount) {
       toast.error("Please fill in all fields");
-      return;
+      return false;
     }
     if (parsedAmount > activeBalance) {
       toast.error(`Insufficient ${activeCurrency} balance`);
-      return;
+      return false;
     }
     if (requiresPin(usdAmount)) {
       setShowPinModal(true);
-      return;
+      return false;
     }
-    await executeSend();
+    return executeSend();
   };
 
   if (sent) {
@@ -128,7 +134,7 @@ function SendMoneyContent() {
         <p className="text-muted-foreground text-sm mt-1">Transfer funds to anyone, anywhere in the world</p>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-4 bg-card border-border flex items-center justify-between">
           <div className="flex items-center gap-3">
             <p className="text-sm text-muted-foreground">Spending from</p>
@@ -152,7 +158,7 @@ function SendMoneyContent() {
 
       <RateWatch currency={activeCurrency} />
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
 
         <Card className="p-6 bg-card border-border shadow-card space-y-6">
           <div className="space-y-2">
@@ -186,25 +192,19 @@ function SendMoneyContent() {
             />
           </div>
 
-          {parsedAmount > 0 && activeCurrency !== "USD" && (
+          <SpringCollapse open={parsedAmount > 0 && activeCurrency !== "USD"}>
             <div className="p-3 rounded-lg bg-secondary/50 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">≈ USD equivalent</span>
               <span className="font-mono font-medium">${usdAmount.toFixed(2)}</span>
             </div>
-          )}
+          </SpringCollapse>
 
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Network fee</span>
             <span className="text-success font-medium">Free</span>
           </div>
 
-          <Button
-            onClick={handleSend}
-            disabled={isSending || !recipient || !amount}
-            className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-semibold text-base gap-2"
-          >
-            {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Send <ArrowRight className="w-4 h-4" /></>}
-          </Button>
+          <SwipeToConfirm label="Send" onConfirm={handleSend} disabled={isSending || !recipient || !amount} />
         </Card>
       </motion.div>
 

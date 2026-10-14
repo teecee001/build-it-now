@@ -1,4 +1,4 @@
-import { EASE, DUR } from "@/lib/motion";
+import { ENTER, EXIT, COMPLEX } from "@/lib/motion";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BetaFeedback } from "@/components/BetaFeedback";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
@@ -14,7 +14,7 @@ import { ExoLogo } from "@/components/ExoLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { OPEN_MENU_EVENT } from "@/lib/appMenu";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -55,6 +55,16 @@ const SECTIONS = MENU_SECTIONS.map((sec) => ({
   items: sec.paths.map((p) => NAV_ITEMS.find((i) => i.path === p)!).filter(Boolean),
 }));
 
+const PAGE_VARIANTS = {
+  enter: (dir: number) => (dir ? { opacity: 0, x: dir * 28 } : { opacity: 0, y: 8 }),
+  center: { opacity: 1, x: 0, y: 0, transition: ENTER },
+  exit: (dir: number) => ({ opacity: 0, ...(dir ? { x: dir * -20 } : { y: -4 }), transition: EXIT }),
+};
+const PARALLAX_VARIANTS = {
+  enter: (dir: number) => ({ x: dir * 10 }),
+  center: { x: 0, transition: COMPLEX },
+};
+
 export function AppLayout() {
   const location = useLocation();
   // Start each page at the top (the document is the scroller on mobile).
@@ -67,6 +77,13 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const reduceMotion = useReducedMotion();
+  // Slide direction follows tab order (Account → Crypto → Send → Activity); other routes slide up.
+  const tabIndex = TAB_ITEMS.findIndex((t) => t.path === location.pathname);
+  const lastTab = useRef(tabIndex);
+  const navDir = tabIndex >= 0 && lastTab.current >= 0 && tabIndex !== lastTab.current ? Math.sign(tabIndex - lastTab.current) : 0;
+  useEffect(() => {
+    lastTab.current = tabIndex;
+  }, [tabIndex]);
 
   useEffect(() => {
     const open = () => setMobileOpen(true);
@@ -86,7 +103,7 @@ export function AppLayout() {
       <motion.aside
         initial={reduceMotion ? false : { opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: DUR.slow, ease: EASE }}
+        transition={COMPLEX}
         className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4"
       >
         <div className="flex items-center justify-between px-3 py-4 mb-6">
@@ -118,7 +135,7 @@ export function AppLayout() {
                       <motion.span
                         layoutId="sidebar-active"
                         className="absolute inset-0 rounded-lg bg-secondary"
-                        transition={{ duration: DUR.base, ease: EASE }}
+                        transition={ENTER}
                       />
                     )}
                     <item.icon className="relative w-4 h-4 transition-transform duration-fast group-hover:translate-x-0.5" />
@@ -277,15 +294,24 @@ export function AppLayout() {
           <Suspense
             fallback={<PageSkeleton />}
           >
-            <AnimatePresence mode="wait" initial={false}>
+            {/* Direction-aware lateral slide between tabs, with a subtle parallax inner layer. */}
+            <AnimatePresence mode="wait" initial={false} custom={navDir}>
               <motion.div
                 key={location.pathname}
-                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
-                transition={{ duration: reduceMotion ? 0 : DUR.fast, ease: EASE }}
+                custom={navDir}
+                variants={reduceMotion ? undefined : PAGE_VARIANTS}
+                initial={reduceMotion ? false : "enter"}
+                animate="center"
+                exit={reduceMotion ? undefined : "exit"}
               >
-                <Outlet />
+                <motion.div
+                  custom={navDir}
+                  variants={reduceMotion ? undefined : PARALLAX_VARIANTS}
+                  initial={reduceMotion ? false : "enter"}
+                  animate="center"
+                >
+                  <Outlet />
+                </motion.div>
               </motion.div>
             </AnimatePresence>
           </Suspense>

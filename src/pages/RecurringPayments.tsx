@@ -97,7 +97,7 @@ export default function RecurringPayments() {
       </motion.div>
 
       {/* Monthly Summary */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-4 bg-card border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

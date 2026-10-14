@@ -82,7 +82,7 @@ export default function Activity() {
                 key={tx.id}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.02 }}
+                transition={{ delay: Math.min(i, 12) * 0.02 }}
               >
                 <TransactionRow tx={tx} />
               </motion.div>

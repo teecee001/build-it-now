@@ -1,3 +1,4 @@
+import { ChartReveal } from "@/components/ds/ChartReveal";
 import { chartAnim } from "@/lib/motion";
 import { motion } from "framer-motion";
 import { PageSkeleton } from "@/components/ui/skeleton";
@@ -121,7 +122,7 @@ export default function SpendingAnalytics() {
       </div>
 
       {/* Summary Cards */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-2 gap-3">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }} className="grid grid-cols-2 gap-3">
         <Card className="p-4 bg-card border-border">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-full bg-success/10 flex items-center justify-center">
@@ -147,7 +148,7 @@ export default function SpendingAnalytics() {
       </motion.div>
 
       {/* Net flow */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="p-4 bg-card border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             {totalIncome - totalSpending >= 0 ? (
@@ -166,7 +167,7 @@ export default function SpendingAnalytics() {
 
       {/* Category Breakdown */}
       {categoryData.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Spending by Category</h3>
           <Card className="p-6 bg-card border-border">
             <div className="flex items-center gap-6">
@@ -217,30 +218,32 @@ export default function SpendingAnalytics() {
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Weekly Trend</h3>
         <Card className="p-6 bg-card border-border">
           <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 4% 16%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(240, 5%, 50%)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(240, 5%, 50%)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(240 6% 10%)",
-                    border: "1px solid hsl(240 4% 16%)",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                  labelStyle={{ color: "hsl(0 0% 95%)" }}
-                />
-                <Bar {...chartAnim()} dataKey="earned" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} name="Earned" />
-                <Bar {...chartAnim()} dataKey="spent" fill="hsl(0, 72%, 51%)" radius={[4, 4, 0, 0]} name="Spent" />
-              </BarChart>
-            </ResponsiveContainer>
+            <ChartReveal className="h-full w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 4% 16%)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(240, 5%, 50%)" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(240, 5%, 50%)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(240 6% 10%)",
+                      border: "1px solid hsl(240 4% 16%)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    labelStyle={{ color: "hsl(0 0% 95%)" }}
+                  />
+                  <Bar {...chartAnim()} dataKey="earned" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} name="Earned" />
+                  <Bar {...chartAnim()} dataKey="spent" fill="hsl(0, 72%, 51%)" radius={[4, 4, 0, 0]} name="Spent" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartReveal>
           </div>
         </Card>
       </motion.div>
 
       {/* Top transactions */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Largest Expenses</h3>
         <div className="space-y-2">
           {spending.slice(0, 5).map((tx) => (

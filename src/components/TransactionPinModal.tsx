@@ -53,7 +53,7 @@ export function TransactionPinModal({ open, onVerified, onCancel, verifyPin, amo
           </div>
 
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-full bg-warning/10 mx-auto flex items-center justify-center">
+            <div className="ring-pulse w-14 h-14 rounded-full bg-warning/10 mx-auto flex items-center justify-center">
               <KeyRound className="w-7 h-7 text-warning" />
             </div>
             <p className="text-sm text-muted-foreground">

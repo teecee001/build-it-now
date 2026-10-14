@@ -65,7 +65,7 @@ function PremiumContent() {
 
       {/* Active Subscription Card */}
       {isSubscribed && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
           <Card className="p-6 bg-card border-warning/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent pointer-events-none" />
             <div className="relative space-y-3">
@@ -99,7 +99,7 @@ function PremiumContent() {
       )}
 
       {/* Pro Plan Card */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className={`p-6 bg-card relative overflow-hidden ${
           isSubscribed ? "border-warning/20" : "border-border"
         }`}>
@@ -152,7 +152,7 @@ function PremiumContent() {
 
       {/* Free Plan Comparison */}
       {!isSubscribed && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
           <Card className="p-6 bg-card border-border space-y-4">
             <div>
               <h3 className="text-sm font-semibold">Free Plan</h3>
@@ -171,7 +171,7 @@ function PremiumContent() {
       )}
 
       {/* Security Note */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <Card className="p-3 bg-secondary/30 border-border flex items-start gap-2">
           <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
           <p className="text-caption text-muted-foreground leading-relaxed">

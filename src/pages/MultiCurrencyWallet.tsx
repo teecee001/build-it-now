@@ -143,7 +143,7 @@ export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {})
         </div>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-6 bg-card border-border">
           <div className="flex items-center gap-2 mb-1">
             <Globe className="w-4 h-4 text-accent" />
@@ -298,7 +298,7 @@ export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {})
         </motion.div>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Your Wallets</h3>
         {wallets.length === 0 ? (
           <Card className="p-8 bg-card border-border text-center">
