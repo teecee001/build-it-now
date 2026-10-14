@@ -73,3 +73,13 @@ Deno.test("a hanging tool times out instead of failing the answer", async () => 
   const r = await runAgent({ call, messages: [{ role: "user", content: "news" }], ctx: { account: { wallets: [], transactions: [], bills: [], crypto: [], stocks: [], cryptoQuotes: {}, stockQuotes: {} } as unknown as AccountData }, evidence: [] });
   assertEquals(r.kind, "answer");
 });
+
+Deno.test("bing rss: unwraps apiclick link and reads News:Source", async () => {
+  const { parseNewsRss, filterByQuery } = await import("./live.ts");
+  const xml = `<rss><channel><item><title>Fed rate cut near?</title><link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;url=https%3a%2f%2fwww.msn.com%2fa&amp;mkt=en-us</link><pubDate>Mon, 12 Oct 2026 14:57:00 GMT</pubDate><News:Source>Business Insider</News:Source></item>
+  <item><title>Oil slides</title><link>https://cnbc.com/oil</link><pubDate>Tue, 13 Oct 2026 10:00:00 GMT</pubDate></item></channel></rss>`;
+  const items = parseNewsRss(xml, 10);
+  assertEquals(items[0], { title: "Fed rate cut near?", source: "Business Insider", date: "2026-10-12 14:57 UTC", link: "https://www.msn.com/a" });
+  assertEquals(items[1].source, "cnbc.com");
+  assertEquals(filterByQuery(items, "What's the news on rate cuts").map((i) => i.title), ["Fed rate cut near?"]);
+});

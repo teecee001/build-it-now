@@ -36,33 +36,117 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 // ---------- News (Google News RSS search) ----------
 const decode = (s: string) =>
   s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/<[^>]+>/g, "").trim();
+    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d))).replace(/<[^>]+>/g, "").trim();
 
-export function parseNewsRss(xml: string, limit: number) {
+const host = (u: string) => {
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
+/** Bing wraps article links in an apiclick redirect; unwrap to the publisher URL. */
+const unwrap = (link: string) => {
+  try {
+    const u = new URL(link);
+    return (u.hostname.endsWith("bing.com") && u.searchParams.get("url")) || link;
+  } catch {
+    return link;
+  }
+};
+
+export function parseNewsRss(xml: string, limit: number, defaultSource = "") {
   const items: { title: string; source: string; date: string; link: string }[] = [];
-  for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
-    const tag = (t: string) => decode(new RegExp(`<${t}[^>]*>([\\s\\S]*?)</${t}>`).exec(m[1])?.[1] ?? "");
-    const source = tag("source");
+  for (const m of xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/g)) {
+    const tag = (t: string) => decode(new RegExp(`<${t}\\b[^>]*>([\\s\\S]*?)</${t}>`, "i").exec(m[1])?.[1] ?? "");
+    const link = unwrap(tag("link") || tag("guid"));
+    const source = tag("source") || tag("News:Source") || defaultSource || host(link);
     let title = tag("title");
+    if (!title || !/^https?:\/\//.test(link)) continue;
     if (source && title.endsWith(` - ${source}`)) title = title.slice(0, -(source.length + 3));
     const pub = Date.parse(tag("pubDate"));
-    items.push({ title, source, date: Number.isFinite(pub) ? new Date(pub).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "", link: tag("link") });
+    items.push({ title, source, date: Number.isFinite(pub) ? new Date(pub).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "", link });
     if (items.length >= limit) break;
   }
   return items;
 }
 
+type Item = ReturnType<typeof parseNewsRss>[number];
+const STOP = new Set(["the", "a", "an", "on", "of", "in", "for", "and", "news", "latest", "what", "whats", "is", "about", "today"]);
+const terms = (q: string) => q.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 1 && !STOP.has(w));
+/** Headlines that mention any query term (stems like "cut"/"cuts" match), newest first. */
+export function filterByQuery(items: Item[], q: string) {
+  const ts = terms(q);
+  const res = ts.map((t) => new RegExp(`\\b${t.replace(/s$/, "")}`, "i"));
+  const hit = (i: Item) => res.some((re) => re.test(i.title));
+  return (ts.length ? items.filter(hit) : items).sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+async function rss(url: string, timeoutMs: number, headers: Record<string, string> = { "User-Agent": BROWSER_UA }) {
+  // One quick retry on an immediate failure (not after a timeout), within the time limit.
+  const t0 = Date.now();
+  return await get(url, headers, timeoutMs).catch((e) => {
+    const left = timeoutMs - (Date.now() - t0);
+    if (left < 2500) throw e;
+    return get(url, headers, left);
+  }).then((r) => r.text());
+}
+
+// Free, keyless feeds, tried in order until one returns headlines.
+export const NEWS_SOURCES: { name: string; load: (q: string) => Promise<Item[]> }[] = [
+  {
+    name: "Google News",
+    load: async (q) => parseNewsRss(await rss(`https://news.google.com/rss/search?q=${encodeURIComponent(q + " when:7d")}&hl=en-US&gl=US&ceid=US:en`, 9000), 15),
+  },
+  {
+    name: "Bing News",
+    load: async (q) => parseNewsRss(await rss(`https://www.bing.com/news/search?q=${encodeURIComponent(q)}&format=rss&mkt=en-US`, 9000), 15),
+  },
+  {
+    // Topic feeds don't search, so keep only headlines that mention the query.
+    name: "CNBC, MarketWatch & Federal Reserve",
+    load: async (q) => {
+      const feeds: [string, string][] = [
+        ["https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664", "CNBC"],
+        ["https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258", "CNBC"],
+        ["https://feeds.content.dowjones.io/public/rss/mw_topstories", "MarketWatch"],
+        ["https://www.federalreserve.gov/feeds/press_all.xml", "Federal Reserve"],
+      ];
+      const lists = await Promise.all(feeds.map(([u, src]) => rss(u, 8000).then((x) => parseNewsRss(x, 40, src)).catch(() => [] as Item[])));
+      return filterByQuery(lists.flat(), q);
+    },
+  },
+];
+
 export async function getNews(query: string, limit = 8) {
   const q = query.trim().slice(0, 200) || "stock market";
   const n = Math.min(15, Math.max(1, Math.round(limit)));
-  try {
-    const xml = await cached(`news:${q.toLowerCase()}`, 10 * 60_000, async () =>
-      await (await get(`https://news.google.com/rss/search?q=${encodeURIComponent(q + " when:7d")}&hl=en-US&gl=US&ceid=US:en`, { "User-Agent": BROWSER_UA })).text());
-    const headlines = parseNewsRss(xml, n);
-    return { query: q, source: "Google News", headlines };
-  } catch (e) {
-    return { query: q, error: `news unavailable (${errMsg(e)})` };
+  const key = `news:${q.toLowerCase()}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < 10 * 60_000) return hit.value as Record<string, unknown>;
+  // All feeds are fetched in parallel (bounded to ~9s, under the agent's 12s tool cap);
+  // the first one in priority order with results wins.
+  const settled = await Promise.allSettled(NEWS_SOURCES.map((src) => src.load(q)));
+  const failed: string[] = [];
+  for (const [i, r] of settled.entries()) {
+    const name = NEWS_SOURCES[i].name;
+    if (r.status === "rejected") {
+      failed.push(`${name}: ${errMsg(r.reason)}`);
+      continue;
+    }
+    const items = r.value.slice(0, n);
+    if (!items.length) {
+      failed.push(`${name}: no results`);
+      continue;
+    }
+    const value = { query: q, source: name, headlines: items };
+    cache.set(key, { at: Date.now(), value }); // only successes are cached
+    if (failed.length) console.warn(`get_news used ${name}: ${failed.join("; ")}`);
+    return value;
   }
+  console.error(`get_news failed: ${failed.join("; ")}`);
+  return { query: q, error: "news feeds temporarily unavailable", tried: failed };
 }
 
 // ---------- Market sentiment ----------

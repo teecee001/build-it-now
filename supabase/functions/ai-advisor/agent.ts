@@ -11,7 +11,7 @@ export type CallResult = { ok: boolean; status: number; json?: unknown; text?: s
 export type Caller = (body: Record<string, unknown>) => Promise<CallResult>;
 
 export type AgentResult =
-  | { kind: "answer"; text: string; toolsUsed: string[]; mode: "tools" | "context"; factcheck: "pass" | "repaired" }
+  | { kind: "answer"; text: string; toolsUsed: string[]; mode: "tools" | "context"; factcheck: "pass" | "repaired"; newsResults?: unknown[] }
   | { kind: "factcheck_failed"; toolsUsed: string[]; mode: "tools" | "context"; unsupported: string[] }
   | { kind: "http_error"; status: number; reason: string };
 
@@ -35,6 +35,7 @@ export async function runAgent(opts: {
   const { call, ctx } = opts;
   const evidence = [...opts.evidence];
   const toolsUsed: string[] = [];
+  const newsResults: unknown[] = [];
   const tools = toolDefs(!!ctx.goals);
   let mode: "tools" | "context" = "tools";
   const convo: Msg[] = [...opts.messages];
@@ -85,6 +86,7 @@ export async function runAgent(opts: {
           result = { error: e instanceof Error ? e.message.slice(0, 120) : "tool failed" };
         }
         if (!toolsUsed.includes(name)) toolsUsed.push(name);
+        if (name === "get_news") newsResults.push(result);
         const content = JSON.stringify(result);
         evidence.push(content);
         convo.push({ role: "tool", tool_call_id: c.id, name, content });
@@ -96,7 +98,7 @@ export async function runAgent(opts: {
   if ("error" in first) return { kind: "http_error", status: first.error.status, reason: first.error.text ?? "" };
   let answer = first.text;
   let bad = unsupportedFigures(answer, evidence);
-  if (bad.length === 0 && answer) return { kind: "answer", text: answer, toolsUsed, mode, factcheck: "pass" };
+  if (bad.length === 0 && answer) return { kind: "answer", text: answer, toolsUsed, mode, factcheck: "pass", newsResults };
 
   // One repair pass.
   convo.push({ role: "assistant", content: answer });
@@ -111,6 +113,6 @@ export async function runAgent(opts: {
   if ("error" in repaired) return { kind: "factcheck_failed", toolsUsed, mode, unsupported: bad.map((b) => b.raw) };
   answer = repaired.text;
   bad = unsupportedFigures(answer, evidence);
-  if (bad.length === 0 && answer) return { kind: "answer", text: answer, toolsUsed, mode, factcheck: "repaired" };
+  if (bad.length === 0 && answer) return { kind: "answer", text: answer, toolsUsed, mode, factcheck: "repaired", newsResults };
   return { kind: "factcheck_failed", toolsUsed, mode, unsupported: bad.map((b) => b.raw) };
 }
