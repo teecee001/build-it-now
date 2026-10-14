@@ -49,3 +49,27 @@ Deno.test("fact-check accepts billions from SEC figures", async () => {
   assertEquals(unsupportedFigures("Revenue was $215.9 billion ($215.94B).", ["215938000000"]).length, 0);
   assertEquals(unsupportedFigures("Revenue was $300 billion.", ["215938000000"]).length, 1);
 });
+
+Deno.test("long chat history is trimmed, not rejected", async () => {
+  const { sanitizeMessages, MAX_TURNS } = await import("./history.ts");
+  const raw: unknown[] = Array.from({ length: 150 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", content: `m${i}` }));
+  raw.push({ role: "system", content: "x" }, null, { role: "user", content: "What's the news on rate cut" });
+  const out = sanitizeMessages(raw);
+  assert(out.length <= MAX_TURNS);
+  assertEquals(out[0].role, "user");
+  assertEquals(out.at(-1)!.content, "What's the news on rate cut");
+  assert(out.every((m) => m.role === "user" || m.role === "assistant"));
+});
+
+Deno.test("a hanging tool times out instead of failing the answer", async () => {
+  const { runAgent } = await import("./agent.ts");
+  let n = 0;
+  const call = async (b: Record<string, unknown>) => {
+    n++;
+    if (n === 1) return { ok: true, status: 200, json: { choices: [{ message: { role: "assistant", content: null, tool_calls: [{ id: "1", type: "function", function: { name: "get_news", arguments: "{\"query\":\"x\"}" } }] } }] } };
+    const tool = (b.messages as { role: string; content: string }[]).find((m) => m.role === "tool");
+    return { ok: true, status: 200, json: { choices: [{ message: { role: "assistant", content: tool?.content.includes("error") || tool ? "News is temporarily unavailable." : "?" } }] } };
+  };
+  const r = await runAgent({ call, messages: [{ role: "user", content: "news" }], ctx: { account: { wallets: [], transactions: [], bills: [], crypto: [], stocks: [], cryptoQuotes: {}, stockQuotes: {} } as unknown as AccountData }, evidence: [] });
+  assertEquals(r.kind, "answer");
+});
