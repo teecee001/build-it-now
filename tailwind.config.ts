@@ -86,6 +86,18 @@ export default {
         'accent': 'var(--shadow-accent)',
         'accent-strong': 'var(--shadow-accent-strong)',
       },
+      transitionTimingFunction: {
+        DEFAULT: "cubic-bezier(0.22, 1, 0.36, 1)",
+        fintech: "cubic-bezier(0.22, 1, 0.36, 1)",
+        out: "cubic-bezier(0.22, 1, 0.36, 1)",
+        "in-out": "cubic-bezier(0.65, 0, 0.35, 1)",
+      },
+      transitionDuration: {
+        DEFAULT: "250ms",
+        fast: "200ms",
+        base: "250ms",
+        slow: "350ms",
+      },
       borderRadius: {
         card: "var(--radius-card)",
         sheet: "var(--radius-sheet)",

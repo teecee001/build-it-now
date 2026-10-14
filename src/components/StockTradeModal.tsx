@@ -1,3 +1,6 @@
+import { EASE } from "@/lib/motion";
+import { SuccessCheck } from "@/components/ds/SuccessCheck";
+import { haptic } from "@/lib/haptics";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -47,6 +50,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
   );
 
   const handleTrade = async () => {
+    haptic("confirm");
     if (!user || !canProceed) return;
     setIsProcessing(true);
     try {
@@ -56,6 +60,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
           operation: "stock_trade", action: "buy", ticker,
           shares: sharesToTrade, dollar_value: dollarValue, price,
         });
+        haptic("success");
         toast.success(`Bought ${sharesToTrade.toFixed(4)} shares of ${ticker}! 📈`);
       } else {
         if (!usdWallet) throw new Error("No USD wallet");
@@ -64,6 +69,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
           operation: "stock_trade", action: "sell", ticker,
           shares: sharesToTrade, dollar_value: dollarValue, price,
         });
+        haptic("success");
         toast.success(`Sold ${sharesToTrade.toFixed(4)} shares of ${ticker} for $${dollarValue.toFixed(2)} 💰`);
       }
       setIsDone(true);
@@ -78,9 +84,9 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
 
   if (isDone) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, ease: EASE }}>
         <Card className="p-6 bg-card border-border text-center space-y-4">
-          <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
+          <SuccessCheck className="w-12 h-12 mx-auto" />
           <h3 className="text-heading">Order Filled!</h3>
           <p className="text-sm text-muted-foreground">Your portfolio has been updated.</p>
           <Button onClick={onClose} className="w-full">Done</Button>
@@ -90,8 +96,8 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-      <Card className="p-6 bg-card border-border space-y-4">
+    <motion.div initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }} transition={{ duration: 0.3, ease: EASE }}>
+      <Card className="p-6 bg-card border-border space-y-4 layered-in shadow-card-hover">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon className={`w-5 h-5 ${type === "buy" ? "text-success" : "text-destructive"}`} />

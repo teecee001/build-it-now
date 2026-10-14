@@ -1,3 +1,4 @@
+import { haptic } from "@/lib/haptics";
 import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -93,6 +94,7 @@ function SendMoneyContent() {
   };
 
   const handleSend = async () => {
+    haptic("confirm");
     if (!recipient || !amount) {
       toast.error("Please fill in all fields");
       return;

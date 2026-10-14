@@ -73,7 +73,7 @@ export function TransactionPinModal({ open, onVerified, onCancel, verifyPin, amo
             autoFocus
           />
 
-          {error && <p className="text-xs text-destructive text-center">{error}</p>}
+          {error && <p role="alert" className="text-xs text-warning text-center rounded-md bg-warning/10 border border-warning/30 px-3 py-2">{error}</p>}
 
           <Button
             onClick={handleSubmit}

@@ -1,3 +1,4 @@
+import { chartAnim } from "@/lib/motion";
 import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -88,7 +89,7 @@ export const CryptoChart = () => {
                 }}
                 formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
               />
-              <Line
+              <Line {...chartAnim()}
                 type="monotone"
                 dataKey="price"
                 stroke="hsl(var(--primary))"

@@ -1,3 +1,4 @@
+import { haptic } from "@/lib/haptics";
 import { LiveDot } from "@/components/ds/LiveBadge";
 import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { useState, useEffect } from "react";
@@ -86,6 +87,7 @@ export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {})
   };
 
   const handleConvert = async () => {
+    haptic("confirm");
     const amt = parseFloat(convertAmount);
     if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
     if (fromCurrency === toCurrency) { toast.error("Select different currencies"); return; }

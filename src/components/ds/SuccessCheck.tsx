@@ -1,16 +1,20 @@
+import { useEffect } from "react";
+import { haptic } from "@/lib/haptics";
+import { EASE } from "@/lib/motion";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 /** Animated success checkmark: the ring draws, then the tick. Static when reduced motion is on. */
 export function SuccessCheck({ className }: { className?: string }) {
   const reduce = useReducedMotion();
+  useEffect(() => haptic("success"), []);
   const draw = (delay: number) =>
     reduce
       ? { initial: { pathLength: 1 }, animate: { pathLength: 1 } }
       : {
           initial: { pathLength: 0 },
           animate: { pathLength: 1 },
-          transition: { duration: 0.45, delay, ease: "easeOut" as const },
+          transition: { duration: 0.45, delay, ease: EASE },
         };
   return (
     <motion.svg

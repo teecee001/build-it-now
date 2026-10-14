@@ -1,3 +1,5 @@
+import { PriceTick } from "@/components/ds/PriceTick";
+import { chartAnim } from "@/lib/motion";
 import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -41,7 +43,7 @@ function MiniChart({ code, change, values }: { code: string; change: number; val
   return (
     <ResponsiveContainer width={56} height={28}>
       <LineChart data={sparkline}>
-        <Line type="monotone" dataKey="p" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={1.5} dot={false} />
+        <Line {...chartAnim()} type="monotone" dataKey="p" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={1.5} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -312,7 +314,7 @@ function CoinRow({ crypto, index, price, change, spark, isFav, onFav, onSelect }
           <div className="flex items-center gap-3">
             <MiniChart code={crypto.code} change={change} values={spark} />
             <div className="text-right min-w-[70px]">
-              <p className="text-sm font-semibold font-mono">${price > 1 ? price.toLocaleString("en-US", { maximumFractionDigits: 2 }) : price.toFixed(6)}</p>
+              <p className="text-sm font-semibold font-mono"><PriceTick value={price}>${price > 1 ? price.toLocaleString("en-US", { maximumFractionDigits: 2 }) : price.toFixed(6)}</PriceTick></p>
               <div className="flex items-center justify-end gap-1">
                 {isPositive ? <TrendingUp className="w-2.5 h-2.5 text-success" /> : <TrendingDown className="w-2.5 h-2.5 text-destructive" />}
                 <p className={`text-caption font-medium ${isPositive ? "text-success" : "text-destructive"}`}>{isPositive ? "+" : ""}{change.toFixed(2)}%</p>

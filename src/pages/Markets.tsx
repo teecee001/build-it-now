@@ -1,3 +1,5 @@
+import { PriceTick } from "@/components/ds/PriceTick";
+import { chartAnim } from "@/lib/motion";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { FeatureGate } from "@/components/FeatureGate";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,7 +40,7 @@ function MiniChart({ values, up }: { values: number[]; up?: boolean }) {
   return (
     <ResponsiveContainer width={56} height={28}>
       <LineChart data={data}>
-        <Line type="monotone" dataKey="p" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={2} dot={false} />
+        <Line {...chartAnim()} type="monotone" dataKey="p" stroke={isUp ? "#22c55e" : "#ef4444"} strokeWidth={2} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -399,7 +401,7 @@ function MarketsContent() {
                   <MiniChart values={item.spark} up={isUp} />
                   <div className="text-right min-w-[76px]">
                     <p className="text-sm font-semibold font-mono">
-                      {formatPrice(item.price, activeCategory)}
+                      <PriceTick value={item.price}>{formatPrice(item.price, activeCategory)}</PriceTick>
                     </p>
                     <div className="flex items-center justify-end gap-1">
                       {isUp ? (
@@ -456,7 +458,7 @@ function MarketsContent() {
               </div>
               <div className="flex items-end gap-2">
                 <p className="text-2xl font-bold font-mono">
-                  {formatPrice(selectedInfo.price, selectedAsset.category)}
+                  <PriceTick value={selectedInfo.price}>{formatPrice(selectedInfo.price, selectedAsset.category)}</PriceTick>
                 </p>
                 <span
                   className={`text-sm font-medium ${

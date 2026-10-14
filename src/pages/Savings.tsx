@@ -1,3 +1,4 @@
+import { chartAnim } from "@/lib/motion";
 import { useState } from "react";
 import { formatMoney } from "@/lib/formatCurrency";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -286,7 +287,7 @@ function SavingsContent() {
                   ]}
                   labelFormatter={(label) => `Month ${label}`}
                 />
-                <Area
+                <Area {...chartAnim()}
                   type="monotone"
                   dataKey="balance"
                   stroke="hsl(142 71% 45%)"

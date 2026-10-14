@@ -1,3 +1,5 @@
+import { MotionConfig } from "framer-motion";
+import { T } from "@/lib/motion";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -89,6 +91,7 @@ function ProtectedRoute({
 
 const App = () => (
   <ThemeProvider defaultTheme="dark" storageKey="exosky-theme">
+    <MotionConfig reducedMotion="user" transition={T}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
@@ -154,6 +157,7 @@ const App = () => (
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </MotionConfig>
   </ThemeProvider>
 );
 

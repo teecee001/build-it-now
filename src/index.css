@@ -220,16 +220,71 @@
   100% { transform: translateX(100%); }
 }
 
+/* Motion tokens: 200–350ms, one custom easing (mirrored in src/lib/motion.ts). */
+:root {
+  --ease-fintech: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 200ms;
+  --dur-base: 250ms;
+  --dur-slow: 350ms;
+}
+
 /* Press feedback on buttons and tappable tiles */
 button:not(:disabled), [role="button"], .press {
-  transition-property: transform, background-color, color, border-color, opacity, box-shadow;
-  transition-duration: 150ms;
+  transition-property: transform, background-color, color, border-color, opacity, box-shadow, filter;
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-fintech);
 }
+
+/* Desktop hover / keyboard focus states */
+@media (hover: hover) {
+  .lift { transition: transform var(--dur-base) var(--ease-fintech), box-shadow var(--dur-base) var(--ease-fintech); }
+  .lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
+}
+:where(button, a, [role="button"]):focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+  transition: outline-offset var(--dur-fast) var(--ease-fintech);
+}
+
+/* Live price tick: subtle colour flash on change (two names so each change restarts it). */
+.price-tick { border-radius: 4px; padding: 0 2px; margin: 0 -2px; }
+.price-tick-up-0 { animation: tick-up-0 var(--dur-slow) var(--ease-fintech) 1 both; }
+.price-tick-up-1 { animation: tick-up-1 var(--dur-slow) var(--ease-fintech) 1 both; }
+.price-tick-down-0 { animation: tick-down-0 var(--dur-slow) var(--ease-fintech) 1 both; }
+.price-tick-down-1 { animation: tick-down-1 var(--dur-slow) var(--ease-fintech) 1 both; }
+@keyframes tick-up-0 { from { background-color: hsl(var(--success) / 0.28); color: hsl(var(--success)); } to { background-color: transparent; } }
+@keyframes tick-up-1 { from { background-color: hsl(var(--success) / 0.28); color: hsl(var(--success)); } to { background-color: transparent; } }
+@keyframes tick-down-0 { from { background-color: hsl(var(--destructive) / 0.25); color: hsl(var(--destructive)); } to { background-color: transparent; } }
+@keyframes tick-down-1 { from { background-color: hsl(var(--destructive) / 0.25); color: hsl(var(--destructive)); } to { background-color: transparent; } }
+
+/* Layered entrance for order panels: the panel rises, then its rows follow. */
+.layered-in > * { animation: layer-in var(--dur-slow) var(--ease-fintech) both; }
+.layered-in > *:nth-child(1) { animation-delay: 40ms; }
+.layered-in > *:nth-child(2) { animation-delay: 80ms; }
+.layered-in > *:nth-child(3) { animation-delay: 120ms; }
+.layered-in > *:nth-child(4) { animation-delay: 160ms; }
+.layered-in > *:nth-child(n+5) { animation-delay: 200ms; }
+@keyframes layer-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Hide-balance blur */
+.balance-mask { transition: filter var(--dur-slow) var(--ease-fintech), opacity var(--dur-slow) var(--ease-fintech); }
+.balance-mask[data-hidden="true"] { filter: blur(10px); opacity: 0.85; user-select: none; }
+
+/* Wallet carousel (snap) */
+.snap-carousel { scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.snap-carousel::-webkit-scrollbar { display: none; }
+.snap-carousel { scroll-padding-inline: 1.5rem; overflow-anchor: none; }
+.snap-carousel > * { scroll-snap-align: start; }
 button:not(:disabled):active, [role="button"]:active, .press:active {
   transform: scale(0.97);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer::after { animation: none; }
+  .price-tick[class*="price-tick-"] { animation: none !important; }
+  .balance-mask { transition: none; }
+  .layered-in > * { animation: none !important; }
+  .lift:hover { transform: none; }
+  .snap-carousel { scroll-behavior: auto; }
   button:not(:disabled):active, [role="button"]:active, .press:active { transform: none; }
 }

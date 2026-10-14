@@ -1,5 +1,8 @@
+import { motion, useReducedMotion } from "framer-motion";
+import { EASE } from "@/lib/motion";
 /** Minimal SVG sparkline. Renders nothing unless there are at least 2 points with some variation. */
 export function Sparkline({ points, className }: { points: number[]; className?: string }) {
+  const reduce = useReducedMotion();
   if (points.length < 2) return null;
   const min = Math.min(...points);
   const max = Math.max(...points);
@@ -18,8 +21,8 @@ export function Sparkline({ points, className }: { points: number[]; className?:
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={`${line} L${w},${h} L0,${h} Z`} fill="url(#spark-fill)" />
-      <path d={line} fill="none" stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+      <motion.path d={`${line} L${w},${h} L0,${h} Z`} fill="url(#spark-fill)" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35, delay: 0.3, ease: EASE }} />
+      <motion.path initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35, ease: EASE }} d={line} fill="none" stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
     </svg>
   );
 }

@@ -1,3 +1,6 @@
+import { EASE } from "@/lib/motion";
+import { SuccessCheck } from "@/components/ds/SuccessCheck";
+import { haptic } from "@/lib/haptics";
 import { Check } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -120,6 +123,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
   );
 
   const handleTrade = async () => {
+    haptic("confirm");
     if (!user || !canProceed) return;
     setIsProcessing(true);
     try {
@@ -129,6 +133,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
           operation: "crypto_trade", action: "buy", code,
           amount: numAmount, crypto_amount: cryptoAmount, price, usd_value: numAmount,
         });
+        haptic("success");
         toast.success(`Bought ${cryptoAmount.toFixed(6)} ${code}! 🎉`);
       } else if (type === "sell") {
         if (!usdWallet) throw new Error("No USD wallet");
@@ -137,6 +142,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
           operation: "crypto_trade", action: "sell", code,
           amount: numAmount, crypto_amount: numAmount, price, usd_value: usdValue,
         });
+        haptic("success");
         toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
       } else if (type === "send") {
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
@@ -147,6 +153,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
           price,
           address: walletAddress,
         });
+        haptic("success");
         toast.success(`Sent ${numAmount.toFixed(6)} ${code} 🚀`);
       } else {
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
@@ -160,6 +167,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
           price,
           swap_to_price: swapToPrice,
         });
+        haptic("success");
         toast.success(`Swapped ${numAmount} ${code} → ${swapTo} ⚡`);
       }
       setIsDone(true);
@@ -176,9 +184,9 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
 
   if (isDone) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, ease: EASE }}>
         <Card className="p-6 bg-card border-border text-center space-y-4">
-          <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
+          <SuccessCheck className="w-12 h-12 mx-auto" />
           <h3 className="text-heading">{type === "send" ? "Crypto Sent!" : "Trade Complete!"}</h3>
           <p className="text-sm text-muted-foreground">Your holdings have been updated.</p>
           <Button onClick={onClose} className="w-full">Done</Button>
@@ -188,8 +196,8 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-      <Card className="p-6 bg-card border-border space-y-4">
+    <motion.div initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }} transition={{ duration: 0.3, ease: EASE }}>
+      <Card className="p-6 bg-card border-border space-y-4 layered-in shadow-card-hover">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon className={`w-5 h-5 ${colors[type]}`} />

@@ -1,3 +1,4 @@
+import { EASE, DUR } from "@/lib/motion";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BetaFeedback } from "@/components/BetaFeedback";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
@@ -82,7 +83,12 @@ export function AppLayout() {
   // of every page. Desktop keeps the fixed-height shell with a scrolling <main>.
   return (
     <div className="flex min-h-[100dvh] bg-background md:h-screen md:min-h-0 md:overflow-hidden">
-      <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4">
+      <motion.aside
+        initial={reduceMotion ? false : { opacity: 0, x: -12 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: DUR.slow, ease: EASE }}
+        className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4"
+      >
         <div className="flex items-center justify-between px-3 py-4 mb-6">
           <ExoLogo size="md" variant="word" />
           <ThemeToggle />
@@ -102,14 +108,21 @@ export function AppLayout() {
                     key={item.path}
                     onClick={() => navigate(item.path)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                      "group relative w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all",
                       isActive
-                        ? "bg-secondary text-foreground"
+                        ? "text-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                     )}
                   >
-                    <item.icon className="w-4 h-4" />
-                    {item.label}
+                    {isActive && (
+                      <motion.span
+                        layoutId="sidebar-active"
+                        className="absolute inset-0 rounded-lg bg-secondary"
+                        transition={{ duration: DUR.base, ease: EASE }}
+                      />
+                    )}
+                    <item.icon className="relative w-4 h-4 transition-transform duration-fast group-hover:translate-x-0.5" />
+                    <span className="relative">{item.label}</span>
                   </button>
                 );
               })}
@@ -173,7 +186,7 @@ export function AppLayout() {
             Sign Out
           </button>
         </div>
-      </aside>
+      </motion.aside>
 
       <div className="app-chrome md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] bg-card/80 backdrop-blur-xl border-b border-border">
         <ExoLogo size="md" variant="word" />
@@ -270,7 +283,7 @@ export function AppLayout() {
                 initial={reduceMotion ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -4 }}
-                transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
+                transition={{ duration: reduceMotion ? 0 : DUR.fast, ease: EASE }}
               >
                 <Outlet />
               </motion.div>
