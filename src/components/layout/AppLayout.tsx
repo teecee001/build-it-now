@@ -56,6 +56,10 @@ const SECTIONS = MENU_SECTIONS.map((sec) => ({
 
 export function AppLayout() {
   const location = useLocation();
+  // Start each page at the top (the document is the scroller on mobile).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const isAdmin = useIsAdmin();
@@ -73,8 +77,11 @@ export function AppLayout() {
   const displayName = profile?.full_name?.trim() || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
+  // Mobile: the document itself scrolls (min-h 100dvh). A 100vh (h-screen) shell with
+  // overflow-hidden is taller than the visible area on iOS Safari/PWA, which hid the bottom
+  // of every page. Desktop keeps the fixed-height shell with a scrolling <main>.
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex min-h-[100dvh] bg-background md:h-screen md:min-h-0 md:overflow-hidden">
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/50 p-4">
         <div className="flex items-center justify-between px-3 py-4 mb-6">
           <ExoLogo size="md" variant="word" />
@@ -252,7 +259,7 @@ export function AppLayout() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 overflow-y-auto overscroll-none md:pt-0 pt-[calc(52px+env(safe-area-inset-top))] pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-0">
+      <main className="flex-1 min-w-0 md:overflow-y-auto md:overscroll-none md:pt-0 pt-[calc(52px+env(safe-area-inset-top))] pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-0">
         <div className="max-w-6xl mx-auto p-4 md:p-8">
           <Suspense
             fallback={<PageSkeleton />}
