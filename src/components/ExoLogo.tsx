@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 interface ExoLogoProps {
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
-  /** Show just the mark (Ξ╳) or mark + wordmark */
-  variant?: "mark" | "full";
+  /** Show just the mark (Ξ╳), mark + wordmark, or just the wordmark (Ξ╳oSky) */
+  variant?: "mark" | "full" | "word";
 }
 
 const sizes = {
@@ -20,6 +20,7 @@ export function ExoLogo({ size = "md", variant = "full", className }: ExoLogoPro
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
+      {variant !== "word" && (
       <div
         className={cn(
           s.box,
@@ -28,7 +29,8 @@ export function ExoLogo({ size = "md", variant = "full", className }: ExoLogoPro
       >
         <span className={cn(s.mark, "leading-none")}>Ξ╳</span>
       </div>
-      {variant === "full" && (
+      )}
+      {variant !== "mark" && (
         <span className={cn(s.word, "font-bold tracking-tight")}>
           <span className="bg-gradient-accent bg-clip-text text-transparent">Ξ╳</span>oSky
         </span>
