@@ -1,3 +1,4 @@
+import { ChartReveal } from "@/components/ds/ChartReveal";
 import { chartAnim } from "@/lib/motion";
 import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
@@ -68,36 +69,38 @@ export const CryptoChart = () => {
             <Skeleton className="w-full h-full" />
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis
-                dataKey="date"
-                stroke="hsl(var(--muted-foreground))"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                  color: 'hsl(var(--foreground))'
-                }}
-                formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
-              />
-              <Line {...chartAnim()}
-                type="monotone"
-                dataKey="price"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <ChartReveal className="h-full w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    color: 'hsl(var(--foreground))'
+                  }}
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
+                />
+                <Line {...chartAnim()}
+                  type="monotone"
+                  dataKey="price"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartReveal>
         )}
       </div>
     </Card>

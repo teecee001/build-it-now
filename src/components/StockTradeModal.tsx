@@ -1,4 +1,5 @@
-import { EASE } from "@/lib/motion";
+import { PendingGlass } from "@/components/ds/PendingGlass";
+import { ENTER, EXIT, COMPLEX } from "@/lib/motion";
 import { SuccessCheck } from "@/components/ds/SuccessCheck";
 import { haptic } from "@/lib/haptics";
 import { useState } from "react";
@@ -84,7 +85,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
 
   if (isDone) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, ease: EASE }}>
+      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={ENTER}>
         <Card className="p-6 bg-card border-border text-center space-y-4">
           <SuccessCheck className="w-12 h-12 mx-auto" />
           <h3 className="text-heading">Order Filled!</h3>
@@ -96,8 +97,9 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }} transition={{ duration: 0.3, ease: EASE }}>
-      <Card className="p-6 bg-card border-border space-y-4 layered-in shadow-card-hover">
+    <motion.div initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }} transition={ENTER}>
+      <Card className="relative p-6 bg-card border-border space-y-4 layered-in shadow-card-hover">
+        <PendingGlass active={isProcessing} />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon className={`w-5 h-5 ${type === "buy" ? "text-success" : "text-destructive"}`} />

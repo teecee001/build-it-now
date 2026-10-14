@@ -334,7 +334,7 @@ function BillPayContent() {
       )}
 
       {/* Categories */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {BILL_CATEGORIES.map((cat) => (
             <button key={cat.label} className="flex flex-col items-center gap-2 p-3 rounded-lg bg-card border border-border hover:bg-secondary/50 transition-colors">
@@ -364,7 +364,7 @@ function BillPayContent() {
         <>
           {/* Unpaid Bills */}
           {unpaidBills.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Upcoming Bills</h3>
               <div className="space-y-2">
                 {unpaidBills.map((bill) => (
@@ -402,7 +402,7 @@ function BillPayContent() {
 
           {/* Paid Bills */}
           {paidBills.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Paid</h3>
               <div className="space-y-2">
                 {paidBills.map((bill) => (

@@ -122,7 +122,7 @@ export default function KYCVerification() {
       </motion.div>
 
       {/* Progress Steps */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <div className="flex items-center justify-between">
           {steps.map((s, i) => (
             <div key={s.key} className="flex items-center">

@@ -1,3 +1,4 @@
+import { PendingGlass } from "@/components/ds/PendingGlass";
 import { haptic } from "@/lib/haptics";
 import { Check } from "lucide-react";
 import { SuccessCheck } from "@/components/ds/SuccessCheck";
@@ -70,7 +71,7 @@ export default function Deposit() {
       </motion.div>
 
       {/* Current Balance */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-4 bg-card border-border flex items-center justify-between">
           <p className="text-sm text-muted-foreground">Current wallet balance</p>
           <p className="text-lg font-bold font-mono">{formatMoney(balance)}</p>
@@ -78,7 +79,7 @@ export default function Deposit() {
       </motion.div>
 
       {/* APY Promo */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-4 bg-gradient-to-r from-success/10 to-success/5 border-success/20 flex items-center gap-3">
           <Percent className="w-5 h-5 text-success" />
           <div>
@@ -89,7 +90,7 @@ export default function Deposit() {
       </motion.div>
 
       {/* Deposit Methods */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Choose Method</h3>
         <div className="space-y-2">
           {[
@@ -124,7 +125,8 @@ export default function Deposit() {
       {/* Direct Deposit Info */}
       {method === "direct" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-6 bg-card border-border shadow-card space-y-4">
+          <Card className="relative p-6 bg-card border-border shadow-card space-y-4">
+            <PendingGlass active={isProcessing} />
             <h3 className="text-sm font-semibold">Direct Deposit Details</h3>
             <p className="text-xs text-muted-foreground">Share these details with your employer to set up direct deposit</p>
             <div className="space-y-3">
@@ -157,7 +159,8 @@ export default function Deposit() {
       {/* Amount Entry for bank/card */}
       {(method === "bank" || method === "card") && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-6 bg-card border-border shadow-card space-y-4">
+          <Card className="relative p-6 bg-card border-border shadow-card space-y-4">
+            <PendingGlass active={isProcessing} />
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground font-medium">Amount</label>
               <Input

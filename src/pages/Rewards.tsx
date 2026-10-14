@@ -52,7 +52,7 @@ export default function Rewards() {
       </motion.div>
 
       {/* Rewards Summary */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-6 bg-card border-border shadow-card overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent pointer-events-none" />
           <div className="relative">
@@ -78,7 +78,7 @@ export default function Rewards() {
       </motion.div>
 
       {/* APY Card */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="p-6 bg-gradient-to-r from-success/10 to-success/5 border-success/20">
           <div className="flex items-center justify-between">
             <div>
@@ -102,7 +102,7 @@ export default function Rewards() {
       </motion.div>
 
       {/* Cashback Rates */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Cashback Rates</h3>
         <div className="grid grid-cols-2 gap-2">
           {CASHBACK_CATEGORIES.map((cat) => (
@@ -118,7 +118,7 @@ export default function Rewards() {
       </motion.div>
 
       {/* Rewards History */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Rewards History</h3>
         {rewardsTx.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No rewards yet. Start spending to earn cashback!</p>

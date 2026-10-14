@@ -14,7 +14,7 @@ export function SuccessCheck({ className }: { className?: string }) {
       : {
           initial: { pathLength: 0 },
           animate: { pathLength: 1 },
-          transition: { duration: 0.45, delay, ease: EASE },
+          transition: { duration: 0.35, delay, ease: EASE },
         };
   return (
     <motion.svg

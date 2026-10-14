@@ -222,10 +222,21 @@
 
 /* Motion tokens: 200–350ms, one custom easing (mirrored in src/lib/motion.ts). */
 :root {
-  --ease-fintech: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Android/others: Material 3 emphasized. iOS overrides below with a spring curve. */
+  --ease-fintech: cubic-bezier(0.2, 0, 0, 1);
+  --dur-exit: 180ms;
   --dur-fast: 200ms;
-  --dur-base: 250ms;
+  --dur-base: 240ms;
   --dur-slow: 350ms;
+}
+html.platform-ios {
+  --ease-fintech: cubic-bezier(0.32, 0.72, 0, 1);
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  html.platform-ios {
+    /* Critically-damped spring sampled as linear() (slight overshoot ~1%). */
+    --ease-fintech: linear(0, 0.0115 1%, 0.0458 2.1%, 0.1817 4.5%, 0.3936 7.6%, 0.6176 11.4%, 0.7988 15.6%, 0.9204 20.5%, 0.9837 25.6%, 1.0065 30.6%, 1.0114 36.2%, 1.0062 46.9%, 0.9999 70.6%, 1);
+  }
 }
 
 /* Press feedback on buttons and tappable tiles */
@@ -247,23 +258,23 @@ button:not(:disabled), [role="button"], .press {
 }
 
 /* Live price tick: subtle colour flash on change (two names so each change restarts it). */
-.price-tick { border-radius: 4px; padding: 0 2px; margin: 0 -2px; }
+.price-tick { font-variant-numeric: tabular-nums; }
 .price-tick-up-0 { animation: tick-up-0 var(--dur-slow) var(--ease-fintech) 1 both; }
 .price-tick-up-1 { animation: tick-up-1 var(--dur-slow) var(--ease-fintech) 1 both; }
 .price-tick-down-0 { animation: tick-down-0 var(--dur-slow) var(--ease-fintech) 1 both; }
 .price-tick-down-1 { animation: tick-down-1 var(--dur-slow) var(--ease-fintech) 1 both; }
-@keyframes tick-up-0 { from { background-color: hsl(var(--success) / 0.28); color: hsl(var(--success)); } to { background-color: transparent; } }
-@keyframes tick-up-1 { from { background-color: hsl(var(--success) / 0.28); color: hsl(var(--success)); } to { background-color: transparent; } }
-@keyframes tick-down-0 { from { background-color: hsl(var(--destructive) / 0.25); color: hsl(var(--destructive)); } to { background-color: transparent; } }
-@keyframes tick-down-1 { from { background-color: hsl(var(--destructive) / 0.25); color: hsl(var(--destructive)); } to { background-color: transparent; } }
+@keyframes tick-up-0 { from { color: hsl(var(--success) / 0.9); } to { color: inherit; } }
+@keyframes tick-up-1 { from { color: hsl(var(--success) / 0.9); } to { color: inherit; } }
+@keyframes tick-down-0 { from { color: hsl(0 55% 62%); } to { color: inherit; } }
+@keyframes tick-down-1 { from { color: hsl(0 55% 62%); } to { color: inherit; } }
 
 /* Layered entrance for order panels: the panel rises, then its rows follow. */
 .layered-in > * { animation: layer-in var(--dur-slow) var(--ease-fintech) both; }
-.layered-in > *:nth-child(1) { animation-delay: 40ms; }
-.layered-in > *:nth-child(2) { animation-delay: 80ms; }
-.layered-in > *:nth-child(3) { animation-delay: 120ms; }
-.layered-in > *:nth-child(4) { animation-delay: 160ms; }
-.layered-in > *:nth-child(n+5) { animation-delay: 200ms; }
+.layered-in > *:nth-child(1) { animation-delay: 25ms; }
+.layered-in > *:nth-child(2) { animation-delay: 50ms; }
+.layered-in > *:nth-child(3) { animation-delay: 75ms; }
+.layered-in > *:nth-child(4) { animation-delay: 100ms; }
+.layered-in > *:nth-child(n+5) { animation-delay: 125ms; }
 @keyframes layer-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* Hide-balance blur */
@@ -287,4 +298,46 @@ button:not(:disabled):active, [role="button"]:active, .press:active {
   .lift:hover { transform: none; }
   .snap-carousel { scroll-behavior: auto; }
   button:not(:disabled):active, [role="button"]:active, .press:active { transform: none; }
+}
+
+/* Swipe-to-pay liquid fill: a soft accent gradient with a slow-moving sheen. */
+.swipe-liquid {
+  background: linear-gradient(90deg, hsl(var(--accent) / 0.25), hsl(var(--accent) / 0.55));
+  background-size: 200% 100%;
+  animation: liquid 1.6s linear infinite;
+}
+@keyframes liquid { from { background-position: 0% 0; } to { background-position: -200% 0; } }
+
+/* Glass shimmer over cards while an external operation is pending. */
+.glass-pending { position: absolute; inset: 0; z-index: 5; border-radius: inherit; overflow: hidden;
+  background: hsl(var(--card) / 0.35); backdrop-filter: blur(3px) saturate(1.2); -webkit-backdrop-filter: blur(3px) saturate(1.2); }
+.glass-pending::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(100deg, transparent 20%, hsl(0 0% 100% / 0.10) 45%, hsl(0 0% 100% / 0.18) 50%, hsl(0 0% 100% / 0.10) 55%, transparent 80%);
+  animation: glass-sweep 1.3s var(--ease-fintech) infinite; }
+@keyframes glass-sweep { to { transform: translateX(100%); } }
+
+/* Biometric / PIN ring pulse */
+.ring-pulse { position: relative; }
+.ring-pulse::before, .ring-pulse::after { content: ""; position: absolute; inset: -6px; border-radius: 9999px;
+  border: 2px solid hsl(var(--warning) / 0.55); animation: ring-pulse 1.8s var(--ease-fintech) infinite; }
+.ring-pulse::after { animation-delay: 0.6s; }
+@keyframes ring-pulse { from { transform: scale(0.9); opacity: 0.9; } to { transform: scale(1.35); opacity: 0; } }
+
+/* Charts: staggered Y-axis label fade */
+.chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick { animation: axis-fade var(--dur-base) var(--ease-fintech) both; }
+.chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick:nth-child(1) { animation-delay: 120ms; }
+.chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick:nth-child(2) { animation-delay: 145ms; }
+.chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick:nth-child(3) { animation-delay: 170ms; }
+.chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick:nth-child(4) { animation-delay: 195ms; }
+.chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick:nth-child(n+5) { animation-delay: 220ms; }
+@keyframes axis-fade { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
+
+/* Info banner icon: gentle steady pulse */
+.calm-pulse { animation: calm-pulse 2s ease-in-out infinite; }
+@keyframes calm-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.92); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-liquid, .glass-pending::after, .ring-pulse::before, .ring-pulse::after, .calm-pulse,
+  .chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick { animation: none !important; }
+  .ring-pulse::before, .ring-pulse::after { opacity: 0.5; transform: none; }
 }

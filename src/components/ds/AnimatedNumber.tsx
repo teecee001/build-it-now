@@ -1,8 +1,8 @@
-import { EASE } from "@/lib/motion";
+import { DECELERATE } from "@/lib/motion";
 import { useEffect, useRef, useState } from "react";
 import { animate, useReducedMotion } from "framer-motion";
 
-/** Counts up/down to `value` when it changes; renders the final value immediately with reduced motion. */
+/** 300ms decelerating roll-up/down to `value` when it changes; renders the final value immediately with reduced motion. */
 export function AnimatedNumber({ value, format }: { value: number; format: (n: number) => string }) {
   const reduce = useReducedMotion();
   const [shown, setShown] = useState(value);
@@ -14,7 +14,7 @@ export function AnimatedNumber({ value, format }: { value: number; format: (n: n
       setShown(value);
       return;
     }
-    const controls = animate(from, value, { duration: 0.8, ease: EASE, onUpdate: setShown });
+    const controls = animate(from, value, { duration: 0.3, ease: DECELERATE, onUpdate: setShown });
     return () => controls.stop();
   }, [value, reduce]);
   return <>{format(shown)}</>;

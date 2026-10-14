@@ -95,7 +95,7 @@ function StocksContent() {
       </motion.div>
 
       {/* Portfolio Card */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-6 bg-card border-border relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-success/5 pointer-events-none" />
           <div className="relative">
@@ -137,7 +137,7 @@ function StocksContent() {
       </AnimatePresence>
 
       {/* Holdings */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Positions</h2>
           <PieChart className="w-4 h-4 text-muted-foreground" />
@@ -275,7 +275,7 @@ function StocksContent() {
       </AnimatePresence>
 
       {/* Market Tabs */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <Tabs defaultValue="all" className="space-y-3">
           <TabsList className="bg-secondary/50 w-full grid grid-cols-3">
             <TabsTrigger value="all" className="text-xs">All Stocks</TabsTrigger>
@@ -319,7 +319,7 @@ function StockRow({ stock, index, price, change, isFav, onFav, onSelect }: {
 }) {
   const isPositive = change >= 0;
   return (
-    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.015 }}>
+    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index, 12) * 0.02 }}>
       <Card className="p-3 bg-card border-border hover:bg-secondary/30 transition-colors cursor-pointer" onClick={onSelect}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

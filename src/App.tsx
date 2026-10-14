@@ -1,5 +1,8 @@
+import { InfoBannerHost, routeErrorToastsToBanner } from "@/components/ds/InfoBanner";
 import { MotionConfig } from "framer-motion";
-import { T } from "@/lib/motion";
+import { T, applyPlatformClass } from "@/lib/motion";
+applyPlatformClass();
+routeErrorToastsToBanner();
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -97,6 +100,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <InfoBannerHost />
           <BrowserRouter>
             <Suspense fallback={<PageFallback />}>
             <Routes>

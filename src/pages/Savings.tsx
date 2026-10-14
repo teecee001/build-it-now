@@ -1,3 +1,4 @@
+import { ChartReveal } from "@/components/ds/ChartReveal";
 import { chartAnim } from "@/lib/motion";
 import { useState } from "react";
 import { formatMoney } from "@/lib/formatCurrency";
@@ -77,7 +78,7 @@ function SavingsContent() {
       </motion.div>
 
       {/* Balance Overview */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-6 bg-card border-border relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent pointer-events-none" />
           <div className="relative">
@@ -121,7 +122,7 @@ function SavingsContent() {
       </motion.div>
 
       {/* Transfer Section */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
@@ -209,7 +210,7 @@ function SavingsContent() {
       </motion.div>
 
       {/* Interest Projection Chart */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -255,47 +256,49 @@ function SavingsContent() {
 
           {/* Chart */}
           <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(142 71% 45%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(142 71% 45%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 4% 16%)" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 10, fill: "hsl(240 5% 50%)" }}
-                  tickFormatter={(v) => v % (projectionMonths <= 12 ? 3 : 12) === 0 ? `${v}mo` : ""}
-                />
-                <YAxis
-                  tick={hasChartData ? { fontSize: 10, fill: "hsl(240 5% 50%)" } : false}
-                  tickFormatter={formatAxisMoney}
-                  width={hasChartData ? 50 : 0}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(240 6% 8%)",
-                    border: "1px solid hsl(240 4% 16%)",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: number, name: string) => [
-                    `$${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
-                    name === "balance" ? "Balance" : "Interest Earned",
-                  ]}
-                  labelFormatter={(label) => `Month ${label}`}
-                />
-                <Area {...chartAnim()}
-                  type="monotone"
-                  dataKey="balance"
-                  stroke="hsl(142 71% 45%)"
-                  fill="url(#savingsGradient)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <ChartReveal className="h-full w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(142 71% 45%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(142 71% 45%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 4% 16%)" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 10, fill: "hsl(240 5% 50%)" }}
+                    tickFormatter={(v) => v % (projectionMonths <= 12 ? 3 : 12) === 0 ? `${v}mo` : ""}
+                  />
+                  <YAxis
+                    tick={hasChartData ? { fontSize: 10, fill: "hsl(240 5% 50%)" } : false}
+                    tickFormatter={formatAxisMoney}
+                    width={hasChartData ? 50 : 0}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(240 6% 8%)",
+                      border: "1px solid hsl(240 4% 16%)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: number, name: string) => [
+                      `$${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+                      name === "balance" ? "Balance" : "Interest Earned",
+                    ]}
+                    labelFormatter={(label) => `Month ${label}`}
+                  />
+                  <Area {...chartAnim()}
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="hsl(142 71% 45%)"
+                    fill="url(#savingsGradient)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartReveal>
           </div>
 
           {/* Projection Summary */}
@@ -317,7 +320,7 @@ function SavingsContent() {
       </motion.div>
 
       {/* FDIC Notice */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <Card className="p-3 bg-secondary/30 border-border flex items-start gap-2">
           <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
           <p className="text-caption text-muted-foreground leading-relaxed">

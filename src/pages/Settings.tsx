@@ -122,7 +122,7 @@ export default function Settings() {
       </motion.div>
 
       {/* Avatar & Profile Card */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <Card className="p-6 bg-card border-border">
           <div className="flex items-center gap-6">
             <div className="relative group">
@@ -155,7 +155,7 @@ export default function Settings() {
       </motion.div>
 
       {/* Edit Profile */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="p-6 bg-card border-border space-y-4">
           <h3 className="text-sm font-semibold">Profile Details</h3>
           <div className="space-y-3">
@@ -180,7 +180,7 @@ export default function Settings() {
       </motion.div>
 
       {/* Transaction PIN */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function Settings() {
       </motion.div>
 
       {/* Trusted Devices */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="p-6 bg-card border-border space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -306,7 +306,7 @@ export default function Settings() {
       </motion.div>
 
       {/* Preferences */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <Card className="p-6 bg-card border-border space-y-4">
           <h3 className="text-sm font-semibold">Preferences</h3>
           <div className="space-y-3">
@@ -368,7 +368,7 @@ export default function Settings() {
       </motion.div>
 
       {/* Legal & Compliance */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Card className="p-4">
           <h3 className="text-sm font-semibold mb-3">Legal & Compliance</h3>
           <div className="space-y-2">

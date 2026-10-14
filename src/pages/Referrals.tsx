@@ -70,7 +70,7 @@ export default function Referrals() {
       </motion.div>
 
       {/* Stats Overview */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.025 }}>
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-4 bg-card border-border text-center">
             <UserPlus className="w-5 h-5 text-accent mx-auto mb-2" />
@@ -91,7 +91,7 @@ export default function Referrals() {
       </motion.div>
 
       {/* Your Referral Code */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <Card className="p-6 bg-card border-border space-y-4 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent pointer-events-none" />
           <div className="relative">
@@ -122,7 +122,7 @@ export default function Referrals() {
       </motion.div>
 
       {/* Redeem Code */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <Card className="p-6 bg-card border-border space-y-3">
           <div className="flex items-center gap-2">
             <Gift className="w-4 h-4 text-success" />
@@ -148,7 +148,7 @@ export default function Referrals() {
       </motion.div>
 
       {/* Milestones */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
         <Card className="p-6 bg-card border-border space-y-3">
           <h3 className="text-sm font-semibold">Referral Milestones</h3>
           <div className="space-y-2">
@@ -184,7 +184,7 @@ export default function Referrals() {
 
       {/* Referral History */}
       {referrals.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }}>
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Referral History
           </h3>
