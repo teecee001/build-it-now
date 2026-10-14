@@ -192,7 +192,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
   const empty = messages.length === 0;
 
   return (
-    <div className="relative mx-auto flex h-[calc(100dvh-8rem)] w-full max-w-3xl flex-col">
+    <div className="relative mx-auto flex h-[calc(100dvh-172px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-[calc(100dvh-8rem)] w-full max-w-3xl flex-col">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur-xl">
         <ExoAvatar size={40} online thinking={typing} />
