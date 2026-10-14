@@ -5,9 +5,9 @@ export type Figure = { raw: string; value: number; kind: "money" | "pct" | "days
 
 export function extractFigures(text: string): Figure[] {
   const out: Figure[] = [];
-  const money = /(?:US)?\$\s?(\d[\d,]*(?:\.\d+)?)\s?(k|m|bn|b|thousand|million)?\b/gi;
+  const money = /(?:US)?\$\s?(\d[\d,]*(?:\.\d+)?)\s?(k|m|bn|b|t|tn|thousand|million|billion|trillion)?\b/gi;
   for (const m of text.matchAll(money)) {
-    const mult: Record<string, number> = { k: 1e3, thousand: 1e3, m: 1e6, million: 1e6, b: 1e9, bn: 1e9 };
+    const mult: Record<string, number> = { k: 1e3, thousand: 1e3, m: 1e6, million: 1e6, b: 1e9, bn: 1e9, billion: 1e9, t: 1e12, tn: 1e12, trillion: 1e12 };
     out.push({ raw: m[0].trim(), value: Number(m[1].replace(/,/g, "")) * (mult[(m[2] ?? "").toLowerCase()] ?? 1), kind: "money" });
   }
   for (const m of text.matchAll(/([+-−]?\d+(?:\.\d+)?)\s?%/g)) {

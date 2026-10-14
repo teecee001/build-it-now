@@ -3,7 +3,7 @@
 import { unsupportedFigures } from "./factcheck.ts";
 import { runTool, type ToolCtx, toolDefs } from "./tools.ts";
 
-export const MAX_TOOL_ROUNDS = 4;
+export const MAX_TOOL_ROUNDS = 5;
 
 type Msg = Record<string, unknown>;
 export type CallResult = { ok: boolean; status: number; json?: unknown; text?: string };

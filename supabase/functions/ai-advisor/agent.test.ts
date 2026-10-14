@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { type CallResult, runAgent } from "./agent.ts";
+import { type CallResult, MAX_TOOL_ROUNDS, runAgent } from "./agent.ts";
 import { unsupportedFigures } from "./factcheck.ts";
 import { evalArithmetic, runTool } from "./tools.ts";
 import { accountSummary, type AccountData } from "./rules.ts";
@@ -63,7 +63,7 @@ Deno.test("provider rejects tools -> context injection", async () => {
   assert(!bodies[1].tools);
 });
 
-Deno.test("loop stops after 4 tool rounds", async () => {
+Deno.test("loop stops after MAX_TOOL_ROUNDS tool rounds", async () => {
   let calls = 0;
   const call = async (b: Record<string, unknown>) => {
     calls++;
@@ -72,7 +72,7 @@ Deno.test("loop stops after 4 tool rounds", async () => {
   };
   const r = await runAgent({ call, ctx: { account }, ...base });
   assertEquals(r.kind, "answer");
-  assertEquals(calls, 5);
+  assertEquals(calls, MAX_TOOL_ROUNDS + 1);
 });
 
 Deno.test("http error is reported", async () => {

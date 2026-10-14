@@ -109,7 +109,7 @@ export function detectIntent(text: string): Intent {
   return "general";
 }
 
-const OUTFLOW = new Set(["send", "withdrawal", "purchase", "bill_payment", "conversion"]);
+export const OUTFLOW = new Set(["send", "withdrawal", "purchase", "bill_payment", "conversion"]);
 const CATEGORY_LABEL: Record<string, string> = {
   send: "Transfers sent",
   withdrawal: "Withdrawals",

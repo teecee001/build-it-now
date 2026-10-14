@@ -1,5 +1,7 @@
 // Exo server-side tools. Account reads come from data already loaded through the
 // user's own RLS client; goals go through that same client. No service role here.
+import { auditFinances } from "./audit.ts";
+import { getCompanyFundamentals, getMacro, getMarketSentiment, getNews } from "./live.ts";
 import { type AccountData, APY_RATE, projectSavings, spendingByCategory, todayISO } from "./rules.ts";
 
 export type GoalsDb = {
@@ -53,6 +55,18 @@ export function toolDefs(withGoals: boolean) {
       expression: { type: "string" },
       date: { type: "string", description: "For days_until: YYYY-MM-DD or MM-DD" },
     }, ["op"]),
+    fn("get_news", "Live news headlines (Google News, last 7 days) with source, date and link. Use for any news, markets, macro, Fed/rate-cut, economy, company or crypto question.", {
+      query: { type: "string", description: "Search terms, e.g. \"Fed rate cut\", \"NVIDIA earnings\", \"bitcoin ETF\"" },
+      limit: { type: "integer", description: "Headlines to return (1-15). Default 8." },
+    }, ["query"]),
+    fn("get_market_sentiment", "Live Fear & Greed indexes: crypto (alternative.me) and US stocks (CNN), with prior values.", {}),
+    fn("get_company_fundamentals", "Official SEC EDGAR filing data for a US-listed company: revenue, net income, diluted EPS, operating income (latest years and quarters), cash, long-term debt, assets, liabilities, shares outstanding.", {
+      ticker: { type: "string", description: "e.g. AAPL, NVDA, TSLA" },
+    }, ["ticker"]),
+    fn("get_macro", "Live US macro data from FRED: effective fed funds rate, 2y and 10y Treasury yields and spread, 30y mortgage rate, unemployment, CPI with YoY inflation.", {}),
+    fn("audit_finances", "Accountant/auditor report on the user's own account: income & expense statement, category breakdown, net cash flow, savings rate, recurring charges/subscriptions, duplicate and unusual transactions, unpaid bills, liquidity. Exact maths.", {
+      period_days: { type: "integer", description: "Statement period in days (7-90). Default 30." },
+    }),
   ];
   if (withGoals) {
     defs.push(
@@ -215,6 +229,16 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
       }
       return { error: `unknown op ${op}` };
     }
+    case "get_news":
+      return await getNews(s("query"), n("limit", 8));
+    case "get_market_sentiment":
+      return await getMarketSentiment();
+    case "get_company_fundamentals":
+      return await getCompanyFundamentals(s("ticker"));
+    case "get_macro":
+      return await getMacro(a.now ?? new Date());
+    case "audit_finances":
+      return auditFinances(a, n("period_days", 30));
     case "set_goal": {
       if (!ctx.goals) return { error: "goals not available" };
       let date = /^\d{4}-\d{2}-\d{2}$/.test(s("target_date")) ? s("target_date") : null;
