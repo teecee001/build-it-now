@@ -6,17 +6,14 @@ import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleS
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Breathing } from '@/components/Breathing';
 import { Rich } from '@/components/ExoText';
-import { ExoMark } from '@/components/ExoMark';
 import { ui } from '@/components/ui';
 import { Sheet } from '@/components/kit';
 import { useAuth } from '@/hooks/useAuth';
-import { askExo, type ChatMessage, type ChatThread, excerpt, extractLinks, loadHistory, loadThreads, MAIN_THREAD, newId, now, saveHistory, saveThreads, threadKey } from '@/lib/exo';
+import { askExo, type ChatMessage, type ChatThread, type ExoMode, excerpt, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, loadHistory, loadThreads, MAIN_THREAD, newId, now, saveHistory, saveThreads, threadKey } from '@/lib/exo';
 import { ChatListView, ExoFace, LinkCards, SwipeReply, type ThreadRow, TypingBubble } from '@/components/ExoChatParts';
 import { useWallet } from '@/hooks/useWallet';
 import { useSavings } from '@/hooks/useSavings';
-import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { haptic } from '@/lib/haptics';
 import { enter } from '@/lib/motion';
@@ -29,6 +26,10 @@ const SUGGESTIONS = [
   'What are key factors for long-term investing?',
 ];
 
+const LIFE_SUGGESTIONS = ['Plan a weekend trip', 'Find a gift under $50', 'Plan a dinner on Friday'];
+const GREETING_MONEY = "Hey 👋 I'm keeping an eye on your money and the markets. What's on your mind?";
+const GREETING_LIFE = 'Hey 👋 Shopping, trips, plans and places. What are we sorting out today?';
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🙏', '🔥'];
 const GROUP_GAP_MS = 5 * 60 * 1000;
 type Goal = { id: string; goal: string; target_amount: number | null; target_date: string | null };
@@ -48,6 +49,8 @@ export default function Exo() {
   const { user } = useAuth();
   const userKey = user?.id ?? 'anon';
   const [activeId, setActiveId] = useState('exo');
+  const [mode, setModeState] = useState<ExoMode>(() => loadMode());
+  const setMode = (m: ExoMode) => { haptic.tap(); setModeState(m); saveMode(m); };
   const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads(userKey));
   const [view, setView] = useState<'chat' | 'list'>('chat');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -103,10 +106,19 @@ export default function Exo() {
     setReplyTo(null);
     setTyping(true);
     if (active.kind === 'chat') setThreads((ts) => ts.map((x) => (x.id === active.id ? { ...x, updatedAt: now(), title: x.title === 'New chat' ? excerpt(t, 40) : x.title } : x)));
-    const r = await askExo(next, active.context);
+    const r = await askExo(next, active.context, { mode });
+    // Delivered: double tick, then Exo's reply arrives as short bubbles (sources as cards on the last).
+    setMsgs((m) => m.map((x) => (x.role === 'user' ? { ...x, read: true } : x)));
+    const sources = extractLinks(r.text, 4);
+    const parts = splitReply(stripSources(r.text) || r.text);
+    for (let i = 0; i < parts.length; i++) {
+      const last = i === parts.length - 1;
+      const msg: ChatMessage = { id: newId(), role: 'assistant', content: parts[i], createdAt: now(), ...(last && sources.length ? { sources } : {}) };
+      setMsgs((m) => [...m, msg]);
+      if (!last) await wait(Math.min(900, 280 + parts[i].length * 2));
+    }
     setTyping(false);
     if (r.ok) haptic.success();
-    setMsgs((m) => [...m.map((x) => (x.role === 'user' ? { ...x, read: true } : x)), { id: newId(), role: 'assistant', content: r.text, createdAt: now() }]);
   };
   const react = (m: ChatMessage, emoji: string) => { haptic.tap(); setMsgs((p) => p.map((x) => (x.id === m.id ? { ...x, reaction: x.reaction === emoji ? undefined : emoji } : x))); setMenu(null); };
   const startReply = (m: ChatMessage) => { setReplyTo(m); setMenu(null); inputRef.current?.focus(); };
@@ -155,6 +167,8 @@ export default function Exo() {
     return { newDay, lastInGroup };
   }), [shown]);
   const empty = msgs.length === 0;
+  const lastExo = [...msgs].reverse().find((m) => m.role === 'assistant');
+  const chips = lastExo && !typing ? followUps(lastExo.content, mode) : mode === 'money' ? SUGGESTIONS : LIFE_SUGGESTIONS;
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: C.bg }}>
@@ -166,7 +180,7 @@ export default function Exo() {
         <ExoFace size={40} />
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={[ui.text, { fontWeight: '700' }]}>{active.kind === 'exo' ? 'Exo' : active.title}</Text>
-          {typing ? <Text style={{ color: C.green, fontSize: 12 }}>typing...</Text> : <Text style={ui.muted} numberOfLines={1}><Text style={{ color: C.green }}>online</Text> · Exo Intelligence · Not financial advice</Text>}
+          <Text style={{ color: C.green, fontSize: 12 }}>{typing ? 'typing...' : 'online'}</Text>
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Search in chat" onPress={() => { setSearchOpen((o) => !o); setQuery(''); }} hitSlop={10}>
           <Ionicons name="search" size={21} color={searchOpen ? C.green : C.text} />
@@ -184,7 +198,15 @@ export default function Exo() {
           {q ? <Text style={ui.muted}>{shown.length}</Text> : null}
         </View>
       )}
-      <ScrollView horizontal accessibilityLabel="Pinned" showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
+      <View accessibilityRole="tablist" accessibilityLabel="Exo mode" style={s.modes}>
+        {(['money', 'life'] as const).map((m) => (
+          <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => setMode(m)} style={[s.modeBtn, mode === m && s.modeOn]}>
+            <Ionicons name={m === 'money' ? 'wallet-outline' : 'sparkles-outline'} size={14} color={mode === m ? C.bg : C.muted} />
+            <Text style={{ color: mode === m ? C.bg : C.muted, fontWeight: '700', fontSize: 13 }}>{m === 'money' ? 'Exo Money' : 'Exo Life'}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {mode === 'money' && <ScrollView horizontal accessibilityLabel="Pinned" showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
         <View style={s.pin}>
           <Ionicons name="wallet-outline" size={16} color={C.green} />
           <View><Text style={{ color: C.muted, fontSize: 11 }}>Balance</Text><Text style={{ color: C.text, fontWeight: '700', fontSize: 13 }}>{money(balance)}</Text></View>
@@ -193,8 +215,8 @@ export default function Exo() {
           <Ionicons name="trending-up-outline" size={16} color={C.green} />
           <View><Text style={{ color: C.muted, fontSize: 11 }}>Savings</Text><Text style={{ color: C.text, fontWeight: '700', fontSize: 13 }}>{money(savingsBalance)} <Text style={{ color: C.green, fontWeight: '400' }}>· {apyRate}% APY</Text></Text></View>
         </View>
-      </ScrollView>
-      {goals.length > 0 && active.kind === 'exo' && (
+      </ScrollView>}
+      {goals.length > 0 && active.kind === 'exo' && mode === 'money' && (
         <ScrollView horizontal accessibilityLabel="Goals" showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, padding: 10, alignItems: 'center' }}>
           <Ionicons name="locate-outline" size={14} color={C.green} />
           {goals.map((g) => (
@@ -223,12 +245,15 @@ export default function Exo() {
         scrollEventThrottle={64}
         ListEmptyComponent={
           typing ? null : (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <Breathing amount={0.08}>
-                <View style={[s.avatar, { width: 88, height: 88, borderRadius: 44 }]}><ExoMark size={40} /></View>
-              </Breathing>
-              <Text style={[ui.text, { fontWeight: '700' }]}>Exo</Text>
-              <Text style={ui.muted}>Ask Exo about markets, budgets, investing, or strategy</Text>
+            // No bot splash: Exo opens the conversation like a person would.
+            <View style={{ flex: 1, justifyContent: 'flex-end', gap: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+                <ExoFace size={28} online={false} />
+                <View style={[s.bubble, s.theirs, { maxWidth: '82%' }]}>
+                  <Text style={{ color: C.text, fontSize: 15, lineHeight: 21 }}>{mode === 'money' ? GREETING_MONEY : GREETING_LIFE}</Text>
+                </View>
+              </View>
+              {mode === 'money' && <Text style={[ui.muted, { fontSize: 11, marginLeft: 36 }]}>Not financial advice</Text>}
             </View>
           )
         }
@@ -252,8 +277,8 @@ export default function Exo() {
                       <Text numberOfLines={2} style={{ fontSize: 12, color: mine ? '#0b3b1d' : C.muted }}>{item.replyTo.excerpt}</Text>
                     </Pressable>
                   )}
-                  <Rich text={item.content} mine={mine} />
-                  {!mine && <LinkCards links={extractLinks(item.content)} />}
+                  <Rich text={mine ? item.content : stripSources(item.content)} mine={mine} />
+                  {!mine && <LinkCards links={item.sources ?? extractLinks(item.content, 4)} />}
                   {lastInGroup && (
                     <View style={{ flexDirection: 'row', alignSelf: 'flex-end', gap: 4, marginTop: 4, alignItems: 'center' }}>
                       <Text style={{ fontSize: 10, color: mine ? '#0b3b1d' : C.muted }}>{time(item.createdAt)}</Text>
@@ -283,7 +308,7 @@ export default function Exo() {
       )}
       <View style={{ height: 48 }}>
         <ScrollView horizontal accessibilityLabel="Suggestions" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, alignItems: 'center' }}>
-          {SUGGESTIONS.map((item) => (
+          {chips.map((item) => (
             <Pressable key={item} accessibilityRole="button" disabled={typing} onPress={() => send(item)} style={s.chip}>
               <Text style={{ color: C.text, fontSize: 13 }}>{item}</Text>
             </Pressable>
@@ -301,19 +326,10 @@ export default function Exo() {
         </Animated.View>
       )}
       <View style={[s.bar, { paddingBottom: insets.bottom + 8 }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Attach" onPress={() => { haptic.tap(); toast('Attachments are coming soon'); }} hitSlop={8}>
-          <Ionicons name="attach" size={24} color={C.muted} />
-        </Pressable>
         <TextInput ref={inputRef} multiline style={[ui.input, { flex: 1, marginBottom: 0, maxHeight: 160 }]} placeholder="Ask Exo..." placeholderTextColor={C.muted} value={input} onChangeText={setInput} onSubmitEditing={() => send(input)} submitBehavior="submit" />
-        {!input.trim() && !typing ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Voice message" onPress={() => { haptic.tap(); toast('Voice messages are coming soon'); }} style={[s.send, { backgroundColor: C.card, borderWidth: 1, borderColor: C.border }]}>
-            <Ionicons name="mic-outline" size={20} color={C.text} />
-          </Pressable>
-        ) : (
           <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={typing || !input.trim()} onPress={() => send(input)} style={[s.send, { opacity: typing || !input.trim() ? 0.5 : 1 }]}>
             <Ionicons name="arrow-up" size={20} color={C.bg} />
           </Pressable>
-        )}
       </View>
       </>}
       <Sheet open={!!menu} onClose={() => setMenu(null)}>
@@ -358,5 +374,8 @@ const s = StyleSheet.create({
   action: { flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 14 },
   searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 12, marginTop: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: C.card },
   pin: { flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 150, backgroundColor: C.card, borderLeftWidth: 3, borderLeftColor: C.green, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
+  modes: { flexDirection: 'row', alignSelf: 'center', backgroundColor: C.card, borderRadius: 999, padding: 3, marginTop: 8, gap: 2 },
+  modeBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 7, borderRadius: 999 },
+  modeOn: { backgroundColor: C.green },
   send: { width: 46, height: 46, borderRadius: 23, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center' },
 });

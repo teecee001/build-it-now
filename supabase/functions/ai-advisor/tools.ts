@@ -3,6 +3,10 @@
 import { auditFinances } from "./audit.ts";
 import { getCompanyFundamentals, getMacro, getMarketSentiment, getNews } from "./live.ts";
 import { type AccountData, APY_RATE, projectSavings, spendingByCategory, todayISO } from "./rules.ts";
+import { blackScholes, meanVariance, missing, monteCarlo } from "./quant.ts";
+import { balanceSheet, checkBooks, selfCorrect } from "./accounting.ts";
+import { mapsLink, planEvent, planTrip, shopSearch } from "./life.ts";
+import type { Blackboard } from "./orchestrator.ts";
 
 export type GoalsDb = {
   remove(id: string): Promise<{ data: unknown[] | null; error: { code?: string; message?: string } | null }>;
@@ -16,6 +20,8 @@ export type ToolCtx = {
   account: AccountData;
   goals?: GoalsDb; // undefined when the exo_goals table doesn't exist
   fiatRates?: () => Promise<Record<string, number>>; // units per 1 USD
+  allow?: string[]; // tool subset for a specialist agent
+  board?: Blackboard; // shared per-request memory
 };
 
 const fn = (name: string, description: string, properties: Record<string, unknown>, required: string[] = []) => ({
@@ -23,7 +29,12 @@ const fn = (name: string, description: string, properties: Record<string, unknow
   function: { name, description, parameters: { type: "object", properties, required } },
 });
 
-export function toolDefs(withGoals: boolean) {
+export function toolDefs(withGoals: boolean, allow?: string[]) {
+  const all = baseDefs(withGoals);
+  return allow ? all.filter((d) => allow.includes(d.function.name)) : all;
+}
+
+function baseDefs(withGoals: boolean) {
   const defs = [
     fn("get_balances", "Wallet balances (available and savings) for each currency, plus crypto/stock holdings valued at live prices.", {}),
     fn("get_transactions", "The user's transactions from their account.", {
@@ -67,6 +78,34 @@ export function toolDefs(withGoals: boolean) {
     fn("audit_finances", "Accountant/auditor report on the user's own account: income & expense statement, category breakdown, net cash flow, savings rate, recurring charges/subscriptions, duplicate and unusual transactions, unpaid bills, liquidity. Exact maths.", {
       period_days: { type: "integer", description: "Statement period in days (7-90). Default 30." },
     }),
+    fn("accounting_check", "Deterministic personal balance sheet (assets = cash + savings + priced holdings; liabilities = unpaid bills; equity) with an A = L + E check and the income-statement check. Unpriced holdings are flagged, not guessed.", {
+      period_days: { type: "integer", description: "Income statement period (7-90). Default 30." },
+    }),
+    fn("quant_monte_carlo", "Monte Carlo projection (GBM, monthly steps) of a portfolio with contributions. Returns p10/p50/p90 and chance of ending below contributions.", {
+      principal: { type: "number" }, monthly: { type: "number" }, years: { type: "number" },
+      mu: { type: "number", description: "Expected annual return as decimal, e.g. 0.07" },
+      sigma: { type: "number", description: "Annual volatility as decimal, e.g. 0.15" },
+    }, ["principal", "years", "mu", "sigma"]),
+    fn("quant_allocation", "Long-only mean-variance (max Sharpe) allocation for 2-8 assets given expected return and volatility.", {
+      assets: { type: "array", items: { type: "object", properties: { symbol: { type: "string" }, mu: { type: "number" }, sigma: { type: "number" } }, required: ["symbol", "mu", "sigma"] } },
+      correlation: { type: "number", description: "Average pairwise correlation, default 0.3" },
+      risk_free: { type: "number", description: "Default 0.04" },
+    }, ["assets"]),
+    fn("quant_black_scholes", "Black-Scholes European option price and greeks.", {
+      S: { type: "number", description: "Spot (from get_prices)" }, K: { type: "number" }, T: { type: "number", description: "Years to expiry" },
+      r: { type: "number", description: "Risk-free rate decimal" }, sigma: { type: "number", description: "Volatility decimal" },
+      type: { type: "string", enum: ["call", "put"] },
+    }, ["S", "K", "T", "r", "sigma"]),
+    fn("shop_search", "Free product search (DuckDuckGo results + Google Shopping/Amazon/eBay links). Prices only when listed.", {
+      query: { type: "string" },
+    }, ["query"]),
+    fn("plan_trip", "Calendar-style trip skeleton: dated days with morning/afternoon/evening slots, maps, flight and hotel search links. No bookings.", {
+      destination: { type: "string" }, start_date: { type: "string", description: "YYYY-MM-DD" }, days: { type: "integer" },
+    }, ["destination"]),
+    fn("plan_event", "Event card: date/time/location, maps and add-to-calendar link, checklist, missing fields.", {
+      title: { type: "string" }, date: { type: "string", description: "YYYY-MM-DD" }, time: { type: "string", description: "HH:MM" }, location: { type: "string" },
+    }, ["title"]),
+    fn("maps_link", "Google Maps search link for a place or address.", { query: { type: "string" } }, ["query"]),
   ];
   if (withGoals) {
     defs.push(
@@ -172,7 +211,7 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
       const syms = Array.isArray(args.symbols) ? (args.symbols as unknown[]).map(String).slice(0, 15) : [];
       return Object.fromEntries(syms.map((x) => {
         const q = quote(a, x);
-        return [x.toUpperCase(), q ? { usd: q.price, change_24h_percent: r2(q.changePct) } : null];
+        return [x.toUpperCase(), q ? { usd: q.price, change_24h_percent: r2(q.changePct) } : { usd: null, flag: "missing_data", note: "no live price; do not estimate" }];
       }));
     }
     case "calculate": {
@@ -237,8 +276,39 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
       return await getCompanyFundamentals(s("ticker"));
     case "get_macro":
       return await getMacro(a.now ?? new Date());
-    case "audit_finances":
-      return auditFinances(a, n("period_days", 30));
+    case "audit_finances": {
+      const audit = auditFinances(a, n("period_days", 30));
+      const books = checkBooks({ assets: { total: 0 }, liabilities: { total: 0 }, equity: 0 }, audit.income_statement);
+      return { ...audit, books_check: books };
+    }
+    case "accounting_check": {
+      const raw = balanceSheet(a);
+      const audit = auditFinances(a, n("period_days", 30));
+      let check = checkBooks(raw, audit.income_statement);
+      let sheet = raw;
+      let corrected = false;
+      if (!check.ok) {
+        const fx = selfCorrect(raw);
+        sheet = fx.sheet; corrected = fx.corrected; check = checkBooks(sheet, audit.income_statement);
+      }
+      return { balance_sheet: sheet, income_statement: audit.income_statement, check, self_corrected: corrected };
+    }
+    case "quant_monte_carlo":
+      return monteCarlo({ principal: n("principal", NaN), monthly: n("monthly", 0), years: n("years", NaN), mu: n("mu", NaN), sigma: n("sigma", NaN) });
+    case "quant_allocation": {
+      const list = Array.isArray(args.assets) ? (args.assets as { symbol: string; mu: number; sigma: number }[]).slice(0, 8) : [];
+      return list.length ? meanVariance(list, n("correlation", 0.3), n("risk_free", 0.04)) : missing("assets");
+    }
+    case "quant_black_scholes":
+      return blackScholes({ S: n("S", NaN), K: n("K", NaN), T: n("T", NaN), r: n("r", NaN), sigma: n("sigma", NaN), type: s("type") === "put" ? "put" : "call" });
+    case "shop_search":
+      return await shopSearch(s("query"));
+    case "plan_trip":
+      return planTrip({ destination: s("destination"), start_date: s("start_date"), days: n("days", 3), today: todayISO(a.now ?? new Date(), a.timeZone ?? "UTC") });
+    case "plan_event":
+      return planEvent({ title: s("title"), date: s("date"), time: s("time"), location: s("location"), today: todayISO(a.now ?? new Date(), a.timeZone ?? "UTC") });
+    case "maps_link":
+      return s("query") ? { query: s("query"), map: mapsLink(s("query")) } : missing("place");
     case "set_goal": {
       if (!ctx.goals) return { error: "goals not available" };
       let date = /^\d{4}-\d{2}-\d{2}$/.test(s("target_date")) ? s("target_date") : null;

@@ -5,7 +5,7 @@ import ExoAvatar from "./ExoAvatar";
 import ExoMarkdown from "./ExoMarkdown";
 import FiguresCard from "./FiguresCard";
 import LinkPreviews from "./LinkPreviews";
-import { extractFigures, extractLinks, type ChatMessage } from "@/lib/exoChat";
+import { extractFigures, extractLinks, stripSources, type ChatMessage } from "@/lib/exoChat";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "🙏", "🔥"];
 
@@ -26,8 +26,9 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
   const [copied, setCopied] = useState(false);
   const pressTimer = useRef<number>();
   const rootRef = useRef<HTMLDivElement>(null);
-  const figures = mine ? [] : extractFigures(msg.content);
-  const links = mine ? [] : extractLinks(msg.content);
+  const body = mine ? msg.content : stripSources(msg.content);
+  const figures = mine ? [] : extractFigures(body);
+  const links = mine ? [] : (msg.sources ?? extractLinks(msg.content, 4));
   const [touch] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(msg.content);
+      await navigator.clipboard.writeText(body);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
@@ -142,7 +143,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
           {mine ? (
             <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{msg.content}</p>
           ) : (
-            <ExoMarkdown content={msg.content} />
+            <ExoMarkdown content={body} />
           )}
           <LinkPreviews links={links} />
 
