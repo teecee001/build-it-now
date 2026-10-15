@@ -14,7 +14,7 @@ const TIERS = {
     name: "Ξ╳oSky Pro",
     price: 14.99,
     features: [
-      "6% APY on Savings",
+      "8% APY on Savings",
       "No transfer fees",
       "Priority support",
       "Higher transaction limits",

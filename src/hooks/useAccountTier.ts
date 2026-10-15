@@ -50,8 +50,8 @@ export const TIER_CONFIG: Record<AccountTierType, {
     single: 5000,
     atm: 1500,
     maxCards: 5,
-    apyBoost: 0,
-    features: ["5 cards (virtual + physical)", "$5,000 per transaction", "$10,000 daily limit", "6% APY"],
+    apyBoost: 2,
+    features: ["5 cards (virtual + physical)", "$5,000 per transaction", "$10,000 daily limit", "8% APY"],
   },
   business: {
     label: "Business",
@@ -62,8 +62,8 @@ export const TIER_CONFIG: Record<AccountTierType, {
     single: 25000,
     atm: 5000,
     maxCards: 15,
-    apyBoost: 0,
-    features: ["15 cards (virtual + physical)", "$25,000 per transaction", "$50,000 daily limit", "6% APY", "Team card management"],
+    apyBoost: 3,
+    features: ["15 cards (virtual + physical)", "$25,000 per transaction", "$50,000 daily limit", "9% APY", "Team card management"],
   },
   bank: {
     label: "Bank",
@@ -74,8 +74,8 @@ export const TIER_CONFIG: Record<AccountTierType, {
     single: 100000,
     atm: 25000,
     maxCards: 50,
-    apyBoost: 0,
-    features: ["50 cards (virtual + physical)", "$100,000 per transaction", "$250,000 daily limit", "6% APY", "Dedicated account manager", "Custom integrations"],
+    apyBoost: 4,
+    features: ["50 cards (virtual + physical)", "$100,000 per transaction", "$250,000 daily limit", "10% APY", "Dedicated account manager", "Custom integrations"],
   },
 };
 
