@@ -6,6 +6,9 @@ import { act, fireEvent, render, renderHook, screen } from '@testing-library/rea
 
 import { useSingleFlight } from '@/lib/singleFlight';
 
+// First require of a screen compiles a large module graph; CI runners need more than 5s.
+jest.setTimeout(30000);
+
 const pending: { resolve: (v: unknown) => void }[] = [];
 const hang = () => new Promise((resolve) => pending.push({ resolve }));
 const mockInvoke = jest.fn((_body: Record<string, unknown>) => hang());
