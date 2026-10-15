@@ -113,3 +113,4 @@ The model never sees credentials. Redis is optional, and without it the safe `DE
 
 - Paid data (S&P, Daloopa), a native compute engine and ML forecasts plug in behind `QUANT_STUBS`.
 - Human-in-the-loop approvals will be required before any money-moving tool exists.
+- Leverage (roadmap): Phase 1 keeps the Governor at 1x leverage, with no exceptions. Leverage may come later as a paper-only setting for the Pro, Business and Bank plans, once the engine has a track record. It will never apply to real-money trading without a separate review.
