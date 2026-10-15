@@ -12,7 +12,11 @@ import { ExoMark } from '@/components/ExoMark';
 import { ui } from '@/components/ui';
 import { Sheet } from '@/components/kit';
 import { useAuth } from '@/hooks/useAuth';
-import { askExo, type ChatMessage, clearHistory, excerpt, loadHistory, newId, now, saveHistory } from '@/lib/exo';
+import { askExo, type ChatMessage, type ChatThread, excerpt, extractLinks, loadHistory, loadThreads, MAIN_THREAD, newId, now, saveHistory, saveThreads, threadKey } from '@/lib/exo';
+import { ChatListView, ExoFace, LinkCards, SwipeReply, type ThreadRow, TypingBubble } from '@/components/ExoChatParts';
+import { useWallet } from '@/hooks/useWallet';
+import { useSavings } from '@/hooks/useSavings';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { haptic } from '@/lib/haptics';
 import { enter } from '@/lib/motion';
@@ -43,6 +47,14 @@ export default function Exo() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const userKey = user?.id ?? 'anon';
+  const [activeId, setActiveId] = useState('exo');
+  const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads(userKey));
+  const [view, setView] = useState<'chat' | 'list'>('chat');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const { balance, savingsBalance } = useWallet();
+  const { apyRate } = useSavings();
+  const money = (n: number) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const [msgs, setMsgs] = useState<ChatMessage[]>(() => loadHistory(userKey));
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
@@ -57,7 +69,8 @@ export default function Exo() {
   const atBottomRef = useRef(true);
   useEffect(() => { atBottomRef.current = atBottom; }, [atBottom]);
 
-  useEffect(() => { saveHistory(userKey, msgs); }, [msgs, userKey]);
+  useEffect(() => { saveHistory(threadKey(userKey, activeId), msgs); }, [msgs, userKey, activeId]);
+  useEffect(() => { saveThreads(userKey, threads); }, [threads, userKey]);
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -89,7 +102,8 @@ export default function Exo() {
     setInput('');
     setReplyTo(null);
     setTyping(true);
-    const r = await askExo(next);
+    if (active.kind === 'chat') setThreads((ts) => ts.map((x) => (x.id === active.id ? { ...x, updatedAt: now(), title: x.title === 'New chat' ? excerpt(t, 40) : x.title } : x)));
+    const r = await askExo(next, active.context);
     setTyping(false);
     if (r.ok) haptic.success();
     setMsgs((m) => [...m.map((x) => (x.role === 'user' ? { ...x, read: true } : x)), { id: newId(), role: 'assistant', content: r.text, createdAt: now() }]);
@@ -98,36 +112,89 @@ export default function Exo() {
   const startReply = (m: ChatMessage) => { setReplyTo(m); setMenu(null); inputRef.current?.focus(); };
   const copy = async (m: ChatMessage) => { await Clipboard.setStringAsync(m.content); haptic.success(); setCopied(true); setTimeout(() => { setCopied(false); setMenu(null); }, 600); };
   const jumpTo = (id: string) => { const i = msgs.findIndex((m) => m.id === id); if (i >= 0) list.current?.scrollToIndex({ index: i, viewPosition: 0.5 }); };
-  const newChat = () => { if (typing) return; haptic.tap(); setMsgs([]); setReplyTo(null); clearHistory(userKey); };
+  // New chat starts a fresh conversation; earlier ones stay in the chat list.
+  const newChat = () => {
+    if (typing) return;
+    haptic.tap();
+    const t: ChatThread = { id: `c-${newId()}`, title: 'New chat', kind: 'chat', updatedAt: now() };
+    setThreads((ts) => [t, ...ts]);
+    setActiveId(t.id);
+    setMsgs([]);
+    setReplyTo(null);
+    setView('chat');
+  };
+  const allThreads = useMemo<ChatThread[]>(() => [
+    MAIN_THREAD,
+    ...goals.map((g): ChatThread => ({ id: `goal:${g.id}`, title: g.goal, kind: 'goal', updatedAt: 0, context: `> My goal: ${g.goal}${g.target_amount != null ? ` ($${Number(g.target_amount).toLocaleString()}` + (g.target_date ? ` by ${g.target_date})` : ')') : ''}` })),
+    ...[...threads].sort((a, b) => b.updatedAt - a.updatedAt),
+  ], [goals, threads]);
+  const active = allThreads.find((t) => t.id === activeId) ?? MAIN_THREAD;
+  const threadRows: ThreadRow[] = view === 'list' ? allThreads.map((t) => {
+    const h = t.id === activeId ? msgs : loadHistory(threadKey(userKey, t.id));
+    const l = h[h.length - 1];
+    return { ...t, last: l?.content, lastAt: l?.createdAt };
+  }) : [];
+  const openThread = (id: string) => {
+    setView('chat');
+    setSearchOpen(false);
+    setQuery('');
+    if (id === activeId || typing) return;
+    setActiveId(id);
+    setReplyTo(null);
+    setMsgs(loadHistory(threadKey(userKey, id)));
+  };
+  const q = query.trim().toLowerCase();
+  const shown = useMemo(() => (q ? msgs.filter((m) => m.content.toLowerCase().includes(q)) : msgs), [msgs, q]);
 
-  const rows = useMemo(() => msgs.map((m, i) => {
-    const prev = msgs[i - 1];
-    const nxt = msgs[i + 1];
+  const rows = useMemo(() => shown.map((m, i) => {
+    const prev = shown[i - 1];
+    const nxt = shown[i + 1];
     const sameDay = (a: ChatMessage, b: ChatMessage) => new Date(a.createdAt).toDateString() === new Date(b.createdAt).toDateString();
     const newDay = !prev || !sameDay(prev, m);
     const lastInGroup = !nxt || !sameDay(nxt, m) || nxt.role !== m.role || nxt.createdAt - m.createdAt > GROUP_GAP_MS;
     return { newDay, lastInGroup };
-  }), [msgs]);
+  }), [shown]);
   const empty = msgs.length === 0;
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={[s.head, { paddingTop: insets.top + 8 }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => router.back()} hitSlop={12}>
+        <Pressable accessibilityRole="button" accessibilityLabel={view === 'chat' ? 'Chats' : 'Close'} onPress={() => (view === 'chat' ? setView('list') : router.back())} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={C.text} />
         </Pressable>
-        <Breathing>
-          <View style={s.avatar}><ExoMark size={18} /></View>
-        </Breathing>
+        {view === 'list' ? <Text style={[ui.text, { flex: 1, fontWeight: '700', fontSize: 17 }]}>Chats</Text> : <>
+        <ExoFace size={40} />
         <View style={{ flex: 1 }}>
-          <Text style={[ui.text, { fontWeight: '700' }]}>Exo</Text>
+          <Text numberOfLines={1} style={[ui.text, { fontWeight: '700' }]}>{active.kind === 'exo' ? 'Exo' : active.title}</Text>
           {typing ? <Text style={{ color: C.green, fontSize: 12 }}>typing...</Text> : <Text style={ui.muted} numberOfLines={1}><Text style={{ color: C.green }}>online</Text> · Exo Intelligence · Not financial advice</Text>}
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="New chat" disabled={empty || typing} onPress={newChat} hitSlop={10} style={{ opacity: empty || typing ? 0.4 : 1 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Search in chat" onPress={() => { setSearchOpen((o) => !o); setQuery(''); }} hitSlop={10}>
+          <Ionicons name="search" size={21} color={searchOpen ? C.green : C.text} />
+        </Pressable>
+        </>}
+        <Pressable accessibilityRole="button" accessibilityLabel="New chat" disabled={view === 'chat' && (empty || typing)} onPress={newChat} hitSlop={10} style={{ opacity: view === 'chat' && (empty || typing) ? 0.4 : 1 }}>
           <Ionicons name="create-outline" size={22} color={C.text} />
         </Pressable>
       </View>
-      {goals.length > 0 && (
+      {view === 'list' ? <View style={{ flex: 1, paddingBottom: insets.bottom }}><ChatListView threads={threadRows} activeId={activeId} onOpen={openThread} /></View> : <>
+      {searchOpen && (
+        <View style={s.searchBar}>
+          <Ionicons name="search" size={16} color={C.muted} />
+          <TextInput autoFocus accessibilityLabel="Search in chat" placeholder="Search" placeholderTextColor={C.muted} value={query} onChangeText={setQuery} style={{ flex: 1, color: C.text, paddingVertical: 8 }} />
+          {q ? <Text style={ui.muted}>{shown.length}</Text> : null}
+        </View>
+      )}
+      <ScrollView horizontal accessibilityLabel="Pinned" showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
+        <View style={s.pin}>
+          <Ionicons name="wallet-outline" size={16} color={C.green} />
+          <View><Text style={{ color: C.muted, fontSize: 11 }}>Balance</Text><Text style={{ color: C.text, fontWeight: '700', fontSize: 13 }}>{money(balance)}</Text></View>
+        </View>
+        <View style={s.pin}>
+          <Ionicons name="trending-up-outline" size={16} color={C.green} />
+          <View><Text style={{ color: C.muted, fontSize: 11 }}>Savings</Text><Text style={{ color: C.text, fontWeight: '700', fontSize: 13 }}>{money(savingsBalance)} <Text style={{ color: C.green, fontWeight: '400' }}>· {apyRate}% APY</Text></Text></View>
+        </View>
+      </ScrollView>
+      {goals.length > 0 && active.kind === 'exo' && (
         <ScrollView horizontal accessibilityLabel="Goals" showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, padding: 10, alignItems: 'center' }}>
           <Ionicons name="locate-outline" size={14} color={C.green} />
           {goals.map((g) => (
@@ -139,7 +206,7 @@ export default function Exo() {
       )}
       <FlatList
         ref={list}
-        data={msgs}
+        data={shown}
         keyExtractor={(m) => m.id}
         accessibilityLabel="Exo"
         initialNumToRender={20}
@@ -172,6 +239,7 @@ export default function Exo() {
             <View style={{ marginBottom: lastInGroup ? 12 : 3 }}>
               {newDay && <View accessibilityRole="text" style={s.day}><Text style={{ color: C.muted, fontSize: 11 }}>{dayLabel(item.createdAt)}</Text></View>}
               <Animated.View entering={enter(0)} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
+                <SwipeReply mine={mine} onReply={() => startReply(item)}>
                 <Pressable
                   accessibilityLabel={`${mine ? 'You' : 'Exo'}, ${time(item.createdAt)}`}
                   accessibilityHint="Long press for Reply, Copy and React"
@@ -185,6 +253,7 @@ export default function Exo() {
                     </Pressable>
                   )}
                   <Rich text={item.content} mine={mine} />
+                  {!mine && <LinkCards links={extractLinks(item.content)} />}
                   {lastInGroup && (
                     <View style={{ flexDirection: 'row', alignSelf: 'flex-end', gap: 4, marginTop: 4, alignItems: 'center' }}>
                       <Text style={{ fontSize: 10, color: mine ? '#0b3b1d' : C.muted }}>{time(item.createdAt)}</Text>
@@ -192,6 +261,7 @@ export default function Exo() {
                     </View>
                   )}
                 </Pressable>
+                </SwipeReply>
                 {item.reaction && (
                   <Pressable accessibilityLabel={`Reaction ${item.reaction}`} onPress={() => react(item, item.reaction!)} style={[s.reaction, mine ? { right: 8 } : { left: 8 }]}>
                     <Text style={{ fontSize: 13 }}>{item.reaction}</Text>
@@ -201,7 +271,7 @@ export default function Exo() {
             </View>
           );
         }}
-        ListFooterComponent={typing ? <Breathing><Text accessibilityLabel="Exo is typing..." style={[ui.muted, { fontSize: 22 }]}>•••</Text></Breathing> : null}
+        ListFooterComponent={typing ? <TypingBubble /> : null}
       />
       {!atBottom && (
         <Animated.View entering={FadeIn} exiting={FadeOut} style={s.fab}>
@@ -231,11 +301,21 @@ export default function Exo() {
         </Animated.View>
       )}
       <View style={[s.bar, { paddingBottom: insets.bottom + 8 }]}>
-        <TextInput ref={inputRef} multiline style={[ui.input, { flex: 1, marginBottom: 0, maxHeight: 160 }]} placeholder="Ask Exo..." placeholderTextColor={C.muted} value={input} onChangeText={setInput} onSubmitEditing={() => send(input)} submitBehavior="submit" />
-        <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={typing || !input.trim()} onPress={() => send(input)} style={[s.send, { opacity: typing || !input.trim() ? 0.5 : 1 }]}>
-          <Ionicons name="arrow-up" size={20} color={C.bg} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Attach" onPress={() => { haptic.tap(); toast('Attachments are coming soon'); }} hitSlop={8}>
+          <Ionicons name="attach" size={24} color={C.muted} />
         </Pressable>
+        <TextInput ref={inputRef} multiline style={[ui.input, { flex: 1, marginBottom: 0, maxHeight: 160 }]} placeholder="Ask Exo..." placeholderTextColor={C.muted} value={input} onChangeText={setInput} onSubmitEditing={() => send(input)} submitBehavior="submit" />
+        {!input.trim() && !typing ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Voice message" onPress={() => { haptic.tap(); toast('Voice messages are coming soon'); }} style={[s.send, { backgroundColor: C.card, borderWidth: 1, borderColor: C.border }]}>
+            <Ionicons name="mic-outline" size={20} color={C.text} />
+          </Pressable>
+        ) : (
+          <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={typing || !input.trim()} onPress={() => send(input)} style={[s.send, { opacity: typing || !input.trim() ? 0.5 : 1 }]}>
+            <Ionicons name="arrow-up" size={20} color={C.bg} />
+          </Pressable>
+        )}
       </View>
+      </>}
       <Sheet open={!!menu} onClose={() => setMenu(null)}>
         {menu && (
           <View accessibilityLabel="Message actions">
@@ -276,5 +356,7 @@ const s = StyleSheet.create({
   replyBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 12, padding: 10, borderRadius: 12, backgroundColor: C.card, borderLeftWidth: 3, borderLeftColor: C.green },
   emoji: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   action: { flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 14 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 12, marginTop: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: C.card },
+  pin: { flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 150, backgroundColor: C.card, borderLeftWidth: 3, borderLeftColor: C.green, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
   send: { width: 46, height: 46, borderRadius: 23, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center' },
 });
