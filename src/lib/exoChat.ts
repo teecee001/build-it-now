@@ -365,3 +365,28 @@ export function projectSeries(principal: number, apyPct: number, months = 12): n
   const r = Math.pow(1 + apyPct / 100, 1 / 12) - 1;
   return Array.from({ length: months + 1 }, (_, i) => Math.round(principal * Math.pow(1 + r, i) * 100) / 100);
 }
+
+/**
+ * Storage key per mode: Money and Life are separate conversations.
+ * Money keeps the original key, so existing (untagged) history migrates to Money untouched.
+ */
+export const modeKey = (userKey: string, mode: ExoMode) => (mode === "life" ? `${userKey}~life` : userKey);
+
+/**
+ * Hub tools per mode. Each one runs through Exo's live server tools:
+ * send=true asks right away (it needs only the user's own data); send=false pre-fills the composer for the user to finish.
+ */
+export type HubTool = { id: string; mode: ExoMode; label: string; prompt: string; send: boolean };
+export const HUB_TOOLS: HubTool[] = [
+  { id: "portfolio", mode: "money", label: "Portfolio & Governor", prompt: "Check my portfolio risk and allocation against my Governor limits", send: true },
+  { id: "projection", mode: "money", label: "Projections", prompt: "Run a Monte Carlo simulation of my savings over 5 years", send: true },
+  { id: "networth", mode: "money", label: "Net worth", prompt: "What is my net worth? Run an accounting check on my accounts", send: true },
+  { id: "markets", mode: "money", label: "Markets", prompt: "Give me live quotes for BTC, ETH and SPY", send: true },
+  { id: "macro", mode: "money", label: "Macro posture", prompt: "What is the macro posture right now and what does it mean for my risk?", send: true },
+  { id: "goals", mode: "money", label: "Goals", prompt: "How am I tracking on my goals?", send: true },
+  { id: "shopping", mode: "life", label: "Shopping", prompt: "Find me ", send: false },
+  { id: "trips", mode: "life", label: "Trips", prompt: "Plan a weekend trip to ", send: false },
+  { id: "events", mode: "life", label: "Events & plans", prompt: "Plan an event: ", send: false },
+  { id: "places", mode: "life", label: "Places", prompt: "Find a good place nearby for ", send: false },
+];
+export const hubTools = (mode: ExoMode) => HUB_TOOLS.filter((t) => t.mode === mode);

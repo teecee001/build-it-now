@@ -10,7 +10,7 @@ import { Rich } from '@/exo/ExoText';
 import { ui } from '@/components/ui';
 import { Sheet } from '@/components/kit';
 import { useAuth } from '@/hooks/useAuth';
-import { askExo, type ChatMessage, type ChatThread, type ExoMode, excerpt, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, loadHistory, loadThreads, MAIN_THREAD, newId, now, saveHistory, saveThreads, threadKey } from '@/exo/lib';
+import { askExo, type ChatMessage, type ChatThread, type ExoMode, excerpt, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, loadHistory, loadThreads, MAIN_THREAD, modeKey, hubTools, type HubTool, newId, now, saveHistory, saveThreads, threadKey } from '@/exo/lib';
 import { ChatListView, ExoFace, LinkCards, SwipeReply, type ThreadRow, TypingBubble } from '@/exo/ChatParts';
 import { LIME, ModePill, RichCards } from '@/exo/RichCards';
 import { useWallet } from '@/hooks/useWallet';
@@ -30,6 +30,18 @@ const SUGGESTIONS = [
 const LIFE_SUGGESTIONS = ['Plan a weekend trip', 'Find a gift under $50', 'Plan a dinner on Friday'];
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🙏', '🔥'];
+const HUB_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
+  portfolio: 'shield-checkmark-outline',
+  projection: 'trending-up-outline',
+  networth: 'calculator-outline',
+  markets: 'stats-chart-outline',
+  macro: 'globe-outline',
+  goals: 'flag-outline',
+  shopping: 'bag-handle-outline',
+  trips: 'airplane-outline',
+  events: 'calendar-outline',
+  places: 'location-outline',
+};
 const GROUP_GAP_MS = 5 * 60 * 1000;
 type Goal = { id: string; goal: string; target_amount: number | null; target_date: string | null };
 const time = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -49,14 +61,18 @@ export default function Exo() {
   const userKey = user?.id ?? 'anon';
   const [activeId, setActiveId] = useState('exo');
   const [mode, setModeState] = useState<ExoMode>(() => loadMode());
-  const setMode = (m: ExoMode) => { haptic.tap(); setModeState(m); saveMode(m); };
-  const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads(userKey));
+  const [threads, setThreads] = useState<ChatThread[]>(() => loadThreads(modeKey(userKey, loadMode())));
+  // Per-mode memory: each mode keeps its own conversation, open chat, draft and scroll position.
+  const modeMem = useRef<Record<ExoMode, { activeId: string; draft: string; offset: number | null }>>({ money: { activeId: 'exo', draft: '', offset: null }, life: { activeId: 'exo', draft: '', offset: null } });
+  const offsetRef = useRef(0);
+  const restoreOffset = useRef<number | null>(null);
+  const justSwitched = useRef(false);
   const [view, setView] = useState<'chat' | 'list'>('chat');
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const { savingsBalance } = useWallet();
   const { apyRate } = useSavings();
-  const [msgs, setMsgs] = useState<ChatMessage[]>(() => loadHistory(userKey));
+  const [msgs, setMsgs] = useState<ChatMessage[]>(() => loadHistory(modeKey(userKey, loadMode())));
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
@@ -70,8 +86,27 @@ export default function Exo() {
   const atBottomRef = useRef(true);
   useEffect(() => { atBottomRef.current = atBottom; }, [atBottom]);
 
-  useEffect(() => { saveHistory(threadKey(userKey, activeId), msgs); }, [msgs, userKey, activeId]);
-  useEffect(() => { saveThreads(userKey, threads); }, [threads, userKey]);
+  useEffect(() => { saveHistory(threadKey(modeKey(userKey, mode), activeId), msgs); }, [msgs, userKey, activeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { saveThreads(modeKey(userKey, mode), threads); }, [threads, userKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setMode = (m: ExoMode) => {
+    if (m === mode || typing) return;
+    haptic.tap();
+    modeMem.current[mode] = { activeId, draft: input, offset: atBottomRef.current ? null : offsetRef.current };
+    const next = modeMem.current[m];
+    const nextMsgs = loadHistory(threadKey(modeKey(userKey, m), next.activeId));
+    // The new-message effect must not yank the restored scroll position to the bottom.
+    justSwitched.current = nextMsgs.length > 0 && nextMsgs[nextMsgs.length - 1].id !== msgs[msgs.length - 1]?.id;
+    restoreOffset.current = next.offset;
+    setModeState(m);
+    saveMode(m);
+    setThreads(loadThreads(modeKey(userKey, m)));
+    setActiveId(next.activeId);
+    setMsgs(nextMsgs);
+    setInput(next.draft);
+    setReplyTo(null);
+    setSearchOpen(false);
+    setQuery('');
+  };
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -88,6 +123,7 @@ export default function Exo() {
   const toBottom = useCallback((animated = true) => { list.current?.scrollToEnd({ animated }); setUnseen(0); }, []);
   const last = msgs[msgs.length - 1];
   useEffect(() => {
+    if (justSwitched.current) { justSwitched.current = false; return; }
     if (!last) return;
     if (atBottomRef.current || last.role === 'user') setTimeout(() => toBottom(), 50);
     else setUnseen((n) => n + 1);
@@ -118,6 +154,13 @@ export default function Exo() {
     setTyping(false);
     if (r.ok) haptic.success();
   };
+  // Hub tool: ask right away, or pre-fill the composer so the user can finish the request.
+  const openTool = (t: HubTool) => {
+    if (t.send) { send(t.prompt); return; }
+    haptic.tap();
+    setInput(t.prompt);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
   const react = (m: ChatMessage, emoji: string) => { haptic.tap(); setMsgs((p) => p.map((x) => (x.id === m.id ? { ...x, reaction: x.reaction === emoji ? undefined : emoji } : x))); setMenu(null); };
   const startReply = (m: ChatMessage) => { setReplyTo(m); setMenu(null); inputRef.current?.focus(); };
   const copy = async (m: ChatMessage) => { await Clipboard.setStringAsync(m.content); haptic.success(); setCopied(true); setTimeout(() => { setCopied(false); setMenu(null); }, 600); };
@@ -140,7 +183,7 @@ export default function Exo() {
   ], [goals, threads]);
   const active = allThreads.find((t) => t.id === activeId) ?? MAIN_THREAD;
   const threadRows: ThreadRow[] = view === 'list' ? allThreads.map((t) => {
-    const h = t.id === activeId ? msgs : loadHistory(threadKey(userKey, t.id));
+    const h = t.id === activeId ? msgs : loadHistory(threadKey(modeKey(userKey, mode), t.id));
     const l = h[h.length - 1];
     return { ...t, last: l?.content, lastAt: l?.createdAt };
   }) : [];
@@ -151,7 +194,7 @@ export default function Exo() {
     if (id === activeId || typing) return;
     setActiveId(id);
     setReplyTo(null);
-    setMsgs(loadHistory(threadKey(userKey, id)));
+    setMsgs(loadHistory(threadKey(modeKey(userKey, mode), id)));
   };
   const q = query.trim().toLowerCase();
   const shown = useMemo(() => (q ? msgs.filter((m) => m.content.toLowerCase().includes(q)) : msgs), [msgs, q]);
@@ -205,6 +248,7 @@ export default function Exo() {
           {q ? <Text style={ui.muted}>{shown.length}</Text> : null}
         </View>
       )}
+      <Animated.View key={mode} entering={FadeIn.duration(160)} style={{ flex: 1 }}>
       <FlatList
         ref={list}
         data={shown}
@@ -213,10 +257,16 @@ export default function Exo() {
         initialNumToRender={20}
         windowSize={11}
         contentContainerStyle={{ padding: 16, flexGrow: 1 }}
-        onLayout={() => toBottom(false)}
+        onLayout={() => {
+          const o = restoreOffset.current;
+          restoreOffset.current = null;
+          if (o != null) list.current?.scrollToOffset({ offset: o, animated: false });
+          else toBottom(false);
+        }}
         onScrollToIndexFailed={() => undefined}
         onScroll={(e) => {
           const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+          offsetRef.current = contentOffset.y;
           const b = contentSize.height - contentOffset.y - layoutMeasurement.height < 80;
           setAtBottom(b);
           if (b) setUnseen(0);
@@ -271,6 +321,7 @@ export default function Exo() {
         }}
         ListFooterComponent={typing ? <TypingBubble /> : null}
       />
+      </Animated.View>
       {!atBottom && (
         <Animated.View entering={FadeIn} exiting={FadeOut} style={s.fab}>
           <Pressable accessibilityLabel={unseen ? `${unseen} new message` : 'Scroll to bottom'} onPress={() => toBottom()} style={s.fabBtn}>
@@ -279,7 +330,17 @@ export default function Exo() {
           </Pressable>
         </Animated.View>
       )}
-      {!typing && (
+      {empty && !typing && (
+        <Animated.View key={'tools-' + mode} entering={FadeIn.duration(160)} accessibilityLabel={mode === 'life' ? 'Exo Life tools' : 'Exo Money tools'} style={s.tools}>
+          {hubTools(mode).map((t) => (
+            <Pressable key={t.id} accessibilityRole="button" accessibilityLabel={t.label} onPress={() => openTool(t)} style={s.tool}>
+              <Ionicons name={HUB_ICONS[t.id] ?? 'sparkles-outline'} size={16} color={mode === 'life' ? LIME : C.green} />
+              <Text numberOfLines={1} style={{ color: C.text, fontSize: 13, fontWeight: '600', flexShrink: 1 }}>{t.label}</Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
+      {!typing && !empty && (
         <View accessibilityLabel="Suggestions" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 8 }}>
           {shownChips.map((item) => (
             <Pressable key={item} accessibilityRole="button" onPress={() => send(item)} style={s.chip}>
@@ -338,6 +399,8 @@ const s = StyleSheet.create({
   bubble: { maxWidth: '85%', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10 },
   mine: { alignSelf: 'flex-end', backgroundColor: C.green, borderBottomRightRadius: 6 },
   theirs: { alignSelf: 'stretch', maxWidth: '100%', backgroundColor: 'transparent', paddingHorizontal: 2, borderRadius: 0 },
+  tools: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  tool: { flexBasis: '46%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#161618', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 12 },
   chip: { flex: 1, backgroundColor: '#161618', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 13 },
   bar: { paddingHorizontal: 12, paddingTop: 2 },
   box: { borderRadius: 28, borderWidth: 1, borderColor: '#26262a', backgroundColor: '#0d0d0e', paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 6 },

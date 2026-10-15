@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronsUpDown, MessagesSquare, Reply, Search, Sparkles, SquarePen, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarDays, Calculator, CandlestickChart, ChevronLeft, ChevronsUpDown, Globe2, LineChart, MapPin, Plane, ShieldCheck, ShoppingBag, Target, type LucideIcon, MessagesSquare, Reply, Search, Sparkles, SquarePen, Wallet, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ExoAvatar from "@/components/exo/ExoAvatar";
@@ -9,7 +9,7 @@ import TypingIndicator from "@/components/exo/TypingIndicator";
 import ChatList, { type ThreadRow } from "@/components/exo/ChatList";
 import { useWallet } from "@/hooks/useWallet";
 import { useAccountTier } from "@/hooks/useAccountTier";
-import { apyForBoost, askExo, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, type ExoMode, excerpt, loadHistory, loadThreads, MAIN_THREAD, newId, saveHistory, saveThreads, threadKey, type ChatMessage, type ChatThread } from "@/lib/exoChat";
+import { apyForBoost, askExo, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, type ExoMode, excerpt, loadHistory, loadThreads, MAIN_THREAD, modeKey, hubTools, type HubTool, newId, saveHistory, saveThreads, threadKey, type ChatMessage, type ChatThread } from "@/lib/exoChat";
 
 const SUGGESTIONS = [
   "What's happening in crypto markets today?",
@@ -20,6 +20,18 @@ const SUGGESTIONS = [
 
 const LIFE_SUGGESTIONS = ["Plan a weekend trip", "Find a gift under $50", "Plan a dinner on Friday"];
 
+const HUB_ICONS: Record<string, LucideIcon> = {
+  portfolio: ShieldCheck,
+  projection: LineChart,
+  networth: Calculator,
+  markets: CandlestickChart,
+  macro: Globe2,
+  goals: Target,
+  shopping: ShoppingBag,
+  trips: Plane,
+  events: CalendarDays,
+  places: MapPin,
+};
 const GROUP_GAP_MS = 5 * 60 * 1000;
 
 type Goal = { id: string; goal: string; target_amount: number | null; target_date: string | null };
@@ -59,10 +71,33 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [sendPulse, setSendPulse] = useState(0);
   const [mode, setModeState] = useState<ExoMode>(() => loadMode());
+  // Per-mode memory: each mode keeps its own conversation, open chat, draft and scroll position.
+  const modeMem = useRef<Record<ExoMode, { activeId: string; draft: string; scroll: number | null }>>({
+    money: { activeId: "exo", draft: "", scroll: null },
+    life: { activeId: "exo", draft: "", scroll: null },
+  });
+  const restoreScroll = useRef<number | null>(null);
+  const justSwitched = useRef(false);
   const setMode = (m: ExoMode) => {
+    if (m === mode || isLoading) return;
+    modeMem.current[mode] = { activeId, draft: input, scroll: atBottom ? null : (scrollRef.current?.scrollTop ?? null) };
+    const next = modeMem.current[m];
     setModeState(m);
     saveMode(m);
+    setReplyTo(null);
+    setSearchOpen(false);
+    setQuery("");
+    setInput(next.draft);
+    setActiveId(next.activeId);
+    const nextMsgs = userKey && userKey !== "preview" ? loadHistory(threadKey(modeKey(userKey, m), next.activeId)) : [];
+    if (userKey && userKey !== "preview") setThreads(loadThreads(modeKey(userKey, m)));
+    setMessages(nextMsgs);
+    restoreScroll.current = next.scroll;
+    // The new-message effect must not yank the restored scroll position to the bottom.
+    justSwitched.current = nextMsgs.length > 0 && nextMsgs[nextMsgs.length - 1].id !== lastId;
+    setModeSwitches((n) => n + 1);
   };
+  const [modeSwitches, setModeSwitches] = useState(0);
   // id of the Exo bubble currently streaming in (null when idle)
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [threads, setThreads] = useState<ChatThread[]>([]);
@@ -87,8 +122,9 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
       if (cancelled) return;
       const uid = data.session?.user.id ?? "anon";
       setUserKey(uid);
-      setMessages(loadHistory(uid));
-      setThreads(loadThreads(uid));
+      const m = loadMode();
+      setMessages(loadHistory(modeKey(uid, m)));
+      setThreads(loadThreads(modeKey(uid, m)));
       if (data.session) {
         try {
           const { data: rows, error } = await (supabase as unknown as GoalsClient)
@@ -108,10 +144,12 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
   }, [initialMessages]);
 
   useEffect(() => {
-    if (userKey && userKey !== "preview") saveHistory(threadKey(userKey, activeId), messages);
+    if (userKey && userKey !== "preview") saveHistory(threadKey(modeKey(userKey, mode), activeId), messages);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mode changes together with messages
   }, [messages, userKey, activeId]);
   useEffect(() => {
-    if (userKey && userKey !== "preview") saveThreads(userKey, threads);
+    if (userKey && userKey !== "preview") saveThreads(modeKey(userKey, mode), threads);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mode changes together with threads
   }, [threads, userKey]);
 
   // Chat list: Exo, then goals as conversations, then saved chats (newest first).
@@ -127,7 +165,7 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
   }, [goals, threads]);
   const active = allThreads.find((t) => t.id === activeId) ?? MAIN_THREAD;
   const threadRows: ThreadRow[] = allThreads.map((t) => {
-    const hist = t.id === activeId ? messages : userKey && userKey !== "preview" ? loadHistory(threadKey(userKey, t.id)) : [];
+    const hist = t.id === activeId ? messages : userKey && userKey !== "preview" ? loadHistory(threadKey(modeKey(userKey, mode), t.id)) : [];
     const last = hist[hist.length - 1];
     return { ...t, last: last?.content, lastAt: last?.createdAt };
   });
@@ -139,7 +177,7 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
     if (id === activeId || isLoading) return;
     setActiveId(id);
     setReplyTo(null);
-    setMessages(userKey && userKey !== "preview" ? loadHistory(threadKey(userKey, id)) : []);
+    setMessages(userKey && userKey !== "preview" ? loadHistory(threadKey(modeKey(userKey, mode), id)) : []);
   };
 
   const scrollToBottom = useCallback((smooth = true) => {
@@ -149,8 +187,11 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
   }, []);
 
   useLayoutEffect(() => {
-    scrollToBottom(false);
-  }, [userKey, scrollToBottom]);
+    const el = scrollRef.current;
+    if (restoreScroll.current != null && el) el.scrollTop = restoreScroll.current;
+    else scrollToBottom(false);
+    restoreScroll.current = null;
+  }, [userKey, modeSwitches, scrollToBottom]);
 
   const lastMsg = messages[messages.length - 1];
   const lastId = lastMsg?.id;
@@ -158,6 +199,10 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
   const atBottomRef = useRef(atBottom);
   atBottomRef.current = atBottom;
   useEffect(() => {
+    if (justSwitched.current) {
+      justSwitched.current = false;
+      return;
+    }
     if (!lastId) return;
     if (atBottomRef.current || lastRole === "user") scrollToBottom();
     else setUnseen((n) => n + 1);
@@ -229,6 +274,19 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
     setStreamingId(null);
     setIsLoading(false);
     inputRef.current?.focus();
+  };
+
+  // Hub tool: ask right away, or pre-fill the composer so the user can finish the request.
+  const openTool = (t: HubTool) => {
+    if (t.send) sendMessage(t.prompt);
+    else {
+      setInput(t.prompt);
+      requestAnimationFrame(() => {
+        const el = inputRef.current;
+        el?.focus();
+        el?.setSelectionRange(t.prompt.length, t.prompt.length);
+      });
+    }
   };
 
   const react = (m: ChatMessage, emoji: string) =>
@@ -346,10 +404,28 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
           </div>
         )}
 
-        <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain px-4 py-2 md:px-8" role="log" aria-live="polite" aria-label="Exo">
+        <motion.div key={mode} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.16 }} ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain px-4 py-2 md:px-8" role="log" aria-live="polite" aria-label="Exo">
           {empty && !typing ? (
-            <div className="flex h-full flex-col items-center justify-center gap-4 opacity-30" aria-hidden="true">
-              <ExoAvatar size={88} />
+            <div className="flex h-full flex-col items-center justify-center gap-8">
+              <div className="opacity-30" aria-hidden="true">
+                <ExoAvatar size={88} />
+              </div>
+              <motion.nav key={mode} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }} aria-label={life ? "Exo Life tools" : "Exo Money tools"} className="grid w-full max-w-xl grid-cols-2 gap-2 sm:grid-cols-3">
+                {hubTools(mode).map((t) => {
+                  const Icon = HUB_ICONS[t.id] ?? Sparkles;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => openTool(t)}
+                      className="flex items-center gap-2.5 rounded-2xl bg-white/[0.05] px-3.5 py-3 text-left text-sm font-medium text-foreground/90 transition hover:bg-white/[0.09] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                    >
+                      <Icon className={`h-4 w-4 flex-shrink-0 ${life ? "text-lime-300" : "text-emerald-400"}`} aria-hidden="true" />
+                      <span className="truncate">{t.label}</span>
+                    </button>
+                  );
+                })}
+              </motion.nav>
             </div>
           ) : (
             <div className="mx-auto max-w-3xl">
@@ -366,7 +442,7 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
               <AnimatePresence>{showDots && <TypingIndicator />}</AnimatePresence>
             </div>
           )}
-        </div>
+        </motion.div>
 
         <AnimatePresence>
           {!atBottom && (
@@ -387,7 +463,7 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
 
         <div className="px-3 pb-3 pt-1 md:px-8">
           <div className="mx-auto max-w-3xl">
-            {!typing && (
+            {!typing && !empty && (
               <div className="mb-2.5 grid grid-cols-2 gap-2" aria-label="Suggestions">
                 {shownChips.map((c, i) => (
                   <motion.button
@@ -452,6 +528,7 @@ export default function ExoApp({ initialMessages, forceTyping }: Props = {}) {
                   aria-checked={life}
                   aria-label={life ? "Exo Life. Switch to Exo Money" : "Exo Money. Switch to Exo Life"}
                   onClick={() => setMode(life ? "money" : "life")}
+                  disabled={isLoading}
                   className="flex items-center gap-1.5 rounded-full bg-white/[0.07] px-3 py-1.5 text-[13px] font-medium transition hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 >
                   {life ? <Sparkles className="h-3.5 w-3.5 text-lime-300" aria-hidden="true" /> : <Wallet className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />}
