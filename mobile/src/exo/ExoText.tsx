@@ -26,7 +26,7 @@ function Inline({ text, color }: { text: string; color: string }) {
 /** Minimal block markdown for Exo replies: headings, bullet/numbered lists, quotes, rules, paragraphs. */
 export function Rich({ text, mine }: { text: string; mine: boolean }) {
   const color = mine ? C.bg : C.text;
-  const base = { color, fontSize: 15, lineHeight: 21 } as const;
+  const base = { color, fontSize: mine ? 15 : 16, lineHeight: mine ? 21 : 25 } as const;
   if (mine) return <Text style={base}>{text}</Text>;
   return (
     <View style={{ gap: 6 }}>

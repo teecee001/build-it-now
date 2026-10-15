@@ -2,18 +2,17 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Rich } from '@/components/ExoText';
+import { Rich } from '@/exo/ExoText';
 import { ui } from '@/components/ui';
 import { Sheet } from '@/components/kit';
 import { useAuth } from '@/hooks/useAuth';
-import { askExo, type ChatMessage, type ChatThread, type ExoMode, excerpt, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, loadHistory, loadThreads, projectSeries, MAIN_THREAD, newId, now, saveHistory, saveThreads, threadKey } from '@/lib/exo';
-import { ChatListView, ExoFace, LinkCards, SwipeReply, type ThreadRow, TypingBubble } from '@/components/ExoChatParts';
-import { accentFor, LIME, PresenceRing, RichCards } from '@/components/ExoRichCards';
-import { AreaChart } from '@/components/Chart';
+import { askExo, type ChatMessage, type ChatThread, type ExoMode, excerpt, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, loadHistory, loadThreads, MAIN_THREAD, newId, now, saveHistory, saveThreads, threadKey } from '@/exo/lib';
+import { ChatListView, ExoFace, LinkCards, SwipeReply, type ThreadRow, TypingBubble } from '@/exo/ChatParts';
+import { LIME, ModePill, RichCards } from '@/exo/RichCards';
 import { useWallet } from '@/hooks/useWallet';
 import { useSavings } from '@/hooks/useSavings';
 import { supabase } from '@/lib/supabase';
@@ -29,8 +28,6 @@ const SUGGESTIONS = [
 ];
 
 const LIFE_SUGGESTIONS = ['Plan a weekend trip', 'Find a gift under $50', 'Plan a dinner on Friday'];
-const GREETING_MONEY = "Hey 👋 I'm keeping an eye on your money and the markets. What's on your mind?";
-const GREETING_LIFE = 'Hey 👋 Shopping, trips, plans and places. What are we sorting out today?';
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const REACTIONS = ['👍', '❤️', '😂', '😮', '🙏', '🔥'];
 const GROUP_GAP_MS = 5 * 60 * 1000;
@@ -57,9 +54,8 @@ export default function Exo() {
   const [view, setView] = useState<'chat' | 'list'>('chat');
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const { balance, savingsBalance } = useWallet();
+  const { savingsBalance } = useWallet();
   const { apyRate } = useSavings();
-  const money = (n: number) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const [msgs, setMsgs] = useState<ChatMessage[]>(() => loadHistory(userKey));
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
@@ -169,26 +165,30 @@ export default function Exo() {
     return { newDay, lastInGroup };
   }), [shown]);
   const empty = msgs.length === 0;
-  const accent = accentFor(mode);
-  const projection = useMemo(() => projectSeries((balance ?? 0) + (savingsBalance ?? 0), Number(apyRate) || 0), [balance, savingsBalance, apyRate]);
   const lastExo = [...msgs].reverse().find((m) => m.role === 'assistant');
-  const chips = lastExo && !typing ? followUps(lastExo.content, mode) : mode === 'money' ? SUGGESTIONS : LIFE_SUGGESTIONS;
+  // Live context chips: from the user's real data first, then from Exo's last reply.
+  const contextChips = mode === 'life' ? LIFE_SUGGESTIONS : [
+    ...(goals[0] ? [`How am I tracking on ${goals[0].goal}?`] : []),
+    ...(Number(savingsBalance) > 0 ? [`Project my savings at ${apyRate}% APY`] : []),
+    ...SUGGESTIONS,
+  ];
+  const shownChips = (lastExo && !typing ? followUps(lastExo.content, mode) : contextChips).slice(0, 2);
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: C.bg }}>
-      <View style={[s.head, { paddingTop: insets.top + 8 }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel={view === 'chat' ? 'Chats' : 'Close'} onPress={() => (view === 'chat' ? setView('list') : router.back())} hitSlop={12}>
+      <View style={[s.head, { paddingTop: insets.top + 6 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={view === 'chat' ? 'Back to ExoSky' : 'Back to chat'} onPress={() => (view === 'list' ? setView('chat') : router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
           <Ionicons name="chevron-back" size={24} color={C.text} />
         </Pressable>
         {view === 'list' ? <Text style={[ui.text, { flex: 1, fontWeight: '700', fontSize: 17 }]}>Chats</Text> : <>
-        <PresenceRing size={40} color={accent} fast={typing}><ExoFace size={40} /></PresenceRing>
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text numberOfLines={1} style={[ui.text, { fontWeight: '700', fontSize: 17, flexShrink: 1 }]}>{active.kind === 'exo' ? 'Exo' : active.title}</Text>
-            <View style={[s.modeTag, { borderColor: accent + '66' }]}><Text style={{ color: accent, fontSize: 9, fontWeight: '800', letterSpacing: 1.2 }}>{mode === 'money' ? 'MONEY' : 'LIFE'}</Text></View>
-          </View>
-          <Text style={{ color: accent, fontSize: 12 }}>{typing ? 'typing...' : 'online'}</Text>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <ExoFace size={28} online={false} />
+          <Text numberOfLines={1} style={{ color: C.text, fontWeight: '700', fontSize: 20, letterSpacing: -0.3, flexShrink: 1 }}>{active.kind === 'exo' ? 'Exo' : active.title}</Text>
+          {typing && <Text style={{ color: C.muted, fontSize: 12 }}>typing...</Text>}
         </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Chats" onPress={() => setView('list')} hitSlop={10}>
+          <Ionicons name="chatbubbles-outline" size={21} color={C.text} />
+        </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Search in chat" onPress={() => { setSearchOpen((o) => !o); setQuery(''); }} hitSlop={10}>
           <Ionicons name="search" size={21} color={searchOpen ? C.green : C.text} />
         </Pressable>
@@ -204,51 +204,6 @@ export default function Exo() {
           <TextInput autoFocus accessibilityLabel="Search in chat" placeholder="Search" placeholderTextColor={C.muted} value={query} onChangeText={setQuery} style={{ flex: 1, color: C.text, paddingVertical: 8 }} />
           {q ? <Text style={ui.muted}>{shown.length}</Text> : null}
         </View>
-      )}
-      <View accessibilityRole="tablist" accessibilityLabel="Exo mode" style={s.modes}>
-        {(['money', 'life'] as const).map((m) => (
-          <Pressable key={m} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} onPress={() => setMode(m)} style={[s.modeBtn, mode === m && { backgroundColor: accentFor(m) }]}>
-            <Ionicons name={m === 'money' ? 'wallet-outline' : 'sparkles-outline'} size={14} color={mode === m ? C.bg : C.muted} />
-            <Text style={{ color: mode === m ? C.bg : C.muted, fontWeight: '700', fontSize: 13 }}>{m === 'money' ? 'Exo Money' : 'Exo Life'}</Text>
-          </Pressable>
-        ))}
-      </View>
-      {mode === 'money' && active.kind === 'exo' && (
-        <Animated.View entering={FadeIn} accessibilityLabel="Pinned" style={s.pulse}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-            <View>
-              <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1 }}>Total</Text>
-              <Text style={{ color: C.text, fontSize: 26, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{money((balance ?? 0) + (savingsBalance ?? 0))}</Text>
-            </View>
-            <View style={s.apyTag}><Text style={{ color: '#6ee7b7', fontSize: 12, fontWeight: '700' }}>{apyRate}% APY</Text></View>
-          </View>
-          <AreaChart values={projection} height={44} color={C.green} />
-          <Text style={{ color: C.muted, fontSize: 11 }}>12-month projection</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={s.tile}><Text style={{ color: C.muted, fontSize: 11 }}>Balance</Text><Text style={{ color: C.text, fontWeight: '700', fontSize: 13 }}>{money(balance)}</Text></View>
-            <View style={s.tile}><Text style={{ color: C.muted, fontSize: 11 }}>Savings</Text><Text style={{ color: C.text, fontWeight: '700', fontSize: 13 }}>{money(savingsBalance)}</Text></View>
-          </View>
-        </Animated.View>
-      )}
-      {mode === 'life' && empty && (
-        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingTop: 10 }}>
-          {LIFE_SUGGESTIONS.map((t, i) => (
-            <Pressable key={t} accessibilityRole="button" disabled={typing} onPress={() => send(t)} style={[s.tile, { borderColor: 'rgba(190,242,100,0.25)', gap: 6, paddingVertical: 12 }]}>
-              <Ionicons name={(['airplane-outline', 'gift-outline', 'restaurant-outline'] as const)[i]} size={18} color={LIME} />
-              <Text style={{ color: C.text, fontSize: 12, fontWeight: '600' }}>{t}</Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
-      {goals.length > 0 && active.kind === 'exo' && mode === 'money' && (
-        <ScrollView horizontal accessibilityLabel="Goals" showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 8, padding: 10, alignItems: 'center' }}>
-          <Ionicons name="locate-outline" size={14} color={C.green} />
-          {goals.map((g) => (
-            <View key={g.id} style={s.goal}>
-              <Text style={{ color: C.text, fontSize: 12 }}>{g.goal}{g.target_amount != null ? <Text style={{ fontWeight: '700' }}> ${Number(g.target_amount).toLocaleString()}</Text> : null}{g.target_date ? <Text style={{ color: C.muted }}> · {new Date(g.target_date).toLocaleDateString([], { month: 'short', year: 'numeric' })}</Text> : null}</Text>
-            </View>
-          ))}
-        </ScrollView>
       )}
       <FlatList
         ref={list}
@@ -269,15 +224,8 @@ export default function Exo() {
         scrollEventThrottle={64}
         ListEmptyComponent={
           typing ? null : (
-            // No bot splash: Exo opens the conversation like a person would.
-            <View style={{ flex: 1, justifyContent: 'flex-end', gap: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-                <ExoFace size={28} online={false} />
-                <View style={[s.bubble, s.theirs, { maxWidth: '82%' }]}>
-                  <Text style={{ color: C.text, fontSize: 15, lineHeight: 21 }}>{mode === 'money' ? GREETING_MONEY : GREETING_LIFE}</Text>
-                </View>
-              </View>
-              {mode === 'money' && <Text style={[ui.muted, { fontSize: 11, marginLeft: 36 }]}>Not financial advice</Text>}
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flex: 1, alignItems: 'center', justifyContent: 'center', opacity: 0.28 }}>
+              <ExoFace size={88} online={false} />
             </View>
           )
         }
@@ -287,14 +235,14 @@ export default function Exo() {
           return (
             <View style={{ marginBottom: lastInGroup ? 12 : 3 }}>
               {newDay && <View accessibilityRole="text" style={s.day}><Text style={{ color: C.muted, fontSize: 11 }}>{dayLabel(item.createdAt)}</Text></View>}
-              <Animated.View entering={enter(0)} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
+              <Animated.View entering={enter(0)} style={{ alignSelf: mine ? 'flex-end' : 'stretch', maxWidth: mine ? '82%' : '100%' }}>
                 <SwipeReply mine={mine} onReply={() => startReply(item)}>
                 <Pressable
                   accessibilityLabel={`${mine ? 'You' : 'Exo'}, ${time(item.createdAt)}`}
                   accessibilityHint="Long press for Reply, Copy and React"
                   delayLongPress={350}
                   onLongPress={() => { haptic.medium(); setMenu(item); }}
-                  style={[s.bubble, mine ? s.mine : [s.theirs, { borderColor: accent + '33' }], mine && mode === 'life' && { backgroundColor: LIME }, !lastInGroup && (mine ? { borderBottomRightRadius: 20 } : { borderBottomLeftRadius: 20 })]}>
+                  style={[s.bubble, mine ? s.mine : s.theirs, mine && mode === 'life' && { backgroundColor: LIME }, !lastInGroup && (mine ? { borderBottomRightRadius: 20 } : { borderBottomLeftRadius: 20 })]}>
                   {item.replyTo && (
                     <Pressable onPress={() => jumpTo(item.replyTo!.id)} style={[s.quote, { borderLeftColor: mine ? C.bg : C.green }]}>
                       <Text style={{ fontSize: 11, fontWeight: '700', color: mine ? C.bg : C.green }}>{item.replyTo.role === 'user' ? 'You' : 'Exo'}</Text>
@@ -331,15 +279,15 @@ export default function Exo() {
           </Pressable>
         </Animated.View>
       )}
-      <View style={{ height: 48 }}>
-        <ScrollView horizontal accessibilityLabel="Suggestions" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, alignItems: 'center' }}>
-          {chips.map((item) => (
-            <Pressable key={item} accessibilityRole="button" disabled={typing} onPress={() => send(item)} style={s.chip}>
-              <Text style={{ color: C.text, fontSize: 13 }}>{item}</Text>
+      {!typing && (
+        <View accessibilityLabel="Suggestions" style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 8 }}>
+          {shownChips.map((item) => (
+            <Pressable key={item} accessibilityRole="button" onPress={() => send(item)} style={s.chip}>
+              <Text numberOfLines={1} style={{ color: C.text, fontSize: 14, fontWeight: '600' }}>{item}</Text>
             </Pressable>
           ))}
-        </ScrollView>
-      </View>
+        </View>
+      )}
       {replyTo && (
         <Animated.View entering={FadeIn.duration(150)} style={s.replyBar}>
           <Ionicons name="arrow-undo-outline" size={16} color={C.green} />
@@ -351,11 +299,15 @@ export default function Exo() {
         </Animated.View>
       )}
       <View style={[s.bar, { paddingBottom: insets.bottom + 8 }]}>
-        <View style={[s.pill, { borderColor: accent + '40' }]}>
-        <TextInput ref={inputRef} multiline style={{ flex: 1, color: C.text, fontSize: 15, maxHeight: 160, paddingVertical: 10 }} placeholder="Ask Exo..." placeholderTextColor={C.muted} value={input} onChangeText={setInput} onSubmitEditing={() => send(input)} submitBehavior="submit" />
-          <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={typing || !input.trim()} onPress={() => send(input)} style={[s.send, { backgroundColor: accent, opacity: typing || !input.trim() ? 0.5 : 1 }]}>
-            <Ionicons name="arrow-up" size={20} color={C.bg} />
-          </Pressable>
+        <View style={s.box}>
+          <TextInput ref={inputRef} multiline style={{ color: C.text, fontSize: 16, maxHeight: 140, paddingTop: 2, paddingBottom: 6 }} placeholder="Ask Exo..." placeholderTextColor={C.muted} value={input} onChangeText={setInput} onSubmitEditing={() => send(input)} submitBehavior="submit" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <ModePill mode={mode} onToggle={() => setMode(mode === 'money' ? 'life' : 'money')} />
+            {mode === 'money' && <Text style={{ color: C.muted, fontSize: 11, flex: 1 }} numberOfLines={1}>Not financial advice</Text>}
+            <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={typing || !input.trim()} onPress={() => send(input)} style={[s.send, { marginLeft: 'auto', opacity: typing || !input.trim() ? 0.3 : 1 }]}>
+              <Ionicons name="arrow-up" size={20} color="#000" />
+            </Pressable>
+          </View>
         </View>
       </View>
       </>}
@@ -382,14 +334,13 @@ export default function Exo() {
   );
 }
 const s = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.border },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#0a0a0b', borderWidth: 1, borderColor: 'rgba(34,197,94,0.5)', alignItems: 'center', justifyContent: 'center' },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, paddingBottom: 8 },
   bubble: { maxWidth: '85%', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10 },
   mine: { alignSelf: 'flex-end', backgroundColor: C.green, borderBottomRightRadius: 6 },
-  theirs: { alignSelf: 'flex-start', backgroundColor: '#0c110e', borderWidth: 1, borderColor: C.border, borderBottomLeftRadius: 6 },
-  chip: { alignSelf: 'flex-start', borderWidth: 1, borderColor: C.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-  bar: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingTop: 8, alignItems: 'center' },
-  goal: { borderWidth: 1, borderColor: C.border, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  theirs: { alignSelf: 'stretch', maxWidth: '100%', backgroundColor: 'transparent', paddingHorizontal: 2, borderRadius: 0 },
+  chip: { flex: 1, backgroundColor: '#161618', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 13 },
+  bar: { paddingHorizontal: 12, paddingTop: 2 },
+  box: { borderRadius: 28, borderWidth: 1, borderColor: '#26262a', backgroundColor: '#0d0d0e', paddingHorizontal: 14, paddingTop: 12, paddingBottom: 10, gap: 6 },
   day: { alignSelf: 'center', backgroundColor: C.card, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginVertical: 10 },
   quote: { borderLeftWidth: 3, paddingLeft: 8, marginBottom: 6, opacity: 0.85 },
   reaction: { position: 'absolute', bottom: -10, backgroundColor: C.card, borderWidth: 1, borderColor: C.border, borderRadius: 999, paddingHorizontal: 5, paddingVertical: 1 },
@@ -400,14 +351,5 @@ const s = StyleSheet.create({
   emoji: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   action: { flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 14 },
   searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 12, marginTop: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: C.card },
-  pin: { flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 150, backgroundColor: C.card, borderLeftWidth: 3, borderLeftColor: C.green, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
-  modes: { flexDirection: 'row', alignSelf: 'center', backgroundColor: C.card, borderRadius: 999, padding: 3, marginTop: 8, gap: 2 },
-  modeBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 7, borderRadius: 999 },
-  modeOn: { backgroundColor: C.green },
-  pulse: { marginHorizontal: 12, marginTop: 10, padding: 14, gap: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(16,185,129,0.22)', backgroundColor: '#07100b' },
-  apyTag: { borderWidth: 1, borderColor: 'rgba(16,185,129,0.35)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: 'rgba(16,185,129,0.1)' },
-  tile: { flex: 1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', borderRadius: 14, padding: 10, backgroundColor: 'rgba(255,255,255,0.03)' },
-  modeTag: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1 },
-  pill: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingLeft: 16, paddingRight: 4, paddingVertical: 4, borderRadius: 28, borderWidth: 1, backgroundColor: '#0c110e' },
-  send: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center' },
+  send: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
 });

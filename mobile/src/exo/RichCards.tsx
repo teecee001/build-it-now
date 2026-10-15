@@ -2,15 +2,16 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, FadeInLeft, ReduceMotion, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInLeft, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { Sparkline } from '@/components/Chart';
+import { AreaChart, Sparkline } from '@/components/Chart';
+import { useSavings } from '@/hooks/useSavings';
+import { useWallet } from '@/hooks/useWallet';
 import { useMarketData } from '@/hooks/useMarketData';
-import { type ExoMode, mentionedTickers, parseAllocation, parseItinerary, parseProducts } from '@/lib/exo';
+import { type ExoMode, mentionedTickers, parseAllocation, parseItinerary, parseProducts, projectSeries } from '@/exo/lib';
 import { C } from '@/lib/theme';
 
 export const LIME = '#bef264';
-export const accentFor = (mode: ExoMode) => (mode === 'life' ? LIME : C.green);
 const MONO = { fontVariant: ['tabular-nums' as const] };
 const PALETTE = ['#34d399', '#2dd4bf', LIME, '#047857', '#22d3ee'];
 
@@ -119,24 +120,57 @@ export function RichCards({ text, mode }: { text: string; mode: ExoMode }) {
   return (
     <>
       <AllocationCard text={text} />
+      {mode === 'money' ? <MoneyCard text={text} /> : null}
       {mode === 'life' ? <ItineraryCard text={text} /> : null}
       {mode === 'life' ? <ProductCards text={text} /> : <QuoteCards text={text} />}
     </>
   );
 }
 
-/** Rotating presence ring around the avatar; spins faster while Exo is typing. */
-export function PresenceRing({ size, color, fast, children }: { size: number; color: string; fast: boolean; children: React.ReactNode }) {
-  const r = useSharedValue(0);
-  useEffect(() => {
-    r.value = 0;
-    r.value = withRepeat(withTiming(360, { duration: fast ? 1600 : 8000, easing: Easing.linear, reduceMotion: ReduceMotion.System }), -1, false);
-  }, [fast, r]);
-  const st = useAnimatedStyle(() => ({ transform: [{ rotate: `${r.value}deg` }] }));
+/** Money/Life switch inside the composer: one tap flips the mode. */
+export function ModePill({ mode, onToggle }: { mode: ExoMode; onToggle: () => void }) {
+  const life = mode === 'life';
   return (
-    <View style={{ width: size + 8, height: size + 8, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View style={[StyleSheet.absoluteFill, { borderRadius: (size + 8) / 2, borderWidth: 2, borderColor: 'transparent', borderTopColor: color, borderRightColor: color + '55' }, st]} />
-      {children}
+    <Pressable accessibilityRole="switch" accessibilityState={{ checked: life }} accessibilityLabel={life ? 'Exo Life. Switch to Exo Money' : 'Exo Money. Switch to Exo Life'} onPress={onToggle} hitSlop={6} style={s.modePill}>
+      <Animated.View key={mode} entering={FadeIn.duration(180)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <Ionicons name={life ? 'sparkles' : 'wallet'} size={14} color={life ? LIME : C.green} />
+        <Text style={{ color: C.text, fontSize: 13, fontWeight: '600' }}>{life ? 'Exo Life' : 'Exo Money'}</Text>
+      </Animated.View>
+      <Ionicons name="swap-vertical" size={12} color={C.muted} />
+    </Pressable>
+  );
+}
+
+const usd = (n: number) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/** Money snapshot: only when Exo's reply is about the user's balance or savings, and only with real numbers. */
+export function MoneyCard({ text }: { text: string }) {
+  const { balance, savingsBalance } = useWallet();
+  const { apyRate } = useSavings();
+  if (!/\b(balance|savings|apy|net worth|cash on hand)\b/i.test(text)) return null;
+  const savings = Number(savingsBalance || 0);
+  const total = Number(balance || 0) + savings;
+  if (!(total > 0)) return null;
+  const apy = Number(apyRate) || 0;
+  return (
+    <View style={[s.card, { padding: 12, gap: 6 }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <View>
+          <Text style={{ color: C.muted, fontSize: 11 }}>Total</Text>
+          <Text style={[{ color: C.text, fontSize: 22, fontWeight: '700' }, MONO]}>{usd(total)}</Text>
+        </View>
+        <Text style={[{ color: '#6ee7b7', fontSize: 12, fontWeight: '700' }, MONO]}>{apy}% APY</Text>
+      </View>
+      {savings > 0 && apy > 0 && (
+        <>
+          <AreaChart values={projectSeries(savings, apy, 12)} height={40} color={C.green} />
+          <Text style={{ color: C.muted, fontSize: 11 }}>12-month projection</Text>
+        </>
+      )}
+      <View style={{ flexDirection: 'row', gap: 16 }}>
+        <Text style={{ color: C.muted, fontSize: 12 }}>Balance <Text style={[{ color: C.text, fontWeight: '700' }, MONO]}>{usd(balance)}</Text></Text>
+        <Text style={{ color: C.muted, fontSize: 12 }}>Savings <Text style={[{ color: C.text, fontWeight: '700' }, MONO]}>{usd(savings)}</Text></Text>
+      </View>
     </View>
   );
 }
@@ -147,5 +181,6 @@ const s = StyleSheet.create({
   kicker: { fontSize: 11, fontWeight: '800', letterSpacing: 1.4 },
   badge: { marginLeft: 'auto', borderWidth: 1, borderColor: 'rgba(16,185,129,0.35)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },
   badgeT: { color: '#6ee7b7', fontSize: 11 },
+  modePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#1c1c1f', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
   dot: { position: 'absolute', left: -17, top: 3, width: 9, height: 9, borderRadius: 5, backgroundColor: LIME, borderWidth: 2, borderColor: '#000' },
 });

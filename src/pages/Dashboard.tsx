@@ -114,7 +114,7 @@ export default function Dashboard() {
     { label: "Savings", sub: `${apyRate}% APY`, icon: PiggyBank, tint: "text-success", path: "/savings" },
     { label: "QR Pay", sub: "Scan & pay", icon: QrCode, tint: "text-muted-foreground", path: "/qr" },
     { label: "Pay Bills", sub: "Utilities & more", icon: Landmark, tint: "text-primary", path: "/bills", feature: "features_bill_pay" },
-    { label: "Exo", sub: "Exo Intelligence", icon: Bot, tint: "text-accent", path: "/advisor" },
+    { label: "Exo", sub: "Exo Intelligence", icon: Bot, tint: "text-accent", path: "/exo" },
     { label: "Crypto", sub: "Trade digital assets", icon: Bitcoin, tint: "text-warning", path: "/wallet", feature: "features_crypto" },
     { label: "Stocks", sub: "Invest in markets", icon: Briefcase, tint: "text-success", path: "/stocks", feature: "features_stocks" },
   ];

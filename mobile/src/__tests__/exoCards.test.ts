@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { apyForBoost, mentionedTickers, parseAllocation, parseItinerary, parseProducts, projectSeries } from '@/lib/exo';
+import { apyForBoost, mentionedTickers, parseAllocation, parseItinerary, parseProducts, projectSeries } from '@/exo/lib';
 jest.mock('@/lib/supabase', () => ({ supabase: { auth: {} }, SUPABASE_URL: 'https://x', SUPABASE_PUBLISHABLE_KEY: 'k' }));
 
 describe('Exo rich card parsers', () => {

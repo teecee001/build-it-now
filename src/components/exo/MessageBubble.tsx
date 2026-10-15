@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, CheckCheck, Copy, Reply, SmilePlus } from "lucide-react";
-import ExoAvatar from "./ExoAvatar";
 import ExoMarkdown from "./ExoMarkdown";
 import FiguresCard from "./FiguresCard";
 import LinkPreviews from "./LinkPreviews";
@@ -80,10 +79,10 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
       className={`group relative flex items-end gap-2 ${mine ? "justify-end" : "justify-start"} ${lastInGroup ? "mb-2" : "mb-1"} ${msg.reaction ? "pb-3" : ""}`}
     >
-      {!mine && (lastInGroup ? <ExoAvatar size={28} /> : <div className="w-7 flex-shrink-0" />)}
+      
 
       <motion.div
-        className={`relative max-w-[82%] md:max-w-[70%] ${mine ? "order-1" : ""}`}
+        className={`relative ${mine ? "order-1 max-w-[82%] md:max-w-[70%]" : "w-full max-w-full"}`}
         drag={touch ? "x" : false}
         dragDirectionLock
         dragConstraints={{ left: 0, right: 0 }}
@@ -114,10 +113,10 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
             }
           }}
           className={`relative px-3.5 pt-2 pb-1.5 select-text outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background shadow-card ${radius} ${
-            mine ? "bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 text-black shadow-[0_8px_24px_-12px_rgba(16,185,129,0.8)]" : `border ${mode === "life" ? "border-lime-300/10" : "border-emerald-500/10"} bg-[#0c110e]/95 text-foreground shadow-[0_8px_30px_-18px_rgba(0,0,0,0.9)] backdrop-blur`
+            mine ? "bg-emerald-500 text-black" : "!px-0.5 !shadow-none text-foreground text-[16px] leading-[1.6]"
           }`}
         >
-          {lastInGroup && (
+          {lastInGroup && mine && (
             <svg
               aria-hidden="true"
               viewBox="0 0 11 20"

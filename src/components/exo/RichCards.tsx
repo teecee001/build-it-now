@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { CalendarDays, ExternalLink, ShieldCheck, ShoppingBag, TrendingDown, TrendingUp } from "lucide-react";
 import { useMarketData } from "@/hooks/useMarketData";
-import { mentionedTickers, parseAllocation, parseItinerary, parseProducts, type ExoMode } from "@/lib/exoChat";
+import { useWallet } from "@/hooks/useWallet";
+import { useAccountTier } from "@/hooks/useAccountTier";
+import { apyForBoost, mentionedTickers, projectSeries, parseAllocation, parseItinerary, parseProducts, type ExoMode } from "@/lib/exoChat";
 
 /** Tiny SVG sparkline; flat line when there's no data. */
 export function Sparkline({ data, up = true, className = "h-8 w-24", fill = true }: { data: number[]; up?: boolean; className?: string; fill?: boolean }) {
@@ -135,10 +137,45 @@ export function ProductCards({ text }: { text: string }) {
 }
 
 /** All rich cards for one Exo message, by mode. */
+const usd = (n: number) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/** Money snapshot: only when Exo's reply is about the user's balance or savings, and only with real numbers. */
+export function MoneyCard({ text }: { text: string }) {
+  const { balance, savingsBalance } = useWallet();
+  const { config } = useAccountTier();
+  if (!/\b(balance|savings|apy|net worth|cash on hand)\b/i.test(text)) return null;
+  const savings = Number(savingsBalance || 0);
+  const total = Number(balance || 0) + savings;
+  if (!(total > 0)) return null;
+  const apy = apyForBoost(config?.apyBoost);
+  return (
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-3 max-w-md rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3.5">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <div className="text-[11px] text-muted-foreground">Total</div>
+          <div className="font-mono text-2xl font-semibold tabular-nums">{usd(total)}</div>
+        </div>
+        <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 font-mono text-xs text-emerald-300">{apy}% APY</span>
+      </div>
+      {savings > 0 && (
+        <>
+          <Sparkline data={projectSeries(savings, apy, 12)} className="mt-2 h-12 w-full" />
+          <div className="text-[11px] text-muted-foreground">12-month projection</div>
+        </>
+      )}
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+        <div><span className="text-muted-foreground">Balance </span><b className="font-mono tabular-nums">{usd(balance)}</b></div>
+        <div><span className="text-muted-foreground">Savings </span><b className="font-mono tabular-nums">{usd(savings)}</b></div>
+      </div>
+    </motion.div>
+  );
+}
+
 export function RichCards({ text, mode }: { text: string; mode: ExoMode }) {
   return (
     <>
       <AllocationCard text={text} />
+      {mode === "money" ? <MoneyCard text={text} /> : null}
       {mode === "life" ? <ItineraryCard text={text} /> : null}
       {mode === "life" ? <ProductCards text={text} /> : <QuoteCards text={text} />}
     </>

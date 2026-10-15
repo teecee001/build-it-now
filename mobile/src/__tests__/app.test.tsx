@@ -2,9 +2,9 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import Login from '@/app/login';
-import { Rich } from '@/components/ExoText';
+import { Rich } from '@/exo/ExoText';
 import { SwipeToPay } from '@/components/SwipeToPay';
-import { parseSse } from '@/lib/exo';
+import { parseSse } from '@/exo/lib';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { auth: {}, rpc: jest.fn() } }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));

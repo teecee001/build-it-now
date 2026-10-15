@@ -73,7 +73,7 @@ export class Blackboard {
 
 /** Messenger style for every reply (shown as short chat bubbles; Sources shown by the app as cards). */
 export const STYLE_RULES = [
-  "Write like a messenger, not a report: 1-3 short paragraphs separated by a blank line, under 90 words total unless the user asks for detail or it's a plan/statement/table.",
+  "Write like a messenger, not a report: 2-4 short sentences (under 90 words) unless the user asks for detail. No headings, no numbered or bulleted essays; plain sentences. Allocation rows, itinerary slots and product links may follow as short lines.",
   "Do not write a 'Sources' heading or list links at the end; cite inline like (Reuters, Oct 7). The app shows sources as cards.",
   "If a tool flags missing_data or a price is null, say it's not available. Never estimate or invent prices.",
 ].join("\n");

@@ -21,7 +21,7 @@ const WalletPage = lazy(() => import("./pages/WalletPage"));
 const SendMoney = lazy(() => import("./pages/SendMoney"));
 const Markets = lazy(() => import("./pages/Markets"));
 const Forecasts = lazy(() => import("./pages/Forecasts"));
-const AIAdvisor = lazy(() => import("./pages/AIAdvisor"));
+const ExoApp = lazy(() => import("./exo/ExoApp"));
 const Rewards = lazy(() => import("./pages/Rewards"));
 const Activity = lazy(() => import("./pages/Activity"));
 const CardPage = lazy(() => import("./pages/CardPage"));
@@ -113,6 +113,17 @@ const App = () => (
               <Route path="/disclosures" element={<ComplianceDisclosures />} />
               <Route path="/compliance" element={<ComplianceDisclosures />} />
               <Route
+                path="/exo"
+                element={
+                  <ProtectedRoute>
+                    <ActiveCurrencyProvider>
+                      <ExoApp />
+                    </ActiveCurrencyProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/advisor" element={<Navigate to="/exo" replace />} />
+              <Route
                 path="/admin"
                 element={
                   <ProtectedRoute skipOnboarding>
@@ -139,7 +150,6 @@ const App = () => (
                 <Route path="/bills" element={<BillPay />} />
                 <Route path="/markets" element={<Markets />} />
                 <Route path="/forecasts" element={<Forecasts />} />
-                <Route path="/advisor" element={<AIAdvisor />} />
                 <Route path="/savings" element={<Savings />} />
                 <Route path="/referrals" element={<Referrals />} />
                 <Route path="/premium" element={<Premium />} />
