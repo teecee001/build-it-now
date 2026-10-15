@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import type { Transaction } from '@/hooks/data';
+import type { TxLike } from '@/lib/formatTransaction';
 import { formatTxAmount, getTransactionTitle } from '@/lib/formatTransaction';
 import { enter } from '@/lib/motion';
 import { C } from '@/lib/theme';
 
-export function TxRow({ tx, i = 0 }: { tx: Transaction; i?: number }) {
+export function TxRow({ tx, i = 0 }: { tx: TxLike & { created_at: string }; i?: number }) {
   const amt = formatTxAmount(tx);
   return (
     <Animated.View entering={enter(i)} style={s.row}>

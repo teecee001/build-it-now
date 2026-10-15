@@ -1,12 +1,16 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { SwipeToPay } from '@/components/SwipeToPay';
+import { TransactionPinModal } from '@/components/TransactionPinModal';
+import { useTransactionPin } from '@/hooks/useTransactionPin';
 import { Card, Screen, Title, ui } from '@/components/ui';
-import { useRates, useWallets } from '@/hooks/data';
-import { invokeWalletOp } from '@/hooks/walletOp';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
+import { useMultiCurrencyWallet } from '@/hooks/useMultiCurrencyWallet';
+import { invokeWalletOp } from '@/hooks/useWallet';
 import { formatAmount, formatHandle } from '@/lib/formatTransaction';
 import { haptic } from '@/lib/haptics';
 import { enter } from '@/lib/motion';
@@ -23,8 +27,9 @@ const newKey = () => `${Date.now()}-${Math.random().toString(36).slice(2)}-${Mat
 
 export default function Send() {
   const qc = useQueryClient();
-  const { wallets } = useWallets();
-  const { toUSD } = useRates();
+  const { wallets } = useMultiCurrencyWallet();
+  const { rates } = useExchangeRates();
+  const toUSD = (n: number, c: string) => n / (rates[c] || 1);
   const [cur, setCur] = useState('USD');
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
@@ -34,6 +39,10 @@ export default function Send() {
   const idem = useRef(newKey());
   const wallet = useMemo(() => wallets.find((w) => w.currency === cur), [wallets, cur]);
   const parsed = parseFloat(amount);
+  const { requiresPin, verifyPin, isPinSet, PIN_THRESHOLD } = useTransactionPin();
+  const [pinOpen, setPinOpen] = useState(false);
+  const pinGate = useRef<((ok: boolean) => void) | null>(null);
+  const closePin = (ok: boolean) => { setPinOpen(false); pinGate.current?.(ok); pinGate.current = null; };
 
   const handleSend = async () => {
     setError(null);
@@ -46,6 +55,10 @@ export default function Send() {
       haptic.error();
       setError(`Insufficient ${cur} balance`);
       return;
+    }
+    if (requiresPin(toUSD(parsed, cur))) {
+      const ok = await new Promise<boolean>((resolve) => { pinGate.current = resolve; setPinOpen(true); });
+      if (!ok) return;
     }
     try {
       const result = await invokeWalletOp({
@@ -116,7 +129,14 @@ export default function Send() {
           <Text style={ui.muted}>Network fee</Text>
           <Text style={{ color: C.green, fontWeight: '600' }}>Free</Text>
         </View>
+        {isPinSet && (
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginBottom: 10 }}>
+            <Ionicons name="shield-checkmark-outline" size={14} color="#A78BFA" />
+            <Text style={ui.muted}>Transaction PIN required for transfers over <Text style={{ color: C.text, fontWeight: '600' }}>${PIN_THRESHOLD}</Text></Text>
+          </View>
+        )}
         <SwipeToPay label="Send" onConfirm={handleSend} disabled={!recipient || !amount} />
+        <TransactionPinModal open={pinOpen} amount={toUSD(parsed || 0, cur)} verifyPin={verifyPin} onVerified={() => closePin(true)} onCancel={() => closePin(false)} />
       </Card>
     </Screen>
   );
