@@ -1,25 +1,42 @@
 {
-  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID": "8154b4fad376bc9d84b585f171e8a782"
+      }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "android": { "buildType": "apk" }
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID": "8154b4fad376bc9d84b585f171e8a782"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID": "8154b4fad376bc9d84b585f171e8a782"
+      }
     }
   },
   "submit": {
     "production": {
       "ios": {},
-      "android": { "track": "internal", "releaseStatus": "draft" }
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
     }
   }
 }
