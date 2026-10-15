@@ -6,6 +6,7 @@ import { type CallResult, runAgent } from "./agent.ts";
 import type { GoalsDb } from "./tools.ts";
 import { sanitizeMessages } from "./history.ts";
 import { appendSources, collectHeadlines } from "./sources.ts";
+import { loadRiskConfig, sharedStore } from "./engines.ts";
 import { AGENTS, agentSystem, Blackboard, LIFE_RULES, leadSynthesis, type Mode, route, STYLE_RULES } from "./orchestrator.ts";
 
 // Exo-internal system instructions (not app UI copy).
@@ -183,6 +184,8 @@ serve(async (req) => {
       ...messages,
     ];
     const plan = route(question, mode);
+    // Shared targets/limits (Upstash Redis when configured, else safe defaults); read-only here.
+    const risk = await loadRiskConfig(sharedStore(), userData.user.id).catch(() => undefined);
     const board = new Blackboard();
     const allowFor = (ids: typeof plan.agents) => [...new Set(ids.flatMap((id) => AGENTS[id].tools))];
     const userText = messages.filter((m) => m?.role === "user" && typeof m.content === "string").map((m) => m.content as string);
@@ -222,7 +225,7 @@ serve(async (req) => {
             const r = await runAgent({
               call, deadline: Math.min(deadline, Date.now() + 18_000), evidence: [...evidence],
               messages: [...baseMessages.slice(0, -messages.length), persona([id]), ...messages],
-              ctx: { account, goals, fiatRates, allow: AGENTS[id].tools, board },
+              ctx: { account, goals, fiatRates, allow: AGENTS[id].tools, board, risk },
             }).catch(() => null);
             return r && r.kind === "answer" ? { agent: AGENTS[id].name, text: r.text, used: r.toolsUsed, news: r.newsResults ?? [] } : null;
           }));
@@ -234,7 +237,7 @@ serve(async (req) => {
           call,
           messages: leadMessages,
           deadline,
-          ctx: { account, goals, fiatRates, allow: allowFor(plan.agents.filter((a) => !plan.debate || (a !== "bull" && a !== "bear")).concat(plan.debate ? ["wealth"] : [])), board },
+          ctx: { account, goals, fiatRates, risk, allow: allowFor(plan.agents.filter((a) => !plan.debate || (a !== "bull" && a !== "bear")).concat(plan.debate ? ["wealth"] : [])), board },
           evidence,
         });
         if (result.kind === "http_error") {

@@ -14,6 +14,7 @@ Exo is ExoSky's money + life intelligence, delivered as a messenger on web (`src
    ├─ Quant            quant_monte_carlo, quant_allocation, quant_black_scholes, calculate, prices
    ├─ Bull  ┐ run in parallel for "should I buy / outlook / thesis" questions,
    ├─ Bear  ┘ then the Lead synthesises both cases + the numbers
+   ├─ Governor         governor_check, macro_posture, quant_signal (risk / rebalance / allocation)
    └─ Life Assistant   shop_search, plan_trip, plan_event, maps_link (+ wealth when "afford")
    │
    │  Blackboard: per-request shared memory. Identical tool reads across agents run once
@@ -37,7 +38,49 @@ Exo is ExoSky's money + life intelligence, delivered as a messenger on web (`src
 | `accounting.ts` | Personal balance sheet (assets = cash + savings + priced holdings; liabilities = unpaid bills), `checkBooks` (A = L + E, lines sum to totals, income − expenses = net), `selfCorrect` that recomputes from line items | live |
 | `life.ts` | Free, keyless shopping search (Bing RSS, then DuckDuckGo HTML, then store links). Prices only when a listing shows one. Trip and event planners return calendar-style structures with Google Maps and Calendar links | live |
 | `tools.ts` | Tool schemas + execution. `get_prices` returns `{ usd: null, flag: "missing_data" }` for unknown symbols | live |
+| `engines.ts` | Dual-Engine: Quant fast path (`quant_signal`, clamped AI params), Macro engine (`macro_posture`), shared Redis/memory limits, Governor (`governor_check`) | live (paper only) |
 | `QUANT_STUBS` in `quant.ts` | Interfaces for S&P Capital IQ, Daloopa, native Rust/C++ engine, LSTM forecasts | stub, not called |
+
+## Dual-Engine architecture (`engines.ts`)
+
+Two engines share one set of targets and limits, and a Governor sits over both. Phase 1 uses only free services and is **paper only**: nothing in the codebase can place an order or move money.
+
+```
+            ┌──────────── shared targets & limits ────────────┐
+            │  Upstash Redis REST (free tier) if               │
+            │  UPSTASH_REDIS_REST_URL/TOKEN are set,           │
+            │  else in-memory; safe defaults on any error      │
+            │  keys: exo:limits:<user>, exo:targets:<user>     │
+            └───────▲───────────────────────────────▲─────────┘
+                    │                               │
+  Quant Engine (fast path)                 Macro Advisory Engine (slow path)
+  crypto / equities / options              FRED (rates, curve, CPI, jobs) live
+  free feeds: market-data fn quotes        SEC EDGAR fundamentals live
+  quant_signal: z-score, regime,           macro_posture: risk_on / neutral /
+  vol-target weight                        risk_off with reasons
+  quant_monte_carlo / allocation /         private equity: stub
+  black_scholes
+  AI = risk/parameter controller:
+  proposes params → clampParams
+  (vol target 5-40%, leverage ≤ 1)
+                    │                               │
+                    └──────────► Governor ◄─────────┘
+             governor_check(proposed paper allocation):
+             kill switch → block · drawdown ≥ limit → block
+             single-asset cap · class caps (crypto 20%, options 5%)
+             risk_off halves crypto/option caps · portfolio vol target
+             → approve | scale_down (adjusted weights) | block
+```
+
+| Piece | Phase 1 | Later |
+| --- | --- | --- |
+| Quant feeds | Live quotes from the existing `market-data` function (price + 24h change); class-level assumed volatility, labelled as an assumption | Tick/WebSocket feeds (e.g. exchange public streams), real realised vol, compiled Rust/C++ engine |
+| Options | Black-Scholes pricing + greeks | Chains, implied vol surface |
+| Macro | FRED + SEC live; private equity stub | Paid S&P / Daloopa, PE marks |
+| Shared state | Upstash Redis REST or memory; read-only from Exo | Admin UI to edit limits; engines write targets |
+| Governor | Deterministic checks on proposals | Human approval required before any execution feature exists |
+
+The model never sees credentials. Redis is optional, and without it the safe `DEFAULT_LIMITS` apply. Edge functions run statelessly, so the "ultra-low latency" path is the deterministic tool code itself (microseconds), with no model calls inside it. A real streaming engine is a later, separate service.
 
 ## Guardrails
 

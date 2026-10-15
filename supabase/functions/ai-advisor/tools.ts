@@ -7,6 +7,7 @@ import { blackScholes, meanVariance, missing, monteCarlo } from "./quant.ts";
 import { balanceSheet, checkBooks, selfCorrect } from "./accounting.ts";
 import { mapsLink, planEvent, planTrip, shopSearch } from "./life.ts";
 import type { Blackboard } from "./orchestrator.ts";
+import { type AssetClass, clampParams, DEFAULT_LIMITS, DEFAULT_TARGETS, governor, type Limits, macroPosture, type Position, PRIVATE_EQUITY_STUB, quantSignal, type Targets } from "./engines.ts";
 
 export type GoalsDb = {
   remove(id: string): Promise<{ data: unknown[] | null; error: { code?: string; message?: string } | null }>;
@@ -22,6 +23,7 @@ export type ToolCtx = {
   fiatRates?: () => Promise<Record<string, number>>; // units per 1 USD
   allow?: string[]; // tool subset for a specialist agent
   board?: Blackboard; // shared per-request memory
+  risk?: { limits: Limits; targets: Targets; backend: string }; // shared targets/limits (Redis or memory)
 };
 
 const fn = (name: string, description: string, properties: Record<string, unknown>, required: string[] = []) => ({
@@ -105,6 +107,16 @@ function baseDefs(withGoals: boolean) {
     fn("plan_event", "Event card: date/time/location, maps and add-to-calendar link, checklist, missing fields.", {
       title: { type: "string" }, date: { type: "string", description: "YYYY-MM-DD" }, time: { type: "string", description: "HH:MM" }, location: { type: "string" },
     }, ["title"]),
+    fn("quant_signal", "Quant engine fast path (paper only): live-quote z-score, regime and vol-target weight per symbol. AI may propose parameters; hard bounds clamp them. Never places orders.", {
+      symbols: { type: "array", items: { type: "string" } },
+      vol_target_pct: { type: "number" }, lookback_sigma: { type: "number" },
+    }, ["symbols"]),
+    fn("macro_posture", "Macro advisory engine: FRED-based risk posture (risk_on / neutral / risk_off) with reasons; private-equity data is a stub.", {}),
+    fn("governor_check", "Governor: cross-asset risk check of a PROPOSED paper allocation against the user's shared limits (concentration, class caps, portfolio vol, drawdown, kill switch). Returns approve / scale_down / block with the adjusted weights. Cannot trade.", {
+      positions: { type: "array", items: { type: "object", properties: { symbol: { type: "string" }, cls: { type: "string", enum: ["crypto", "equity", "option", "cash"] }, weight_pct: { type: "number" } }, required: ["symbol", "cls", "weight_pct"] } },
+      current_drawdown_pct: { type: "number" },
+      use_macro: { type: "boolean", description: "Apply the macro posture (risk_off halves crypto/option caps). Default true." },
+    }, ["positions"]),
     fn("maps_link", "Google Maps search link for a place or address.", { query: { type: "string" } }, ["query"]),
   ];
   if (withGoals) {
@@ -307,6 +319,43 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
       return planTrip({ destination: s("destination"), start_date: s("start_date"), days: n("days", 3), today: todayISO(a.now ?? new Date(), a.timeZone ?? "UTC") });
     case "plan_event":
       return planEvent({ title: s("title"), date: s("date"), time: s("time"), location: s("location"), today: todayISO(a.now ?? new Date(), a.timeZone ?? "UTC") });
+    case "quant_signal": {
+      const syms = Array.isArray(args.symbols) ? (args.symbols as unknown[]).map(String).slice(0, 10) : [];
+      const params = clampParams({ vol_target_pct: n("vol_target_pct", NaN), lookback_sigma: n("lookback_sigma", NaN) });
+      return {
+        params, paper_only: true,
+        signals: syms.map((x) => {
+          const sym = x.toUpperCase();
+          const cls: AssetClass = a.cryptoQuotes[sym] ? "crypto" : "equity";
+          return quantSignal(sym, quote(a, sym), cls, params);
+        }),
+      };
+    }
+    case "macro_posture": {
+      const m = await getMacro(a.now ?? new Date()) as Record<string, { value?: number; yoy_inflation_percent?: number | null }> & { spread_10y_minus_2y?: number };
+      return {
+        ...macroPosture({ yield_curve_10y_2y: m.spread_10y_minus_2y ?? null, cpi_yoy: m.cpi?.yoy_inflation_percent ?? null, unemployment: m.unemployment?.value ?? null, fed_funds: m.fed_funds_effective?.value ?? null }),
+        inputs: { spread_10y_minus_2y: m.spread_10y_minus_2y ?? null, cpi_yoy: m.cpi?.yoy_inflation_percent ?? null, unemployment: m.unemployment?.value ?? null },
+        private_equity: PRIVATE_EQUITY_STUB,
+      };
+    }
+    case "governor_check": {
+      const pos = (Array.isArray(args.positions) ? args.positions : []).slice(0, 20).map((p) => {
+        const o = p as Record<string, unknown>;
+        const cls = ["crypto", "equity", "option", "cash"].includes(String(o.cls)) ? (o.cls as AssetClass) : "equity";
+        return { symbol: String(o.symbol ?? "?").toUpperCase(), cls, weight_pct: typeof o.weight_pct === "number" ? o.weight_pct : NaN } as Position;
+      });
+      if (!pos.length) return missing("positions");
+      let posture: string | undefined;
+      if (args.use_macro !== false) {
+        try {
+          const m = await getMacro(a.now ?? new Date()) as Record<string, { value?: number; yoy_inflation_percent?: number | null }> & { spread_10y_minus_2y?: number };
+          posture = macroPosture({ yield_curve_10y_2y: m.spread_10y_minus_2y ?? null, cpi_yoy: m.cpi?.yoy_inflation_percent ?? null, unemployment: m.unemployment?.value ?? null }).posture;
+        } catch { posture = undefined; }
+      }
+      const limits = ctx.risk?.limits ?? DEFAULT_LIMITS;
+      return { ...governor(pos, limits, { posture, current_drawdown_pct: n("current_drawdown_pct", 0) }), macro_posture: posture ?? "unknown", limits, targets: ctx.risk?.targets ?? DEFAULT_TARGETS, limits_source: ctx.risk?.backend ?? "defaults" };
+    }
     case "maps_link":
       return s("query") ? { query: s("query"), map: mapsLink(s("query")) } : missing("place");
     case "set_goal": {

@@ -2,7 +2,7 @@
 // blackboard (tool-result cache + findings). Routing is deterministic (no extra model call),
 // so it's free and testable. Specialists reuse the same agent loop, fact-check and tools.
 export type Mode = "money" | "life";
-export type AgentId = "bull" | "bear" | "quant" | "wealth" | "life";
+export type AgentId = "bull" | "bear" | "quant" | "wealth" | "life" | "governor";
 
 export const AGENTS: Record<AgentId, { name: string; tools: string[]; brief: string }> = {
   wealth: {
@@ -12,7 +12,7 @@ export const AGENTS: Record<AgentId, { name: string; tools: string[]; brief: str
   },
   quant: {
     name: "Quant",
-    tools: ["calculate", "quant_monte_carlo", "quant_allocation", "quant_black_scholes", "get_prices", "get_balances", "get_macro"],
+    tools: ["calculate", "quant_monte_carlo", "quant_allocation", "quant_black_scholes", "quant_signal", "get_prices", "get_balances", "get_macro"],
     brief: "Numbers only: simulations, allocation, option pricing. State assumptions (mu, sigma, correlation). Never invent prices; if a price tool returns null say it's not available.",
   },
   bull: {
@@ -24,6 +24,11 @@ export const AGENTS: Record<AgentId, { name: string; tools: string[]; brief: str
     name: "Bear",
     tools: ["get_news", "get_company_fundamentals", "get_prices", "get_market_sentiment", "get_macro"],
     brief: "Make the strongest evidence-based bear case in 3 bullets (risks, valuation, macro), citing tool data only.",
+  },
+  governor: {
+    name: "Governor",
+    tools: ["governor_check", "macro_posture", "quant_signal", "get_balances", "get_prices", "accounting_check"],
+    brief: "Cross-asset risk officer. Check any proposed allocation or rebalance with governor_check before endorsing it; report approve / scale down / block and why. Paper only; you cannot trade.",
   },
   life: {
     name: "Life Assistant",
@@ -45,6 +50,7 @@ export function route(question: string, mode: Mode): { agents: AgentId[]; debate
   const debate = has(q, /\b(should i (buy|sell|invest)|bull|bear|buy or sell|worth (buying|investing)|outlook|thesis|overvalued|undervalued)\b/);
   if (has(q, /monte carlo|simulat|probabilit|allocation|allocate|portfolio weights?|sharpe|black[- ]?scholes|option price|volatility|\bvar\b|risk of (losing|ruin)/)) agents.add("quant");
   if (debate) { agents.add("bull"); agents.add("bear"); }
+  if (has(q, /\b(risk|exposure|limits?|rebalanc\w*|allocation|allocate|drawdown|hedge|concentrat\w*|macro)\b/)) agents.add("governor");
   if (!agents.size || has(q, /\b(my|i)\b/)) agents.add("wealth");
   return { agents: [...agents], debate };
 }
