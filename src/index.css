@@ -341,3 +341,13 @@ button:not(:disabled):active, [role="button"]:active, .press:active {
   .chart-reveal .recharts-yAxis .recharts-cartesian-axis-tick { animation: none !important; }
   .ring-pulse::before, .ring-pulse::after { opacity: 0.5; transform: none; }
 }
+
+/* Landing header: very subtle breathing glow on the ΞX mark */
+@keyframes exo-breathe {
+  0%, 100% { filter: drop-shadow(0 0 0 hsl(var(--accent) / 0)); }
+  50% { filter: drop-shadow(0 0 6px hsl(var(--accent) / 0.45)); }
+}
+.exo-breathe { animation: exo-breathe 3.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .exo-breathe { animation: none; }
+}
