@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, Reply, SquarePen, Target, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, Mic, Paperclip, PiggyBank, Reply, Search, SquarePen, Target, Wallet, X } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ExoAvatar from "@/components/exo/ExoAvatar";
 import MessageBubble from "@/components/exo/MessageBubble";
 import TypingIndicator from "@/components/exo/TypingIndicator";
-import { askExo, clearHistory, excerpt, loadHistory, newId, saveHistory, type ChatMessage } from "@/lib/exoChat";
+import ChatList, { type ThreadRow } from "@/components/exo/ChatList";
+import { useWallet } from "@/hooks/useWallet";
+import { useSavings } from "@/hooks/useSavings";
+import { askExo, excerpt, loadHistory, loadThreads, MAIN_THREAD, newId, saveHistory, saveThreads, threadKey, type ChatMessage, type ChatThread } from "@/lib/exoChat";
 
 const SUGGESTIONS = [
   "What's happening in crypto markets today?",
@@ -52,6 +56,14 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
   const [unseen, setUnseen] = useState(0);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [sendPulse, setSendPulse] = useState(0);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [activeId, setActiveId] = useState("exo");
+  const [listOpen, setListOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const { balance, savingsBalance } = useWallet();
+  const { apyRate } = useSavings();
+  const money = (n: number) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typing = isLoading || !!forceTyping;
@@ -65,6 +77,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
       const uid = data.session?.user.id ?? "anon";
       setUserKey(uid);
       setMessages(loadHistory(uid));
+      setThreads(loadThreads(uid));
       if (data.session) {
         try {
           const { data: rows, error } = await (supabase as unknown as GoalsClient)
@@ -84,8 +97,39 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
   }, [initialMessages]);
 
   useEffect(() => {
-    if (userKey && userKey !== "preview") saveHistory(userKey, messages);
-  }, [messages, userKey]);
+    if (userKey && userKey !== "preview") saveHistory(threadKey(userKey, activeId), messages);
+  }, [messages, userKey, activeId]);
+  useEffect(() => {
+    if (userKey && userKey !== "preview") saveThreads(userKey, threads);
+  }, [threads, userKey]);
+
+  // Chat list: Exo, then goals as conversations, then saved chats (newest first).
+  const allThreads = useMemo<ChatThread[]>(() => {
+    const goalThreads: ChatThread[] = goals.map((g) => ({
+      id: `goal:${g.id}`,
+      title: g.goal,
+      kind: "goal",
+      updatedAt: 0,
+      context: `> My goal: ${g.goal}${g.target_amount != null ? ` ($${Number(g.target_amount).toLocaleString()}` + (g.target_date ? ` by ${g.target_date})` : ")") : ""}`,
+    }));
+    return [MAIN_THREAD, ...goalThreads, ...[...threads].sort((a, b) => b.updatedAt - a.updatedAt)];
+  }, [goals, threads]);
+  const active = allThreads.find((t) => t.id === activeId) ?? MAIN_THREAD;
+  const threadRows: ThreadRow[] = allThreads.map((t) => {
+    const hist = t.id === activeId ? messages : userKey && userKey !== "preview" ? loadHistory(threadKey(userKey, t.id)) : [];
+    const last = hist[hist.length - 1];
+    return { ...t, last: last?.content, lastAt: last?.createdAt };
+  });
+
+  const openThread = (id: string) => {
+    setListOpen(false);
+    setSearchOpen(false);
+    setQuery("");
+    if (id === activeId || isLoading) return;
+    setActiveId(id);
+    setReplyTo(null);
+    setMessages(userKey && userKey !== "preview" ? loadHistory(threadKey(userKey, id)) : []);
+  };
 
   const scrollToBottom = useCallback((smooth = true) => {
     const el = scrollRef.current;
@@ -143,7 +187,9 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
     setReplyTo(null);
     setSendPulse((n) => n + 1);
     setIsLoading(true);
-    const result = await askExo(history);
+    if (active.kind === "chat")
+      setThreads((ts) => ts.map((t) => (t.id === active.id ? { ...t, updatedAt: Date.now(), title: t.title === "New chat" ? excerpt(text, 40) : t.title } : t)));
+    const result = await askExo(history, active.context);
     setMessages((prev) => [
       ...prev.map((m) => (m.role === "user" ? { ...m, read: true } : m)),
       { id: newId(), role: "assistant", content: result.text, createdAt: Date.now() },
@@ -166,38 +212,57 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
     el?.animate?.([{ filter: "brightness(1.6)" }, { filter: "brightness(1)" }], { duration: 900 });
   };
 
+  // New chat starts a fresh conversation; earlier ones stay in the chat list.
   const newChat = () => {
     if (isLoading) return;
+    const t: ChatThread = { id: `c-${newId()}`, title: "New chat", kind: "chat", updatedAt: Date.now() };
+    setThreads((ts) => [t, ...ts]);
+    setActiveId(t.id);
     setMessages([]);
     setReplyTo(null);
-    if (userKey && userKey !== "preview") clearHistory(userKey);
+    setListOpen(false);
     inputRef.current?.focus();
   };
+
+  const q = query.trim().toLowerCase();
+  const shownMessages = useMemo(() => (q ? messages.filter((m) => m.content.toLowerCase().includes(q)) : messages), [messages, q]);
 
   // Day separators + grouping of consecutive messages from the same sender.
   const rows = useMemo(
     () =>
-      messages.map((m, i) => {
-        const prev = messages[i - 1];
-        const next = messages[i + 1];
+      shownMessages.map((m, i, list) => {
+        const prev = list[i - 1];
+        const next = list[i + 1];
         const sameDay = (a: ChatMessage, b: ChatMessage) => new Date(a.createdAt).toDateString() === new Date(b.createdAt).toDateString();
         const newDay = !prev || !sameDay(prev, m);
         const firstInGroup = newDay || prev.role !== m.role || m.createdAt - prev.createdAt > GROUP_GAP_MS;
         const lastInGroup = !next || !sameDay(next, m) || next.role !== m.role || next.createdAt - m.createdAt > GROUP_GAP_MS;
         return { m, newDay, firstInGroup, lastInGroup };
       }),
-    [messages],
+    [shownMessages],
   );
 
   const empty = messages.length === 0;
 
   return (
-    <div className="relative mx-auto flex h-[calc(100dvh-172px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-[calc(100dvh-8rem)] w-full max-w-3xl flex-col">
+    <div className="relative mx-auto flex h-[calc(100dvh-172px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-[calc(100dvh-8rem)] w-full max-w-5xl overflow-hidden md:rounded-card md:border md:border-border/60">
+      <aside className={`${listOpen ? "flex" : "hidden"} w-full flex-col border-r border-border/60 bg-background md:flex md:w-72 md:flex-shrink-0`}>
+        <ChatList threads={threadRows} activeId={activeId} onOpen={openThread} onNew={newChat} />
+      </aside>
+      <div className={`${listOpen ? "hidden" : "flex"} relative min-w-0 flex-1 flex-col md:flex`}>
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur-xl">
+        <button
+          type="button"
+          onClick={() => setListOpen(true)}
+          aria-label="Chats"
+          className="-ml-2 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
         <ExoAvatar size={40} online thinking={typing} />
         <div className="min-w-0 flex-1">
-          <h1 className="text-base font-semibold leading-tight tracking-tight">Exo</h1>
+          <h1 className="truncate text-base font-semibold leading-tight tracking-tight">{active.kind === "exo" ? "Exo" : active.title}</h1>
           <p className="truncate text-xs leading-tight" aria-live="polite">
             {typing ? (
               <span className="text-accent">typing...</span>
@@ -208,6 +273,19 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
             )}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSearchOpen((o) => !o);
+            setQuery("");
+          }}
+          aria-label="Search in chat"
+          aria-pressed={searchOpen}
+          title="Search in chat"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <Search className="h-4 w-4" />
+        </button>
         <button
           type="button"
           onClick={newChat}
@@ -221,7 +299,44 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
         </button>
       </header>
 
-      {goals.length > 0 && (
+      {searchOpen && (
+        <div className="flex items-center gap-2 border-b border-border/60 bg-background/80 px-4 py-2">
+          <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            aria-label="Search in chat"
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+          {q && <span className="text-xs tabular-nums text-muted-foreground">{shownMessages.length}</span>}
+        </div>
+      )}
+
+      {/* Pinned money cards */}
+      {!initialMessages && (
+        <div className="flex gap-2 overflow-x-auto border-b border-border/60 bg-secondary/30 px-4 py-2 [scrollbar-width:none]" aria-label="Pinned">
+          <div className="flex min-w-[150px] items-center gap-2 rounded-card border-l-[3px] border-accent bg-background/70 px-3 py-1.5">
+            <Wallet className="h-4 w-4 text-accent" aria-hidden="true" />
+            <div className="text-xs leading-tight">
+              <div className="text-muted-foreground">Balance</div>
+              <div className="font-semibold tabular-nums">{money(balance)}</div>
+            </div>
+          </div>
+          <div className="flex min-w-[150px] items-center gap-2 rounded-card border-l-[3px] border-accent bg-background/70 px-3 py-1.5">
+            <PiggyBank className="h-4 w-4 text-accent" aria-hidden="true" />
+            <div className="text-xs leading-tight">
+              <div className="text-muted-foreground">Savings</div>
+              <div className="font-semibold tabular-nums">
+                {money(savingsBalance)} <span className="font-normal text-accent">· {apyRate}% APY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {goals.length > 0 && active.kind === "exo" && (
         <div className="flex items-center gap-2 overflow-x-auto border-b border-border/60 bg-secondary/40 px-4 py-2 text-xs" aria-label="Goals">
           <Target className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
           {goals.map((g) => (
@@ -336,6 +451,15 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
             sendMessage(input);
           }}
         >
+          <button
+            type="button"
+            aria-label="Attach"
+            title="Attach"
+            onClick={() => toast("Attachments are coming soon")}
+            className="flex h-11 w-9 flex-shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Paperclip className="h-5 w-5" />
+          </button>
           <label htmlFor="exo-input" className="sr-only">
             Ask Exo...
           </label>
@@ -354,6 +478,17 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
             }}
             className="max-h-40 min-h-[44px] flex-1 resize-none rounded-3xl border border-border bg-secondary px-4 py-3 text-[15px] leading-6 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
+          {!input.trim() && !isLoading ? (
+            <button
+              type="button"
+              aria-label="Voice message"
+              title="Voice message"
+              onClick={() => toast("Voice messages are coming soon")}
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <Mic className="h-5 w-5" />
+            </button>
+          ) : (
           <motion.button
             key={sendPulse}
             type="submit"
@@ -367,7 +502,9 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>
+          )}
         </form>
+      </div>
       </div>
     </div>
   );

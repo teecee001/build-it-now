@@ -57,7 +57,7 @@ export function parseSse(raw: string): string {
   return content;
 }
 
-export async function askExo(history: ChatMessage[]): Promise<{ ok: boolean; text: string }> {
+export async function askExo(history: ChatMessage[], context?: string): Promise<{ ok: boolean; text: string }> {
   try {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -71,7 +71,7 @@ export async function askExo(history: ChatMessage[]): Promise<{ ok: boolean; tex
     const resp = await fetch(CHAT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, apikey: SUPABASE_PUBLISHABLE_KEY },
-      body: JSON.stringify({ messages: toApiMessages(history.slice(-20)), timezone }),
+      body: JSON.stringify({ messages: withContext(toApiMessages(history.slice(-20)), context), timezone }),
     });
     if (resp.status === 401) return { ok: false, text: 'Please sign in again, then try the advisor.' };
     if (resp.status === 429) return { ok: false, text: 'Rate limit reached. Please try again in a moment.' };
@@ -84,3 +84,38 @@ export async function askExo(history: ChatMessage[]): Promise<{ ok: boolean; tex
     return { ok: false, text: "Sorry, I couldn't process that request. Please try again." };
   }
 }
+
+// ---- Conversations (Telegram-style chat list); same keys/shape as web src/lib/exoChat.ts ----
+export type ChatThread = { id: string; title: string; kind: 'exo' | 'goal' | 'chat'; updatedAt: number; context?: string };
+const THREADS_PREFIX = 'exo-chats:v1:';
+export const MAIN_THREAD: ChatThread = { id: 'exo', title: 'Exo', kind: 'exo', updatedAt: 0 };
+export const threadKey = (userKey: string, id: string) => (id === 'exo' ? userKey : `${userKey}:${id}`);
+export function loadThreads(userKey: string): ChatThread[] {
+  try {
+    const raw = globalThis.localStorage?.getItem(THREADS_PREFIX + userKey);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((t) => t && typeof t.id === 'string' && t.id !== 'exo') : [];
+  } catch {
+    return [];
+  }
+}
+export function saveThreads(userKey: string, threads: ChatThread[]) {
+  try { globalThis.localStorage?.setItem(THREADS_PREFIX + userKey, JSON.stringify(threads.filter((t) => t.id !== 'exo' && t.kind !== 'goal').slice(0, 50))); } catch { /* ignore */ }
+}
+export type LinkPreview = { title: string; url: string; host: string };
+export function extractLinks(md: string, max = 3): LinkPreview[] {
+  const out: LinkPreview[] = [];
+  const seen = new Set<string>();
+  const re = /\[([^\]]{1,140})\]\((https?:\/\/[^\s)]+)\)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(md)) && out.length < max) {
+    const url = m[2];
+    const host = (url.match(/^https?:\/\/([^/?#]+)/)?.[1] ?? '').replace(/^www\./, '');
+    if (!host || seen.has(url)) continue;
+    seen.add(url);
+    out.push({ title: m[1].replace(/[*_`]/g, '').trim(), url, host });
+  }
+  return out;
+}
+export const withContext = (msgs: { role: ChatRole; content: string }[], context?: string) =>
+  context && msgs.length ? [{ ...msgs[0], content: `${context}\n\n${msgs[0].content}` }, ...msgs.slice(1)] : msgs;

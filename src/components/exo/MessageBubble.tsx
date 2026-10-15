@@ -4,7 +4,8 @@ import { Check, CheckCheck, Copy, Reply, SmilePlus } from "lucide-react";
 import ExoAvatar from "./ExoAvatar";
 import ExoMarkdown from "./ExoMarkdown";
 import FiguresCard from "./FiguresCard";
-import { extractFigures, type ChatMessage } from "@/lib/exoChat";
+import LinkPreviews from "./LinkPreviews";
+import { extractFigures, extractLinks, type ChatMessage } from "@/lib/exoChat";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "🙏", "🔥"];
 
@@ -26,6 +27,8 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
   const pressTimer = useRef<number>();
   const rootRef = useRef<HTMLDivElement>(null);
   const figures = mine ? [] : extractFigures(msg.content);
+  const links = mine ? [] : extractLinks(msg.content);
+  const [touch] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -76,7 +79,20 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
     >
       {!mine && (lastInGroup ? <ExoAvatar size={28} /> : <div className="w-7 flex-shrink-0" />)}
 
-      <div className={`relative max-w-[82%] md:max-w-[70%] ${mine ? "order-1" : ""}`}>
+      <motion.div
+        className={`relative max-w-[82%] md:max-w-[70%] ${mine ? "order-1" : ""}`}
+        drag={touch ? "x" : false}
+        dragDirectionLock
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ left: mine ? 0.4 : 0, right: mine ? 0 : 0.4 }}
+        dragSnapToOrigin
+        onDragEnd={(_, info) => {
+          if (Math.abs(info.offset.x) > 56) {
+            navigator.vibrate?.(8);
+            onReply(msg);
+          }
+        }}
+      >
         <div
           tabIndex={0}
           role="article"
@@ -128,6 +144,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
           ) : (
             <ExoMarkdown content={msg.content} />
           )}
+          <LinkPreviews links={links} />
 
           <div className={`mt-1 flex items-center justify-end gap-1 text-caption ${mine ? "text-accent-foreground/80" : "text-muted-foreground"}`}>
             <time dateTime={new Date(msg.createdAt).toISOString()}>{time(msg.createdAt)}</time>
@@ -214,7 +231,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
             ))}
           </motion.div>
         )}
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

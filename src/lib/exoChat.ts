@@ -63,7 +63,7 @@ export const toApiMessages = (messages: ChatMessage[]) =>
 
 export type AdvisorResult = { ok: true; text: string } | { ok: false; text: string };
 
-export async function askExo(history: ChatMessage[]): Promise<AdvisorResult> {
+export async function askExo(history: ChatMessage[], context?: string): Promise<AdvisorResult> {
   try {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
@@ -78,7 +78,7 @@ export async function askExo(history: ChatMessage[]): Promise<AdvisorResult> {
       },
       body: JSON.stringify({
         // Only recent turns are useful to the model; long histories used to be rejected.
-        messages: toApiMessages(history.slice(-20)),
+        messages: withContext(toApiMessages(history.slice(-20)), context),
         timezone: (() => {
           try {
             return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -171,3 +171,51 @@ export function extractFigures(md: string): Figure[] {
   }
   return figs.length >= 2 ? figs : [];
 }
+
+// ---- Conversations (Telegram-style chat list) ----
+// The main Exo thread keeps the original storage key, so existing history is untouched.
+export type ChatThread = { id: string; title: string; kind: "exo" | "goal" | "chat"; updatedAt: number; context?: string };
+const THREADS_PREFIX = "exo-chats:v1:";
+export const MAIN_THREAD: ChatThread = { id: "exo", title: "Exo", kind: "exo", updatedAt: 0 };
+export const threadKey = (userKey: string, id: string) => (id === "exo" ? userKey : `${userKey}:${id}`);
+
+export function loadThreads(userKey: string): ChatThread[] {
+  try {
+    const raw = localStorage.getItem(THREADS_PREFIX + userKey);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((t) => t && typeof t.id === "string" && t.id !== "exo") : [];
+  } catch {
+    return [];
+  }
+}
+export function saveThreads(userKey: string, threads: ChatThread[]) {
+  try {
+    localStorage.setItem(THREADS_PREFIX + userKey, JSON.stringify(threads.filter((t) => t.id !== "exo" && t.kind !== "goal").slice(0, 50)));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Markdown links in an Exo reply (its Sources), for link-preview cards. */
+export type LinkPreview = { title: string; url: string; host: string };
+export function extractLinks(md: string, max = 3): LinkPreview[] {
+  const out: LinkPreview[] = [];
+  const seen = new Set<string>();
+  const re = /\[([^\]]{1,140})\]\((https?:\/\/[^\s)]+)\)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(md)) && out.length < max) {
+    try {
+      const u = new URL(m[2]);
+      if (seen.has(u.href)) continue;
+      seen.add(u.href);
+      out.push({ title: m[1].replace(/[*_`]/g, "").trim(), url: u.href, host: u.hostname.replace(/^www\./, "") });
+    } catch {
+      /* not a URL */
+    }
+  }
+  return out;
+}
+
+/** Thread context (e.g. a goal) is passed as a quoted preamble on the first turn; same {role, content} contract. */
+export const withContext = (msgs: { role: ChatRole; content: string }[], context?: string) =>
+  context && msgs.length ? [{ ...msgs[0], content: `${context}\n\n${msgs[0].content}` }, ...msgs.slice(1)] : msgs;
