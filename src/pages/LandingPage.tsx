@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, useInView, useReducedMotion } from "framer-motion";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -97,48 +97,12 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center">
-              <span className="text-xs font-black text-accent-foreground tracking-tighter">Ξ╳</span>
-            </div>
-            <span className="text-base font-bold tracking-tight">
-              <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-accent)" }}>
-                Ξ╳
-              </span>
-              oSky
-            </span>
-            <span className="hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent/15 text-accent border border-accent/20">
-              Beta
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/auth")}
-              className="text-muted-foreground hover:text-foreground hidden sm:inline-flex"
-            >
-              Log In
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => navigate("/auth")}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1 text-xs sm:text-sm"
-            >
-              Sign Up
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-      </nav>
+      <LandingHeader />
 
       <motion.section
         ref={heroRef}
         style={prefersReducedMotion ? undefined : { opacity: heroOpacity, y: heroY }}
-        className="relative pt-20 sm:pt-24 pb-10 px-5 will-change-transform"
+        className="relative pt-24 sm:pt-28 pb-10 px-5 will-change-transform"
       >
         <div className="absolute top-14 left-1/2 -translate-x-1/2 w-[360px] sm:w-[520px] h-[240px] bg-accent/[0.07] rounded-full blur-[100px] pointer-events-none" />
         <div className="max-w-6xl mx-auto relative flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-12">
