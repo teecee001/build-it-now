@@ -22,6 +22,9 @@ export default function TabsLayout() {
         tabBarActiveTintColor: C.green,
         tabBarInactiveTintColor: C.muted,
         tabBarStyle: { backgroundColor: C.bg, borderTopColor: C.border },
+        // Explicit line height: with the default 10px label and lineHeight "normal" the
+        // label box was exactly 10px with overflow hidden, clipping descenders (y, p, g).
+        tabBarLabelStyle: { fontSize: 11, lineHeight: 14, fontWeight: '500', flexShrink: 0 },
         sceneStyle: { backgroundColor: C.bg },
       }}>
       <Tabs.Screen name="index" options={tab('Account', 'grid-outline')} />

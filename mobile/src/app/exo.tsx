@@ -1,12 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Breathing } from '@/components/Breathing';
+import { Rich } from '@/components/ExoText';
 import { ExoMark } from '@/components/ExoMark';
 import { ui } from '@/components/ui';
 import { askExo, type ChatMessage, newId, now } from '@/lib/exo';
@@ -20,24 +20,6 @@ const SUGGESTIONS = [
   'Explain dollar-cost averaging simply',
   'What are key factors for long-term investing?',
 ];
-
-/** Renders Exo text; markdown links (Exo's sources) become tappable and open in the in-app browser. */
-function Rich({ text, mine }: { text: string; mine: boolean }) {
-  const parts = text.split(/(\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g);
-  return (
-    <Text style={{ color: mine ? C.bg : C.text, fontSize: 15, lineHeight: 21 }}>
-      {parts.map((p, i) => {
-        const m = p.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
-        if (!m) return p.replace(/\*\*/g, '');
-        return (
-          <Text key={i} style={{ color: C.green, textDecorationLine: 'underline' }} onPress={() => WebBrowser.openBrowserAsync(m[2]).catch(() => undefined)}>
-            {m[1]}
-          </Text>
-        );
-      })}
-    </Text>
-  );
-}
 
 export default function Exo() {
   const insets = useSafeAreaInsets();

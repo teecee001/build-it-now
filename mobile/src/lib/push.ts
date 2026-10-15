@@ -2,11 +2,12 @@
 // (see mobile/README.md for the table + policy Maurice would need to add).
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 export async function registerForPush(): Promise<string | null> {
   if (Platform.OS === 'web' || !Device.isDevice) return null;
+  // Loaded lazily so the web build never evaluates expo-notifications (it warns on web).
+  const Notifications = await import('expo-notifications');
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
