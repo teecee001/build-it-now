@@ -1,12 +1,14 @@
 // Read-only WalletConnect (free WalletConnect v2 Sign SDK). We only ask for the account address:
 // no signing methods are requested and nothing is ever sent to the wallet for approval.
-// Hidden unless EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID is set (free project id: cloud.reown.com).
+// Project id from EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID (eas.json / .env); falls back to ExoSky's
+// public Reown client id (not a secret). Set the env var to an empty string to hide the feature.
 import type SignClientType from '@walletconnect/sign-client';
 import type { SessionTypes } from '@walletconnect/types';
 
 import { WEB_ORIGIN } from '@/lib/web';
 
-export const WC_PROJECT_ID = process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '';
+const DEFAULT_WC_PROJECT_ID = '8154b4fad376bc9d84b585f171e8a782';
+export const WC_PROJECT_ID = process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID ?? DEFAULT_WC_PROJECT_ID;
 export const walletConnectEnabled = WC_PROJECT_ID.length > 0;
 
 export const CHAINS: { id: string; name: string; symbol: string; rpc: string }[] = [
