@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ChevronLeft, Mic, Paperclip, PiggyBank, Reply, Search, SquarePen, Target, Wallet, X } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowDown, ArrowUp, ChevronLeft, PiggyBank, Reply, Search, Sparkles, SquarePen, Target, Wallet, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ExoAvatar from "@/components/exo/ExoAvatar";
 import MessageBubble from "@/components/exo/MessageBubble";
@@ -9,7 +8,7 @@ import TypingIndicator from "@/components/exo/TypingIndicator";
 import ChatList, { type ThreadRow } from "@/components/exo/ChatList";
 import { useWallet } from "@/hooks/useWallet";
 import { useSavings } from "@/hooks/useSavings";
-import { askExo, excerpt, loadHistory, loadThreads, MAIN_THREAD, newId, saveHistory, saveThreads, threadKey, type ChatMessage, type ChatThread } from "@/lib/exoChat";
+import { askExo, extractLinks, followUps, loadMode, saveMode, splitReply, stripSources, type ExoMode, excerpt, loadHistory, loadThreads, MAIN_THREAD, newId, saveHistory, saveThreads, threadKey, type ChatMessage, type ChatThread } from "@/lib/exoChat";
 
 const SUGGESTIONS = [
   "What's happening in crypto markets today?",
@@ -17,6 +16,10 @@ const SUGGESTIONS = [
   "Explain dollar-cost averaging simply",
   "What are key factors for long-term investing?",
 ];
+
+const GREETING_MONEY = "Hey 👋 I'm keeping an eye on your money and the markets. What's on your mind?";
+const GREETING_LIFE = "Hey 👋 Shopping, trips, plans and places. What are we sorting out today?";
+const LIFE_SUGGESTIONS = ["Plan a weekend trip", "Find a gift under $50", "Plan a dinner on Friday"];
 
 const GROUP_GAP_MS = 5 * 60 * 1000;
 
@@ -56,6 +59,13 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
   const [unseen, setUnseen] = useState(0);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [sendPulse, setSendPulse] = useState(0);
+  const [mode, setModeState] = useState<ExoMode>(() => loadMode());
+  const setMode = (m: ExoMode) => {
+    setModeState(m);
+    saveMode(m);
+  };
+  // id of the Exo bubble currently streaming in (null when idle)
+  const [streamingId, setStreamingId] = useState<string | null>(null);
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [activeId, setActiveId] = useState("exo");
   const [listOpen, setListOpen] = useState(false);
@@ -67,6 +77,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typing = isLoading || !!forceTyping;
+  const showDots = typing && !streamingId;
 
   // Resolve the signed-in user, load their history and (optionally) their Exo goals.
   useEffect(() => {
@@ -189,11 +200,33 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
     setIsLoading(true);
     if (active.kind === "chat")
       setThreads((ts) => ts.map((t) => (t.id === active.id ? { ...t, updatedAt: Date.now(), title: t.title === "New chat" ? excerpt(text, 40) : t.title } : t)));
-    const result = await askExo(history, active.context);
-    setMessages((prev) => [
-      ...prev.map((m) => (m.role === "user" ? { ...m, read: true } : m)),
-      { id: newId(), role: "assistant", content: result.text, createdAt: Date.now() },
-    ]);
+    const liveId = newId();
+    let started = false;
+    const result = await askExo(history, active.context, {
+      mode,
+      // Stream into one live bubble (Sources hidden; shown as cards when done).
+      onDelta: (soFar) => {
+        const content = stripSources(soFar);
+        if (!started) {
+          started = true;
+          setStreamingId(liveId);
+          setMessages((prev) => [...prev.map((m) => (m.role === "user" ? { ...m, read: true } : m)), { id: liveId, role: "assistant", content, createdAt: Date.now() }]);
+        } else setMessages((prev) => prev.map((m) => (m.id === liveId ? { ...m, content } : m)));
+      },
+    });
+    // Final: short bubbles, sources as cards on the last one.
+    const sources = extractLinks(result.text, 4);
+    const parts = splitReply(stripSources(result.text) || result.text);
+    const at = Date.now();
+    const finals: ChatMessage[] = parts.map((content, i) => ({
+      id: i === 0 ? liveId : newId(),
+      role: "assistant",
+      content,
+      createdAt: at + i,
+      ...(i === parts.length - 1 && sources.length ? { sources } : {}),
+    }));
+    setMessages((prev) => [...prev.filter((m) => m.id !== liveId).map((m) => (m.role === "user" ? { ...m, read: true } : m)), ...finals]);
+    setStreamingId(null);
     setIsLoading(false);
     inputRef.current?.focus();
   };
@@ -243,6 +276,8 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
   );
 
   const empty = messages.length === 0;
+  const lastExo = [...messages].reverse().find((m) => m.role === "assistant");
+  const chips = lastExo && !streamingId ? followUps(lastExo.content, mode) : mode === "money" ? SUGGESTIONS : LIFE_SUGGESTIONS;
 
   return (
     <div className="relative mx-auto flex h-[calc(100dvh-172px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-[calc(100dvh-8rem)] w-full max-w-5xl overflow-hidden md:rounded-card md:border md:border-border/60">
@@ -267,9 +302,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
             {typing ? (
               <span className="text-accent">typing...</span>
             ) : (
-              <span className="text-muted-foreground">
-                <span className="text-accent">online</span> · Exo Intelligence · Not financial advice
-              </span>
+              <span className="text-accent">online</span>
             )}
           </p>
         </div>
@@ -299,6 +332,30 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
         </button>
       </header>
 
+      <div className="flex items-center justify-center border-b border-border/60 bg-background/80 px-4 py-2">
+        <div role="tablist" aria-label="Exo mode" className="relative grid w-full max-w-xs grid-cols-2 rounded-full bg-secondary p-1 text-sm">
+          <motion.span
+            aria-hidden="true"
+            layout
+            transition={{ type: "spring", stiffness: 500, damping: 36 }}
+            className={`absolute inset-y-1 w-[calc(50%-4px)] rounded-full bg-gradient-accent shadow-[0_0_16px_hsl(var(--accent)/0.35)] ${mode === "money" ? "left-1" : "left-[calc(50%+3px)]"}`}
+          />
+          {(["money", "life"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => setMode(m)}
+              className={`relative z-10 flex items-center justify-center gap-1.5 rounded-full py-1.5 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${mode === m ? "text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {m === "money" ? <Wallet className="h-3.5 w-3.5" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+              {m === "money" ? "Exo Money" : "Exo Life"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {searchOpen && (
         <div className="flex items-center gap-2 border-b border-border/60 bg-background/80 px-4 py-2">
           <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -315,7 +372,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
       )}
 
       {/* Pinned money cards */}
-      {!initialMessages && (
+      {!initialMessages && mode === "money" && (
         <div className="flex gap-2 overflow-x-auto border-b border-border/60 bg-secondary/30 px-4 py-2 [scrollbar-width:none]" aria-label="Pinned">
           <div className="flex min-w-[150px] items-center gap-2 rounded-card border-l-[3px] border-accent bg-background/70 px-3 py-1.5">
             <Wallet className="h-4 w-4 text-accent" aria-hidden="true" />
@@ -336,7 +393,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
         </div>
       )}
 
-      {goals.length > 0 && active.kind === "exo" && (
+      {goals.length > 0 && active.kind === "exo" && mode === "money" && (
         <div className="flex items-center gap-2 overflow-x-auto border-b border-border/60 bg-secondary/40 px-4 py-2 text-xs" aria-label="Goals">
           <Target className="h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
           {goals.map((g) => (
@@ -361,12 +418,17 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
         aria-label="Exo"
       >
         {empty && !typing && (
-          <div className="flex h-full flex-col items-center justify-center gap-4 px-4 text-center">
-            <ExoAvatar size={72} online />
-            <div>
-              <p className="text-heading">Exo</p>
-              <p className="text-sm text-muted-foreground">Ask Exo about markets, budgets, investing, or strategy</p>
-            </div>
+          // No bot splash: Exo opens the conversation like a person would.
+          <div className="flex min-h-full flex-col justify-end pb-2">
+            <MessageBubble
+              msg={{ id: "exo-hello", role: "assistant", content: mode === "money" ? GREETING_MONEY : GREETING_LIFE, createdAt: Date.now() }}
+              firstInGroup
+              lastInGroup
+              onReply={startReply}
+              onReact={() => undefined}
+              onJumpTo={() => undefined}
+            />
+            {mode === "money" && <p className="mt-1 pl-9 text-caption text-muted-foreground/70">Not financial advice</p>}
           </div>
         )}
 
@@ -381,7 +443,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
           </div>
         ))}
 
-        <AnimatePresence>{typing && <TypingIndicator />}</AnimatePresence>
+        <AnimatePresence>{showDots && <TypingIndicator />}</AnimatePresence>
       </div>
 
       <AnimatePresence>
@@ -406,7 +468,7 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
       {/* Composer */}
       <div className="sticky bottom-0 z-20 border-t border-border/60 bg-background/85 px-3 pb-3 pt-2 backdrop-blur-xl md:px-6">
         <div className="-mx-3 mb-2 flex gap-2 overflow-x-auto px-3 pb-0.5 [scrollbar-width:none] md:-mx-6 md:px-6" aria-label="Suggestions">
-          {SUGGESTIONS.map((s) => (
+          {chips.map((s) => (
             <button
               key={s}
               type="button"
@@ -451,15 +513,6 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
             sendMessage(input);
           }}
         >
-          <button
-            type="button"
-            aria-label="Attach"
-            title="Attach"
-            onClick={() => toast("Attachments are coming soon")}
-            className="flex h-11 w-9 flex-shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <Paperclip className="h-5 w-5" />
-          </button>
           <label htmlFor="exo-input" className="sr-only">
             Ask Exo...
           </label>
@@ -478,17 +531,6 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
             }}
             className="max-h-40 min-h-[44px] flex-1 resize-none rounded-3xl border border-border bg-secondary px-4 py-3 text-[15px] leading-6 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
-          {!input.trim() && !isLoading ? (
-            <button
-              type="button"
-              aria-label="Voice message"
-              title="Voice message"
-              onClick={() => toast("Voice messages are coming soon")}
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              <Mic className="h-5 w-5" />
-            </button>
-          ) : (
           <motion.button
             key={sendPulse}
             type="submit"
@@ -502,7 +544,6 @@ export default function AIAdvisor({ initialMessages, forceTyping }: Props = {}) 
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>
-          )}
         </form>
       </div>
       </div>

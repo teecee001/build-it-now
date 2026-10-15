@@ -36,7 +36,7 @@ export async function runAgent(opts: {
   const evidence = [...opts.evidence];
   const toolsUsed: string[] = [];
   const newsResults: unknown[] = [];
-  const tools = toolDefs(!!ctx.goals);
+  const tools = toolDefs(!!ctx.goals, ctx.allow);
   let mode: "tools" | "context" = "tools";
   const convo: Msg[] = [...opts.messages];
 
@@ -77,7 +77,9 @@ export async function runAgent(opts: {
           // A slow or failing tool must never sink the answer: cap it and return an error object.
           let timer: ReturnType<typeof setTimeout> | undefined;
           result = await Promise.race([
-            runTool(name, args, ctx),
+            ctx.allow && !ctx.allow.includes(name)
+              ? Promise.resolve({ error: `${name} is not available to this agent` })
+              : ctx.board ? ctx.board.run(name, args, () => runTool(name, args, ctx)) : runTool(name, args, ctx),
             new Promise((resolve) => {
               timer = setTimeout(() => resolve({ error: `${name} timed out; source temporarily unavailable` }), TOOL_TIMEOUT_MS);
             }),

@@ -6,6 +6,8 @@ import { type CallResult, runAgent } from "./agent.ts";
 import type { GoalsDb } from "./tools.ts";
 import { sanitizeMessages } from "./history.ts";
 import { appendSources, collectHeadlines } from "./sources.ts";
+import { loadRiskConfig, sharedStore } from "./engines.ts";
+import { AGENTS, agentSystem, Blackboard, LIFE_RULES, leadSynthesis, type Mode, route, STYLE_RULES } from "./orchestrator.ts";
 
 // Exo-internal system instructions (not app UI copy).
 const EXO_DATA_RULES = [
@@ -30,7 +32,7 @@ const TIME_BUDGET_MS = 40_000;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Expose-Headers": "x-exo-source, x-exo-provider, x-exo-tried, x-exo-tools, x-exo-mode, x-exo-factcheck",
+  "Access-Control-Expose-Headers": "x-exo-source, x-exo-provider, x-exo-tried, x-exo-tools, x-exo-mode, x-exo-factcheck, x-exo-agents, x-exo-cache-hits",
 };
 
 const json = (body: unknown, status: number) =>
@@ -139,6 +141,8 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const timezone = body?.timezone;
+    // Optional; older clients don't send it and get Money mode (unchanged behaviour).
+    const mode: Mode = body?.mode === "life" ? "life" : "money";
     if (!Array.isArray(body?.messages)) return json({ error: "Invalid messages" }, 400);
     // The app keeps up to 200 messages of history and sends them all; never reject a long
     // chat (that surfaced as the client's generic error). Keep only the recent, valid turns.
@@ -158,7 +162,7 @@ serve(async (req) => {
     const builtIn = (extra: Record<string, string> = {}) => sseAnswer(ruleAnswer(question, account), extra);
 
     // Date questions are answered exactly from the server clock in the user's time zone.
-    if (detectIntent(question) === "date") {
+    if (mode === "money" && detectIntent(question) === "date") {
       return builtIn({ "X-Exo-Provider": "built-in", "X-Exo-Tried": "date-shortcut", "X-Exo-Tools": "none", "X-Exo-Factcheck": "pass" });
     }
 
@@ -170,6 +174,8 @@ serve(async (req) => {
       { role: "system", content: todayLine(account) },
       { role: "system", content: ADVISOR_SYSTEM },
       { role: "system", content: EXO_DATA_RULES },
+      { role: "system", content: STYLE_RULES },
+      ...(mode === "life" ? [{ role: "system", content: LIFE_RULES }] : []),
       {
         role: "system",
         content:
@@ -177,8 +183,14 @@ serve(async (req) => {
       },
       ...messages,
     ];
+    const plan = route(question, mode);
+    // Shared targets/limits (Upstash Redis when configured, else safe defaults); read-only here.
+    const risk = await loadRiskConfig(sharedStore(), userData.user.id).catch(() => undefined);
+    const board = new Blackboard();
+    const allowFor = (ids: typeof plan.agents) => [...new Set(ids.flatMap((id) => AGENTS[id].tools))];
     const userText = messages.filter((m) => m?.role === "user" && typeof m.content === "string").map((m) => m.content as string);
 
+    const leadNews: unknown[] = [];
     for (const p of providers) {
       // Per-request time budget: stay well inside the edge wall-clock limit and the user's patience.
       if (Date.now() - started > TIME_BUDGET_MS) {
@@ -203,12 +215,30 @@ serve(async (req) => {
         return { ok: false, status: response.status, text };
       };
       try {
+        const deadline = started + TIME_BUDGET_MS;
+        const evidence = [summary, ...userText];
+        const persona = (ids: typeof plan.agents) => ({ role: "system", content: ids.map(agentSystem).join("\n") });
+        let leadMessages = [...baseMessages.slice(0, -messages.length), persona(plan.agents), ...messages];
+        if (plan.debate) {
+          // Bull and Bear research in parallel on the shared blackboard; the Lead then synthesises.
+          const sides = await Promise.all((["bull", "bear"] as const).map(async (id) => {
+            const r = await runAgent({
+              call, deadline: Math.min(deadline, Date.now() + 18_000), evidence: [...evidence],
+              messages: [...baseMessages.slice(0, -messages.length), persona([id]), ...messages],
+              ctx: { account, goals, fiatRates, allow: AGENTS[id].tools, board, risk },
+            }).catch(() => null);
+            return r && r.kind === "answer" ? { agent: AGENTS[id].name, text: r.text, used: r.toolsUsed, news: r.newsResults ?? [] } : null;
+          }));
+          for (const f of sides) if (f) { board.findings.push({ agent: f.agent, text: f.text }); evidence.push(f.text); }
+          if (board.findings.length) leadMessages = [...baseMessages.slice(0, -messages.length), { role: "system", content: leadSynthesis(board.findings) }, ...messages];
+          sides.forEach((f) => f && f.news.length && (leadNews.push(...f.news)));
+        }
         const result = await runAgent({
           call,
-          messages: baseMessages,
-          deadline: started + TIME_BUDGET_MS,
-          ctx: { account, goals, fiatRates },
-          evidence: [summary, ...userText],
+          messages: leadMessages,
+          deadline,
+          ctx: { account, goals, fiatRates, risk, allow: allowFor(plan.agents.filter((a) => !plan.debate || (a !== "bull" && a !== "bear")).concat(plan.debate ? ["wealth"] : [])), board },
+          evidence,
         });
         if (result.kind === "http_error") {
           tried.push(`${p.name}=${result.status}`);
@@ -219,13 +249,15 @@ serve(async (req) => {
           "X-Exo-Provider": p.name,
           "X-Exo-Tried": tried.join(","),
           "X-Exo-Tools": result.toolsUsed.join(",") || "none",
-          "X-Exo-Mode": result.mode,
+          "X-Exo-Mode": `${mode}/${result.mode}`,
+          "X-Exo-Agents": plan.agents.join(",") + (plan.debate ? "+lead" : ""),
+          "X-Exo-Cache-Hits": String(board.hits),
         };
         if (result.kind === "factcheck_failed") {
           console.error(`Exo fact-check failed on ${p.name}: unsupported ${result.unsupported.join(", ").slice(0, 200)}`);
           return builtIn({ ...meta, "X-Exo-Factcheck": "failed-built-in" });
         }
-        const text = appendSources(result.text, collectHeadlines(result.newsResults ?? []));
+        const text = appendSources(result.text, collectHeadlines([...leadNews, ...(result.newsResults ?? [])]));
         return sseAnswer(text, { ...meta, "X-Exo-Source": "ai", "X-Exo-Factcheck": result.factcheck });
       } catch (e) {
         console.error(`Exo provider ${p.name} threw: ${e instanceof Error ? e.name + ": " + e.message.slice(0, 200) : "unknown"}`);
