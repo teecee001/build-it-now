@@ -1,16 +1,19 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FlatList, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TxRow } from '@/components/TxRow';
 import { Title, ui } from '@/components/ui';
-import { useTransactions } from '@/hooks/data';
+import { useTransactions } from '@/hooks/useTransactions';
 import { getTransactionTitle } from '@/lib/formatTransaction';
 import { C } from '@/lib/theme';
 
 export default function Activity() {
   const insets = useSafeAreaInsets();
-  const { transactions, isLoading, refetch } = useTransactions();
+  const { transactions, isLoading } = useTransactions();
+  const qc = useQueryClient();
+  const refetch = () => qc.invalidateQueries({ queryKey: ['transactions'] });
   const [q, setQ] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const list = q

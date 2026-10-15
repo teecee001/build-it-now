@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text } from 'react-native';
 
@@ -8,20 +8,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { haptic } from '@/lib/haptics';
 import { biometricLabel, isLockEnabled, setLockEnabled } from '@/lib/lock';
 import { C } from '@/lib/theme';
-import { openWeb } from '@/lib/web';
 
 // Same labels, grouping and routes as the web app menu (src/components/layout/AppLayout.tsx).
-const SECTIONS: { title: string; items: { label: string; path: string }[] }[] = [
+const SECTIONS: { title: string; items: { label: string; path: Href }[] }[] = [
   { title: 'Money', items: [
     { label: 'QR Pay', path: '/qr' }, { label: 'Deposit', path: '/deposit' }, { label: 'Savings', path: '/savings' },
     { label: 'Card', path: '/card' }, { label: 'Bills', path: '/bills' },
   ] },
   { title: 'Invest', items: [
-    { label: 'Stocks', path: '/stocks' }, { label: 'Markets', path: '/markets' }, { label: 'Forecasts', path: '/forecasts' },
+    { label: 'Crypto', path: '/crypto' }, { label: 'Stocks', path: '/stocks' }, { label: 'Markets', path: '/markets' }, { label: 'Forecasts', path: '/forecasts' },
   ] },
   { title: 'More', items: [
     { label: 'Rewards', path: '/rewards' }, { label: 'Refer & Earn', path: '/referrals' }, { label: 'Pro', path: '/premium' },
-    { label: 'Settings', path: '/settings' },
+    { label: 'Settings', path: '/settings' }, { label: 'Feedback', path: '/feedback' },
   ] },
 ];
 
@@ -42,7 +41,7 @@ export default function Menu() {
     biometricLabel().then(setBio);
     isLockEnabled().then(setLock);
   }, []);
-  const go = (path: string) => { haptic.tap(); openWeb(path); };
+  const go = (path: Href) => { haptic.tap(); router.push(path); };
 
   return (
     <Screen>
@@ -52,7 +51,7 @@ export default function Menu() {
       {SECTIONS.map((sec, i) => (
         <Card key={sec.title} i={i + 1}>
           <Text style={s.sec}>{sec.title}</Text>
-          {sec.items.map((it) => <Row key={it.path} label={it.label} onPress={() => go(it.path)} />)}
+          {sec.items.map((it) => <Row key={it.label} label={it.label} onPress={() => go(it.path)} />)}
         </Card>
       ))}
       {bio && (

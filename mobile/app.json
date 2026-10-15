@@ -37,13 +37,44 @@
           "backgroundColor": "#09090B",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120,
-          "dark": { "backgroundColor": "#09090B", "image": "./assets/images/splash-icon.png" }
+          "dark": {
+            "backgroundColor": "#09090B",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
       ],
       "expo-secure-store",
-      ["expo-local-authentication", { "faceIDPermission": "ExoSky uses Face ID to unlock the app." }],
-      ["expo-notifications", { "color": "#22C55E" }],
-      "expo-web-browser"
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "ExoSky uses Face ID to unlock the app."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#22C55E"
+        }
+      ],
+      "expo-web-browser",
+      "expo-sqlite",
+      "expo-sharing",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ExoSky uses the camera to scan QR codes for payments and wallet addresses.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ExoSky uses your photos to set your profile picture.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

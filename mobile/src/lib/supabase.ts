@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
+import type { Database } from '@/integrations/supabase/types';
+
 // Same public project URL + publishable (anon) key the web app ships in
 // src/integrations/supabase/client.ts. These are public by design; no secrets here.
 export const SUPABASE_URL = 'https://vxcxwmhesgpncbkhwsej.supabase.co';
@@ -41,7 +43,7 @@ const storage =
         removeItem: (k: string) => secureStorage.removeItem(sanitize(k)),
       };
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage,
     persistSession: true,
