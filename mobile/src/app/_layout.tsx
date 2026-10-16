@@ -56,6 +56,8 @@ function Root() {
         <Stack.Protected guard={!!session}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="exo" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="wallet" />
+          <Stack.Screen name="wallet-recover" />
           <Stack.Screen name="analytics" />
           <Stack.Screen name="bills" />
           <Stack.Screen name="card" />

@@ -7,6 +7,8 @@ import Animated, { ZoomIn } from 'react-native-reanimated';
 import { SwipeToPay } from '@/components/SwipeToPay';
 import { TransactionPinModal } from '@/components/TransactionPinModal';
 import { useTransactionPin } from '@/hooks/useTransactionPin';
+import { mpcConfig } from '@/wallet/mpc/config';
+import { type ConfirmOutcome, useConfirmSheet } from '@/wallet/mpc/ConfirmSheet';
 import { Card, Screen, Title, ui } from '@/components/ui';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { useMultiCurrencyWallet } from '@/hooks/useMultiCurrencyWallet';
@@ -42,6 +44,7 @@ export default function Send() {
   const { requiresPin, verifyPin, isPinSet, PIN_THRESHOLD } = useTransactionPin();
   const [pinOpen, setPinOpen] = useState(false);
   const pinGate = useRef<((ok: boolean) => void) | null>(null);
+  const { ask, sheet: confirmSheet } = useConfirmSheet();
   const closePin = (ok: boolean) => { setPinOpen(false); pinGate.current?.(ok); pinGate.current = null; };
 
   const handleSend = async () => {
@@ -56,7 +59,13 @@ export default function Send() {
       setError(`Insufficient ${cur} balance`);
       return;
     }
-    if (requiresPin(toUSD(parsed, cur))) {
+    // Exo Wallet flag on: one native review + biometric confirm for every send (same sheet as crypto).
+    let bio: ConfirmOutcome | null = null;
+    if (mpcConfig().enabled) {
+      bio = await ask({ title: 'Send money', amount: `${symbolOf(cur)}${parsed.toFixed(2)} ${cur}`, to: formatHandle(recipient) });
+      if (bio === 'cancelled') return;
+    }
+    if (bio !== 'confirmed' && requiresPin(toUSD(parsed, cur))) {
       const ok = await new Promise<boolean>((resolve) => { pinGate.current = resolve; setPinOpen(true); });
       if (!ok) return;
     }
@@ -136,6 +145,7 @@ export default function Send() {
           </View>
         )}
         <SwipeToPay label="Send" onConfirm={handleSend} disabled={!recipient || !amount} />
+        {confirmSheet}
         <TransactionPinModal open={pinOpen} amount={toUSD(parsed || 0, cur)} verifyPin={verifyPin} onVerified={() => closePin(true)} onCancel={() => closePin(false)} />
       </Card>
     </Screen>
