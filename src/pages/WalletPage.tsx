@@ -3,6 +3,7 @@ import { chartAnim } from "@/lib/motion";
 import { LiveDot } from "@/components/ds/LiveBadge";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { mpcConfig } from "@/wallet/mpc/config";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -101,9 +102,14 @@ export default function WalletPage() {
             <Wallet className="w-5 h-5 text-warning" />
             <h1 className="text-title">Crypto Wallet</h1>
           </div>
-          <Badge variant={isLive ? "default" : "secondary"} className="gap-1 text-caption">
-            {isLive ? <><LiveDot />Live</> : "Demo"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {mpcConfig().enabled && (
+              <Button variant="outline" size="sm" onClick={() => navigate("/wallet/exo")}>Exo Wallet</Button>
+            )}
+            <Badge variant={isLive ? "default" : "secondary"} className="gap-1 text-caption">
+              {isLive ? <><LiveDot />Live</> : "Demo"}
+            </Badge>
+          </div>
         </div>
       </motion.div>
 
