@@ -19,9 +19,9 @@ export interface MpcWalletProvider {
   /** Creates the wallet; the provider splits the key into shares and never returns it. */
   createWallet(): Promise<{ address: string }>;
   /** Encrypts the recovery share to the user's own cloud account. */
-  backup(method: BackupMethod): Promise<void>;
+  backup(method: BackupMethod, password?: string): Promise<void>;
   /** Rebuilds device access on a new phone from the auth share plus the recovery share. */
-  recover(method: BackupMethod): Promise<{ address: string }>;
+  recover(method: BackupMethod, password?: string): Promise<{ address: string }>;
   /** Signs and broadcasts on an allowed testnet only; returns the tx hash. */
   sendTestnet(tx: TestnetTx): Promise<string>;
 }

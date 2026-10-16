@@ -17,6 +17,7 @@ import { isLockEnabled } from '@/lib/lock';
 import { IS_IOS } from '@/lib/motion';
 import { registerForPush } from '@/lib/push';
 import { C } from '@/lib/theme';
+import { PrivyWalletRoot } from '@/wallet/mpc/PrivyBridge';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
@@ -100,7 +101,9 @@ export default function RootLayout() {
         <AuthProvider>
           <StatusBar style="light" />
           <ActiveCurrencyProvider>
-            <Root />
+            <PrivyWalletRoot>
+              <Root />
+            </PrivyWalletRoot>
           </ActiveCurrencyProvider>
         </AuthProvider>
       </QueryClientProvider>

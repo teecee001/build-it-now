@@ -10,12 +10,12 @@ import { Badge, Box, Btn, Field, k, Page } from '@/components/kit';
 import { getErrorMessage } from '@/lib/errors';
 import { C } from '@/lib/theme';
 import { toast } from '@/lib/toast';
-import { BACKUP_LABEL, backupOptions, type BackupMethod, DEFAULT_TESTNET, isAddress, testnetBalances, toWei, useConfirmSheet, walletProvider, type WalletState } from '@/wallet/mpc';
+import { BACKUP_LABEL, backupOptions, type BackupMethod, DEFAULT_TESTNET, isAddress, testnetBalances, toWei, useConfirmSheet, useWalletProvider, type WalletState } from '@/wallet/mpc';
 import type { TestnetBalance } from '@/wallet/mpc/balance';
 
 
 export default function Wallet() {
-  const provider = walletProvider();
+  const provider = useWalletProvider();
   const [state, setState] = useState<WalletState | null>(null);
   const [busy, setBusy] = useState(false);
   const refresh = useCallback(() => { provider.state().then(setState).catch(() => setState({ kind: 'signed_out' })); }, [provider]);
@@ -51,14 +51,15 @@ export default function Wallet() {
           <Btn label="Restore wallet" icon="refresh-outline" onPress={() => router.push('/wallet-recover')} style={{ marginTop: 14 }} />
         </Box>
       ) : (
-        <Ready address={state.address} backup={state.backup} busy={busy} onBackup={(m) => act(() => provider.backup(m))()} />
+        <Ready address={state.address} backup={state.backup} busy={busy} onBackup={(m, pw) => act(() => provider.backup(m, pw))()} />
       )}
     </Page>
   );
 }
 
-function Ready({ address, backup, busy, onBackup }: { address: string; backup: BackupMethod | null; busy: boolean; onBackup: (m: BackupMethod) => void }) {
-  const provider = walletProvider();
+function Ready({ address, backup, busy, onBackup }: { address: string; backup: BackupMethod | null; busy: boolean; onBackup: (m: BackupMethod, password?: string) => void }) {
+  const provider = useWalletProvider();
+  const [password, setPassword] = useState('');
   const [balances, setBalances] = useState<TestnetBalance[]>([]);
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
@@ -107,7 +108,9 @@ function Ready({ address, backup, busy, onBackup }: { address: string; backup: B
         ) : (
           <>
             <Text style={[k.muted, { marginTop: 6 }]}>Back up now so you can restore this wallet on a new phone.</Text>
-            {backupOptions().map((m) => <Btn key={m} label={`Back up to ${BACKUP_LABEL[m]}`} variant="outline" busy={busy} onPress={() => onBackup(m)} style={{ marginTop: 10 }} />)}
+            {backupOptions().filter((m) => m !== 'password').map((m) => <Btn key={m} label={`Back up to ${BACKUP_LABEL[m]}`} variant="outline" busy={busy} onPress={() => onBackup(m)} style={{ marginTop: 10 }} />)}
+            <Field label="Recovery password" value={password} onChangeText={setPassword} placeholder="At least 8 characters" secureTextEntry autoCapitalize="none" style={{ marginTop: 10 }} />
+            <Btn label="Back up with password" variant="outline" busy={busy} disabled={password.length < 8} onPress={() => onBackup('password', password)} />
           </>
         )}
       </Box>

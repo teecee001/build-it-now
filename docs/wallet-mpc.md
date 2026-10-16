@@ -71,3 +71,17 @@ Whether this counts as **non-custodial** depends on the jurisdiction and on the 
 1. A Privy account and app at https://dashboard.privy.io. Copy the **App ID** and create a **Client ID** for the mobile app (App settings > Clients). Set them as `EXPO_PUBLIC_PRIVY_APP_ID` and `EXPO_PUBLIC_PRIVY_CLIENT_ID` in `eas.json` (preview env) or `.env`.
 2. In Privy: **Wallets > Advanced**, choose on-device execution. **Authentication**: add a custom JWT provider pointing at the Supabase JWKS. **Recovery**: enable iCloud (needs an Apple CloudKit container and API token in the Apple Developer account) and Google Drive (needs a Google OAuth client in Google Cloud Console).
 3. Set `EXPO_PUBLIC_MPC_WALLET=1` only on the preview profile.
+
+## Privy integration (live in preview/development builds)
+
+- Login: ExoSky's Supabase session is passed to Privy as a custom JWT (`customAuth.getCustomAccessToken`). This is JWT-based auth, which is on Privy's free Developer plan. There is no second sign-in.
+- Flag: `EXPO_PUBLIC_MPC_WALLET=1` plus `EXPO_PUBLIC_PRIVY_APP_ID` and `EXPO_PUBLIC_PRIVY_CLIENT_ID` are set only in the eas.json `development` and `preview` profiles. Production is unchanged.
+- Safety: Privy loads lazily and only when the binary contains its native modules (ExpoCrypto and RNCWebView). OTA updates that reach older APKs or Expo Go fall back to the "not set up" screen. Web uses a pass-through (`PrivyBridge.tsx`).
+- Testnet only: `switchChain` and `sendTestnet` assert Base Sepolia or Sepolia. The adapter also re-reads `eth_chainId` before signing and refuses anything else.
+- Backup: Google Drive and a password (8+ characters, maps to Privy `user-passcode`). iCloud appears only when Privy's native extension module is present (iOS builds).
+
+### Privy dashboard steps
+1. Authentication → JWT-based auth (custom auth): JWKS URL `https://vxcxwmhesgpncbkhwsej.supabase.co/auth/v1/.well-known/jwks.json`, user ID claim `sub`. Supabase must use asymmetric JWT signing keys (Supabase → Project Settings → JWT Keys → migrate off legacy HS256), or the JWKS will be empty.
+2. App clients → the mobile client: allowed app identifier `com.exosky.app`, URL scheme `exosky`.
+3. Embedded wallets → Ethereum: create on login off (ExoSky creates on tap). Enable recovery with Google Drive, password, and iCloud (iCloud needs an Apple developer account and an iCloud container).
+4. Embedded wallets → advanced: enable on-device execution for Expo if offered.
