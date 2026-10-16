@@ -22,6 +22,7 @@ const SendMoney = lazy(() => import("./pages/SendMoney"));
 const Markets = lazy(() => import("./pages/Markets"));
 const Forecasts = lazy(() => import("./pages/Forecasts"));
 const ExoApp = lazy(() => import("./exo/ExoApp"));
+const LifeHubs = lazy(() => import("./pages/LifeHubs"));
 const Rewards = lazy(() => import("./pages/Rewards"));
 const Activity = lazy(() => import("./pages/Activity"));
 const CardPage = lazy(() => import("./pages/CardPage"));
@@ -163,6 +164,7 @@ const App = () => (
                 <Route path="/convert" element={<MultiCurrencyWallet />} />
                 <Route path="/stocks" element={<StocksPage />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/life" element={<LifeHubs />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
