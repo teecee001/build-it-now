@@ -8,7 +8,7 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withD
 import { Breathing } from '@/components/Breathing';
 import { ExoMark } from '@/components/ExoMark';
 import { ui } from '@/components/ui';
-import { excerpt, type ChatThread, type LinkPreview } from '@/lib/exo';
+import { excerpt, type ChatThread, type LinkPreview } from '@/exo/lib';
 import { haptic } from '@/lib/haptics';
 import { animateTo } from '@/lib/motion';
 import { C } from '@/lib/theme';

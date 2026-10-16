@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { extractLinks, followUps, splitReply, stripSources, loadHistory, loadThreads, saveHistory, saveThreads, threadKey, withContext } from '@/lib/exo';
+import { extractLinks, followUps, splitReply, stripSources, loadHistory, loadThreads, saveHistory, saveThreads, threadKey, withContext } from '@/exo/lib';
 jest.mock('@/lib/supabase', () => ({ supabase: { auth: {} }, SUPABASE_URL: 'https://x', SUPABASE_PUBLISHABLE_KEY: 'k' }));
 
 const store: Record<string, string> = {};

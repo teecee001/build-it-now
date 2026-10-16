@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, CheckCheck, Copy, Reply, SmilePlus } from "lucide-react";
-import ExoAvatar from "./ExoAvatar";
 import ExoMarkdown from "./ExoMarkdown";
 import FiguresCard from "./FiguresCard";
 import LinkPreviews from "./LinkPreviews";
-import { extractFigures, extractLinks, stripSources, type ChatMessage } from "@/lib/exoChat";
+import { RichCards } from "./RichCards";
+import { extractFigures, extractLinks, parseAllocation, stripSources, type ChatMessage, type ExoMode } from "@/lib/exoChat";
 
 const REACTIONS = ["👍", "❤️", "😂", "😮", "🙏", "🔥"];
 
@@ -16,18 +16,19 @@ type Props = {
   onReply: (m: ChatMessage) => void;
   onReact: (m: ChatMessage, emoji: string) => void;
   onJumpTo: (id: string) => void;
+  mode?: ExoMode;
 };
 
 const time = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
-export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply, onReact, onJumpTo }: Props) {
+export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply, onReact, onJumpTo, mode = "money" }: Props) {
   const mine = msg.role === "user";
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const pressTimer = useRef<number>();
   const rootRef = useRef<HTMLDivElement>(null);
   const body = mine ? msg.content : stripSources(msg.content);
-  const figures = mine ? [] : extractFigures(body);
+  const figures = mine || parseAllocation(body).length ? [] : extractFigures(body);
   const links = mine ? [] : (msg.sources ?? extractLinks(msg.content, 4));
   const [touch] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches);
 
@@ -78,10 +79,10 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
       className={`group relative flex items-end gap-2 ${mine ? "justify-end" : "justify-start"} ${lastInGroup ? "mb-2" : "mb-1"} ${msg.reaction ? "pb-3" : ""}`}
     >
-      {!mine && (lastInGroup ? <ExoAvatar size={28} /> : <div className="w-7 flex-shrink-0" />)}
+      
 
       <motion.div
-        className={`relative max-w-[82%] md:max-w-[70%] ${mine ? "order-1" : ""}`}
+        className={`relative ${mine ? "order-1 max-w-[82%] md:max-w-[70%]" : "w-full max-w-full"}`}
         drag={touch ? "x" : false}
         dragDirectionLock
         dragConstraints={{ left: 0, right: 0 }}
@@ -112,14 +113,14 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
             }
           }}
           className={`relative px-3.5 pt-2 pb-1.5 select-text outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background shadow-card ${radius} ${
-            mine ? "bg-gradient-accent text-accent-foreground" : "bg-secondary text-foreground"
+            mine ? "bg-emerald-500 text-black" : "!px-0.5 !shadow-none text-foreground text-[16px] leading-[1.6]"
           }`}
         >
-          {lastInGroup && (
+          {lastInGroup && mine && (
             <svg
               aria-hidden="true"
               viewBox="0 0 11 20"
-              className={`absolute bottom-0 w-[11px] h-[20px] ${mine ? "-right-[6px] text-[hsl(160_84%_39%)]" : "-left-[6px] -scale-x-100 text-secondary"}`}
+              className={`absolute bottom-0 w-[11px] h-[20px] ${mine ? "-right-[6px] text-emerald-600" : "-left-[6px] -scale-x-100 text-[#0c110e]"}`}
             >
               <path d="M0 0v14c0 3 2 6 6 6h5C6 20 1 15 0 0z" fill="currentColor" />
             </svg>
@@ -130,7 +131,7 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
               type="button"
               onClick={() => onJumpTo(msg.replyTo!.id)}
               className={`mb-2 block w-full text-left rounded-lg border-l-[3px] px-2 py-1 text-[13px] ${
-                mine ? "border-white/80 bg-white/15" : "border-accent bg-background/50"
+                mine ? "border-black/40 bg-black/10" : "border-emerald-400 bg-white/[0.03]"
               }`}
             >
               <span className={`block font-semibold text-xs ${mine ? "" : "text-accent"}`}>{msg.replyTo.role === "user" ? "You" : "Exo"}</span>
@@ -145,9 +146,10 @@ export default function MessageBubble({ msg, firstInGroup, lastInGroup, onReply,
           ) : (
             <ExoMarkdown content={body} />
           )}
+          {!mine && <RichCards text={body} mode={mode} />}
           <LinkPreviews links={links} />
 
-          <div className={`mt-1 flex items-center justify-end gap-1 text-caption ${mine ? "text-accent-foreground/80" : "text-muted-foreground"}`}>
+          <div className={`mt-1 flex items-center justify-end gap-1 text-caption ${mine ? "text-black/60" : "text-muted-foreground"}`}>
             <time dateTime={new Date(msg.createdAt).toISOString()}>{time(msg.createdAt)}</time>
             {mine &&
               (msg.read ? (

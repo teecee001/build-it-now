@@ -190,3 +190,95 @@ export function followUps(last: string | undefined, mode: ExoMode): string[] {
   }
   return pick.slice(0, 3);
 }
+
+// ---- Rich cards parsed from Exo replies (pure; same in web and mobile) ----
+export type AllocationRow = { symbol: string; pct: number; note?: string };
+/** '- **BTC**: 20% (crypto cap)' style rows from a Governor / allocation reply. */
+export function parseAllocation(md: string): AllocationRow[] {
+  if (!/governor|allocat|rebalanc|weights?|portfolio/i.test(md)) return [];
+  const rows: AllocationRow[] = [];
+  const re = /^\s*(?:[-*]|\d+[.)])\s+\**([A-Za-z][A-Za-z0-9.]{0,9})\**\s*[:–—-]\s*\**(\d{1,3}(?:\.\d+)?)\s?%\**\s*(?:\(([^)]{1,40})\))?/;
+  for (const line of md.split('\n')) {
+    const m = line.match(re);
+    if (m) rows.push({ symbol: m[1].toUpperCase(), pct: Number(m[2]), note: m[3]?.trim() });
+  }
+  const sum = rows.reduce((s, r) => s + r.pct, 0);
+  return rows.length >= 2 && sum <= 100.5 ? rows : [];
+}
+
+export type ItineraryRow = { label: string; text: string };
+/** '**Sat, Nov 8** · Morning: …' or 'Day 1: …' lines from a Life plan. */
+export function parseItinerary(md: string): ItineraryRow[] {
+  const rows: ItineraryRow[] = [];
+  const re = /^\s*(?:[-*]\s+)?\**((?:Day\s+\d+)|(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*,?\s+[A-Z][a-z]{2,8}\.?\s+\d{1,2}))\**\s*[·:—–-]\s*(.+)$/;
+  for (const line of md.split('\n')) {
+    const m = line.match(re);
+    if (m) rows.push({ label: m[1].replace(/\s+/g, ' '), text: m[2].replace(/\*\*/g, '').trim() });
+  }
+  return rows.length >= 2 ? rows : [];
+}
+
+const CRYPTO = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK'];
+const STOCKS = ['AAPL', 'NVDA', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'SPY', 'QQQ', 'AMD', 'NFLX'];
+const NAMES: Record<string, string> = { bitcoin: 'BTC', ethereum: 'ETH', solana: 'SOL', nvidia: 'NVDA', tesla: 'TSLA', apple: 'AAPL' };
+/** Up to 3 tickers mentioned in a reply, with their asset class (prices come from live market data, never the text). */
+export function mentionedTickers(md: string, max = 3): { symbol: string; cls: 'crypto' | 'stocks' }[] {
+  const out: { symbol: string; cls: 'crypto' | 'stocks' }[] = [];
+  const add = (s: string) => {
+    if (out.length >= max || out.some((o) => o.symbol === s)) return;
+    out.push({ symbol: s, cls: CRYPTO.includes(s) ? 'crypto' : 'stocks' });
+  };
+  const text = md.replace(/\]\([^)]*\)/g, ']');
+  for (const m of text.matchAll(/\b([A-Z]{2,5})\b/g)) if (CRYPTO.includes(m[1]) || STOCKS.includes(m[1])) add(m[1]);
+  for (const [name, sym] of Object.entries(NAMES)) if (new RegExp(`\\b${name}\\b`, 'i').test(text)) add(sym);
+  return out;
+}
+
+export type ProductCardData = { title: string; url: string; host: string; price: string | null };
+/** Product links in a Life reply: '[Name](url) — $89' lines. Price only if written next to the link. */
+export function parseProducts(md: string, max = 4): ProductCardData[] {
+  const out: ProductCardData[] = [];
+  for (const line of md.split('\n')) {
+    const m = /\[([^\]]{2,120})\]\((https?:\/\/[^\s)]+)\)/.exec(line);
+    if (!m || /reuters|bloomberg|coindesk|cnbc|wsj|ft\.com|news/i.test(m[2])) continue;
+    const price = /(?:US)?\$\s?\d[\d,]*(?:\.\d{2})?/.exec(line.replace(m[0], ''))?.[0] ?? null;
+    if (!price && !/shop|buy|store|amazon|ebay|walmart|target|bestbuy/i.test(line + m[2])) continue;
+    const host = (m[2].match(/^https?:\/\/([^/?#]+)/)?.[1] ?? '').replace(/^www\./, '');
+    out.push({ title: m[1].replace(/[*_`]/g, ''), url: m[2], host, price });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/** Savings APY by plan: Personal 6%, Pro 8%, Business 9%, Bank 10% (6% base + plan boost). */
+export const apyForBoost = (apyBoost: number | undefined) => 6 + (Number.isFinite(apyBoost) ? Number(apyBoost) : 0);
+/** Month-by-month savings projection for the money pulse chart. */
+export function projectSeries(principal: number, apyPct: number, months = 12): number[] {
+  const r = Math.pow(1 + apyPct / 100, 1 / 12) - 1;
+  return Array.from({ length: months + 1 }, (_, i) => Math.round(principal * Math.pow(1 + r, i) * 100) / 100);
+}
+
+/**
+ * Storage key per mode: Money and Life are separate conversations.
+ * Money keeps the original key, so existing (untagged) history migrates to Money untouched.
+ */
+export const modeKey = (userKey: string, mode: ExoMode) => (mode === 'life' ? `${userKey}~life` : userKey);
+
+/**
+ * Hub tools per mode. Each one runs through Exo's live server tools:
+ * send=true asks right away (it needs only the user's own data); send=false pre-fills the composer for the user to finish.
+ */
+export type HubTool = { id: string; mode: ExoMode; label: string; prompt: string; send: boolean };
+export const HUB_TOOLS: HubTool[] = [
+  { id: 'portfolio', mode: 'money', label: 'Portfolio & Governor', prompt: 'Check my portfolio risk and allocation against my Governor limits', send: true },
+  { id: 'projection', mode: 'money', label: 'Projections', prompt: 'Run a Monte Carlo simulation of my savings over 5 years', send: true },
+  { id: 'networth', mode: 'money', label: 'Net worth', prompt: 'What is my net worth? Run an accounting check on my accounts', send: true },
+  { id: 'markets', mode: 'money', label: 'Markets', prompt: 'Give me live quotes for BTC, ETH and SPY', send: true },
+  { id: 'macro', mode: 'money', label: 'Macro posture', prompt: 'What is the macro posture right now and what does it mean for my risk?', send: true },
+  { id: 'goals', mode: 'money', label: 'Goals', prompt: 'How am I tracking on my goals?', send: true },
+  { id: 'shopping', mode: 'life', label: 'Shopping', prompt: 'Find me ', send: false },
+  { id: 'trips', mode: 'life', label: 'Trips', prompt: 'Plan a weekend trip to ', send: false },
+  { id: 'events', mode: 'life', label: 'Events & plans', prompt: 'Plan an event: ', send: false },
+  { id: 'places', mode: 'life', label: 'Places', prompt: 'Find a good place nearby for ', send: false },
+];
+export const hubTools = (mode: ExoMode) => HUB_TOOLS.filter((t) => t.mode === mode);

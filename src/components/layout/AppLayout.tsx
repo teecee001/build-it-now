@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { path: "/markets", icon: TrendingUp, label: "Markets" },
   { path: "/forecasts", icon: Target, label: "Forecasts" },
   { path: "/referrals", icon: Users, label: "Refer & Earn" },
-  { path: "/advisor", icon: Bot, label: "Exo" },
+  { path: "/exo", icon: Bot, label: "Exo" },
   { path: "/premium", icon: Crown, label: "Pro" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
@@ -45,7 +45,7 @@ const TAB_ITEMS = TAB_PATHS.map((p) => NAV_ITEMS.find((i) => i.path === p)!);
 
 /* Menu sections (labels reuse NAV_ITEMS; section titles are short neutral headings). */
 const MENU_SECTIONS: { title?: string; paths: string[] }[] = [
-  { paths: ["/dashboard", "/activity", "/advisor"] },
+  { paths: ["/dashboard", "/activity", "/exo"] },
   { title: "Money", paths: ["/send", "/qr", "/deposit", "/savings", "/card", "/bills"] },
   { title: "Invest", paths: ["/wallet", "/stocks", "/markets", "/forecasts"] },
   { title: "More", paths: ["/rewards", "/referrals", "/premium", "/settings"] },

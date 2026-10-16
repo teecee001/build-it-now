@@ -105,7 +105,7 @@ export const SCENES: Scene[] = [
     subtitle: "Exo Intelligence",
     description: "Get personalized insights, spending analysis, and smart recommendations. Available 24/7.",
     tip: "Ask Exo about your spending patterns for tailored advice.",
-    route: "/advisor",
+    route: "/exo",
     accentColor: "330 81% 60%",
     bgGradient: "from-pink-500/15 via-rose-500/10 to-transparent",
     duration: 5000,

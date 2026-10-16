@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ADVISOR_SYSTEM, chatCompletions, getAdvisorProviders } from "../_shared/ai.ts";
 import { type AccountData, type Quote, accountSummary, detectIntent, ruleAnswer, safeTimeZone, todayISO, todayText } from "./rules.ts";
 import { type CallResult, runAgent } from "./agent.ts";
+import { enforceBrevity } from "./brevity.ts";
 import type { GoalsDb } from "./tools.ts";
 import { sanitizeMessages } from "./history.ts";
 import { appendSources, collectHeadlines } from "./sources.ts";
@@ -257,7 +258,7 @@ serve(async (req) => {
           console.error(`Exo fact-check failed on ${p.name}: unsupported ${result.unsupported.join(", ").slice(0, 200)}`);
           return builtIn({ ...meta, "X-Exo-Factcheck": "failed-built-in" });
         }
-        const text = appendSources(result.text, collectHeadlines([...leadNews, ...(result.newsResults ?? [])]));
+        const text = appendSources(enforceBrevity(result.text, question), collectHeadlines([...leadNews, ...(result.newsResults ?? [])]));
         return sseAnswer(text, { ...meta, "X-Exo-Source": "ai", "X-Exo-Factcheck": result.factcheck });
       } catch (e) {
         console.error(`Exo provider ${p.name} threw: ${e instanceof Error ? e.name + ": " + e.message.slice(0, 200) : "unknown"}`);
