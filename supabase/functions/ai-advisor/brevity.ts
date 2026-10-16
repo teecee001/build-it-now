@@ -19,12 +19,17 @@ export function enforceBrevity(text: string, question: string, maxSentences = 4,
     const line = raw.trimEnd();
     if (!line.trim() || /^\s*#{1,6}\s/.test(line) || /^\s*(\*\*|__)[^*_]{1,60}(\*\*|__):?\s*$/.test(line) || /^\s*[-*_]{3,}\s*$/.test(line)) continue;
     if (CARD_LINE.test(line)) { if (cards.length < 6) cards.push(line); continue; }
-    // List items become plain sentences; bold lead-ins are kept as plain text.
-    prose.push(line.replace(/^\s*(?:[-*+]|\d+[.)])\s+/, "").replace(/\*\*([^*]+)\*\*/g, "$1"));
+    // List items become plain sentences; bold "Label:" lead-ins are dropped.
+    const item = line.replace(/^\s*(?:[-*+]|\d+[.)])\s+/, "").replace(/^\s*\*\*[^*]{1,40}:\*\*\s*/, "").replace(/^\s*\*\*([^*]{1,40})\*\*:\s*/, "").replace(/\*\*([^*]+)\*\*/g, "$1");
+    if (item.trim()) prose.push(item.trim());
   }
   const out: string[] = [];
   let words = 0;
-  for (const s of sentences(prose.join(" "))) {
+  // A lead-in that only introduces a list ("...across four dimensions:") reads as a fragment once the list is flattened.
+  const lines = prose.filter((l, i) => !(/:\s*$/.test(l) && i < prose.length - 1));
+  for (const s of sentences(lines.join(" "))) {
+    // Internal tool names (snake_case or backticked) never reach the user.
+    if (/`[^`]+`|\b[a-z]+_[a-z_]+\b/.test(s)) continue;
     const w = s.split(" ").length;
     if (out.length >= maxSentences || (out.length >= 2 && words + w > maxWords)) break;
     out.push(s);
