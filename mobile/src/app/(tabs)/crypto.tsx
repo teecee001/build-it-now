@@ -11,6 +11,7 @@ import { ListPage } from '@/components/ListPage';
 import { PriceChart } from '@/components/PriceChart';
 import { PriceTick } from '@/components/PriceTick';
 import { WalletConnectCard } from '@/components/WalletConnectCard';
+import { ExoWalletEntry } from '@/wallet/mpc/Entry';
 import { CRYPTO_LIST } from '@/constants/cryptoList';
 import { useCryptoHoldings } from '@/hooks/useCryptoHoldings';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
@@ -106,6 +107,7 @@ export default function WalletPage() {
           ))}
         </View>
       </Box>
+      <ExoWalletEntry />
       <WalletConnectCard />
       <View style={[k.rowB, { marginVertical: 8 }]}>
         <Text style={k.h3}>Holdings</Text>
