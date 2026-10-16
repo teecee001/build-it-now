@@ -59,7 +59,7 @@ describe('providers', () => {
   const fake = (over: Partial<PrivyLike> = {}): PrivyLike => ({
     isReady: true, authenticated: true, address: ADDR, needsRecovery: false, backupMethod: null, recoveryMethods: ['icloud'],
     create: jest.fn(async () => ({ address: ADDR })), setRecovery: jest.fn(async () => undefined), recover: jest.fn(async () => ({ address: ADDR })),
-    request: jest.fn(async () => '0xhash'), switchChain: jest.fn(async () => undefined), ...over,
+    request: jest.fn(async (a: { method: string }) => (a.method === 'eth_chainId' ? '0x14a34' : '0xhash')) as PrivyLike['request'], switchChain: jest.fn(async () => undefined), ...over,
   });
   it('maps Privy state', async () => {
     expect((await privyProvider(fake({ authenticated: false })).state()).kind).toBe('signed_out');
@@ -72,6 +72,18 @@ describe('providers', () => {
     expect(await privyProvider(p).sendTestnet({ chainId: 84532, to: ADDR, valueWei: 10n ** 16n })).toBe('0xhash');
     expect(p.request).toHaveBeenCalledWith({ method: 'eth_sendTransaction', params: [{ to: ADDR, value: '0x2386f26fc10000' }] });
     await expect(privyProvider(fake()).sendTestnet({ chainId: 8453, to: ADDR, valueWei: 1n })).rejects.toThrow(/testnet only/);
+  });
+  it('refuses to sign if the wallet is not on the testnet', async () => {
+    const p = fake({ request: jest.fn(async (a: { method: string }) => (a.method === 'eth_chainId' ? '0x2105' : '0xhash')) as PrivyLike['request'] });
+    await expect(privyProvider(p).sendTestnet({ chainId: 84532, to: ADDR, valueWei: 1n })).rejects.toThrow(/testnet only/);
+    expect(p.request).not.toHaveBeenCalledWith(expect.objectContaining({ method: 'eth_sendTransaction' }));
+  });
+  it('requires a strong password for password backup', async () => {
+    const p = fake();
+    await expect(privyProvider(p).backup('password', 'short')).rejects.toThrow(/8 characters/);
+    await privyProvider(p).backup('password', 'long-enough-pw');
+    expect(p.setRecovery).toHaveBeenCalledWith('password', 'long-enough-pw');
+    await expect(privyProvider(p).recover('password')).rejects.toThrow(/recovery password/);
   });
   it('refuses everything when unconfigured', async () => {
     const p = unconfiguredProvider({ kind: 'disabled' });

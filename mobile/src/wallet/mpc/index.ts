@@ -1,4 +1,6 @@
 // Exo Wallet (Hybrid MPC, testnet). Provider-agnostic: screens talk to MpcWalletProvider only.
+import { useEffect, useState } from 'react';
+
 import { mpcConfig } from './config';
 import type { MpcWalletProvider } from './types';
 import { unconfiguredProvider } from './unconfigured';
@@ -13,9 +15,21 @@ export { unconfiguredProvider } from './unconfigured';
 export { ConfirmSheet, useConfirmSheet } from './ConfirmSheet';
 
 let active: MpcWalletProvider | null = null;
-/** The Privy bridge registers itself here once the SDK is installed and configured. */
+const listeners = new Set<() => void>();
+/** The Privy bridge registers itself here once the SDK is loaded and the user is signed in. */
 export function registerProvider(p: MpcWalletProvider | null) {
   active = p;
+  listeners.forEach((l) => l());
+}
+/** Re-renders when the provider (or its state) changes. */
+export function useWalletProvider(): MpcWalletProvider {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    const l = () => bump((n) => n + 1);
+    listeners.add(l);
+    return () => { listeners.delete(l); };
+  }, []);
+  return walletProvider();
 }
 export function walletProvider(): MpcWalletProvider {
   const cfg = mpcConfig();
