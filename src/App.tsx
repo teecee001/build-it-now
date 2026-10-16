@@ -10,6 +10,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { PrivyWalletRoot } from "@/wallet/mpc/PrivyWalletRoot";
+import { mpcConfig } from "@/wallet/mpc/config";
 import { ActiveCurrencyProvider } from "@/hooks/useActiveCurrency";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useGeoVerification } from "@/hooks/useGeoVerification";
@@ -18,6 +20,7 @@ import { CountryOnboarding } from "@/components/CountryOnboarding";
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const WalletPage = lazy(() => import("./pages/WalletPage"));
+const ExoWallet = lazy(() => import("./pages/ExoWallet"));
 const SendMoney = lazy(() => import("./pages/SendMoney"));
 const Markets = lazy(() => import("./pages/Markets"));
 const Forecasts = lazy(() => import("./pages/Forecasts"));
@@ -97,6 +100,7 @@ const App = () => (
     <MotionConfig reducedMotion="user" transition={T}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <PrivyWalletRoot>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -142,6 +146,7 @@ const App = () => (
               >
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/wallet" element={<WalletPage />} />
+                {mpcConfig().enabled && <Route path="/wallet/exo" element={<ExoWallet />} />}
                 <Route path="/send" element={<SendMoney />} />
                 <Route path="/deposit" element={<Deposit />} />
                 <Route path="/activity" element={<Activity />} />
@@ -169,6 +174,7 @@ const App = () => (
             </Suspense>
           </BrowserRouter>
         </TooltipProvider>
+        </PrivyWalletRoot>
       </AuthProvider>
     </QueryClientProvider>
     </MotionConfig>
