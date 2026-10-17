@@ -55,7 +55,7 @@ function SendMoneyContent() {
   const parsedAmount = parseFloat(amount || "0");
   const usdAmount = toUSD(parsedAmount);
 
-  const executeSend = async (pin = ""): Promise<boolean> => {
+  const executeSend = async (): Promise<boolean> => {
     if (!user || sendInFlight.current) return false;
     let ok = false;
     sendInFlight.current = true;
@@ -77,7 +77,6 @@ function SendMoneyContent() {
         recipient: recipient.trim(),
         idempotency_key: idempotencyKey,
         description: `Sent ${activeSymbol}${parsedAmount.toFixed(2)} ${activeCurrency} to ${formatHandle(recipient)}`,
-        pin,
       });
       // Only report success when the server confirms the transfer was recorded.
       if (!result || result.success !== true || !result.transaction_id) {
@@ -211,7 +210,7 @@ function SendMoneyContent() {
 
       <TransactionPinModal
         open={showPinModal}
-        onVerified={(pin) => { setShowPinModal(false); void executeSend(pin); }}
+        onVerified={() => { setShowPinModal(false); executeSend(); }}
         onCancel={() => setShowPinModal(false)}
         verifyPin={verifyPin}
         amount={usdAmount}

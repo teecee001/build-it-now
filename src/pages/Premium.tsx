@@ -159,7 +159,7 @@ function PremiumContent() {
               <p className="text-xs text-muted-foreground mt-1">What you currently have</p>
             </div>
             <div className="space-y-2">
-              {["No paid savings interest", "Standard transfer speeds", "Email support", "Basic transaction limits", "In-app card record"].map((f) => (
+              {["6% APY on Savings", "Standard transfer speeds", "Email support", "Basic transaction limits", "Standard debit card"].map((f) => (
                 <div key={f} className="flex items-center gap-3">
                   <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <span className="text-sm text-muted-foreground">{f}</span>

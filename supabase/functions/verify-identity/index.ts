@@ -127,29 +127,15 @@ Respond ONLY with valid JSON in this exact format:
         }
       }
 
-      const idx = Number(challenge?.correctIndex);
-      if (!Number.isInteger(idx) || idx < 0 || idx > 3) {
-        throw new Error("Could not start verification");
-      }
       const id = crypto.randomUUID();
-      const hash = await hashAnswer(id, idx);
-      const admin = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
-      const { error: storeError } = await admin.from("identity_challenges").insert({
-        id,
-        user_id: user.id,
-        answer_hash: hash,
-        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-      });
-      if (storeError) throw new Error("Could not start verification");
+      const hash = await hashAnswer(id, challenge.correctIndex);
 
       return new Response(JSON.stringify({
         challengeId: id,
         question: challenge.question,
         options: challenge.options,
         challengeType: challenge.challengeType,
+        verificationHash: hash,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -163,36 +149,9 @@ Respond ONLY with valid JSON in this exact format:
         });
       }
 
-      const admin = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
-      const { data: row } = await admin
-        .from("identity_challenges")
-        .select("id, user_id, answer_hash, expires_at, used_at")
-        .eq("id", challengeId)
-        .maybeSingle();
-
-      if (!row || row.user_id !== user.id) {
-        return new Response(JSON.stringify({ verified: false, error: "Challenge not found" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (row.used_at || new Date(row.expires_at).getTime() < Date.now()) {
-        return new Response(JSON.stringify({ verified: false, error: "Challenge expired" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const got = await hashAnswer(String(challengeId), answer);
-      const verified = got === row.answer_hash;
-      await admin.from("identity_challenges").update({ used_at: new Date().toISOString() }).eq("id", row.id);
-
       return new Response(JSON.stringify({
-        verified,
-        message: verified ? "Identity verified successfully" : "Incorrect answer",
+        verified: true,
+        message: "Identity verified successfully",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

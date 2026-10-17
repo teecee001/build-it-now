@@ -73,8 +73,13 @@ export function useMultiCurrencyWallet() {
       if (wallets.length >= maxCurrencies) {
         throw new Error(slotLimitMessage(tier, maxCurrencies));
       }
-      const { error } = await supabase.rpc("open_currency_wallet", { p_currency: currency.toUpperCase() });
-      if (error) throw new Error(error.message);
+      const { error } = await supabase.from("wallets").insert({
+        user_id: user.id,
+        balance: 0,
+        savings_balance: 0,
+        currency,
+      });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["multi-wallets"] });
@@ -88,23 +93,19 @@ export function useMultiCurrencyWallet() {
       toCurrency,
       amount,
       rate,
-      pin,
     }: {
       fromCurrency: string;
       toCurrency: string;
       amount: number;
       rate: number;
-      pin?: string;
     }) => {
       if (!user) throw new Error("Not authenticated");
       const fromWallet = wallets.find(w => w.currency === fromCurrency);
       if (!fromWallet) throw new Error(`No ${fromCurrency} wallet found`);
       if (fromWallet.balance < amount) throw new Error(`Insufficient ${fromCurrency} balance`);
 
-      if (!wallets.find(w => w.currency === toCurrency)) {
-        if (wallets.length >= maxCurrencies) throw new Error(slotLimitMessage(tier, maxCurrencies));
-        const opened = await supabase.rpc("open_currency_wallet", { p_currency: toCurrency.toUpperCase() });
-        if (opened.error) throw new Error(opened.error.message);
+      if (!wallets.find(w => w.currency === toCurrency) && wallets.length >= maxCurrencies) {
+        throw new Error(slotLimitMessage(tier, maxCurrencies));
       }
 
       const { invokeWalletOp } = await import("@/hooks/useWallet");
@@ -114,7 +115,6 @@ export function useMultiCurrencyWallet() {
         to_currency: toCurrency,
         amount,
         rate,
-        pin: pin || "",
       });
 
       return { convertedAmount: result.convertedAmount ?? amount * rate };

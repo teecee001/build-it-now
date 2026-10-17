@@ -6,12 +6,12 @@ import { Btn, IconDot, k, Sheet } from '@/components/kit';
 import { haptic } from '@/lib/haptics';
 import { C } from '@/lib/theme';
 
-export function TransactionPinModal({ open, onVerified, onCancel, verifyPin, amount }: { open: boolean; onVerified: (pin: string) => void; onCancel: () => void; verifyPin: (pin: string) => boolean; amount: number }) {
+export function TransactionPinModal({ open, onVerified, onCancel, verifyPin, amount }: { open: boolean; onVerified: () => void; onCancel: () => void; verifyPin: (pin: string) => boolean; amount: number }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const submit = () => {
     if (pin.length < 4) return;
-    if (verifyPin(pin)) { const entered = pin; setPin(''); setError(''); haptic.success(); onVerified(entered); }
+    if (verifyPin(pin)) { setPin(''); setError(''); haptic.success(); onVerified(); }
     else { haptic.error(); setError('Incorrect PIN. Try again.'); setPin(''); }
   };
   return (

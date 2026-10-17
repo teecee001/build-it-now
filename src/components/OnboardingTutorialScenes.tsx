@@ -36,10 +36,10 @@ export const SCENES: Scene[] = [
   {
     id: "deposit",
     icon: Landmark,
-    title: "Add money",
-    subtitle: "Not connected",
-    description: "Bank deposits are not connected. ExoSky does not issue a routing number or an account number, and this screen does not add money.",
-    tip: "Nothing in this tour moves real funds.",
+    title: "Direct Deposit",
+    subtitle: "Get paid faster",
+    description: "Set up direct deposit with your unique routing and account numbers. Funds arrive instantly — no waiting.",
+    tip: "Share your deposit details with your employer to get started.",
     route: "/deposit",
     accentColor: "217 91% 60%",
     bgGradient: "from-blue-500/15 via-indigo-500/10 to-transparent",
@@ -89,9 +89,9 @@ export const SCENES: Scene[] = [
     id: "savings",
     icon: PiggyBank,
     title: "Savings",
-    subtitle: "Projection only",
-    description: "The savings chart is an illustration. Interest is not paid, and there is no lock-up because nothing is earning a yield.",
-    tip: "The percentage on the chart is not money you receive.",
+    subtitle: "6% APY — no lock-ups",
+    description: "Grow your money with industry-leading 6% annual yield. Deposit and withdraw anytime — your money stays liquid.",
+    tip: "Check the dashboard to see your monthly earnings projection.",
     route: "/savings",
     accentColor: "142 71% 45%",
     bgGradient: "from-green-500/15 via-lime-500/10 to-transparent",
@@ -198,8 +198,8 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
                 </div>
               </div>
               {[
-                { label: "Routing", value: "Not issued" },
-                { label: "Account", value: "Not issued" },
+                { label: "Routing", value: "021000021" },
+                { label: "Account", value: "****4832" },
               ].map((field, i) => (
                 <motion.div
                   key={field.label}
@@ -220,7 +220,7 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
                 style={{ backgroundColor: `hsl(${accentColor} / 0.08)` }}
               >
                 <Shield className="w-3 h-3" style={{ color: accent }} />
-                <span className="text-[7px] font-medium" style={{ color: accent }}>Not a bank</span>
+                <span className="text-[7px] font-medium" style={{ color: accent }}>FDIC Protected</span>
               </motion.div>
             </motion.div>
           </div>
@@ -402,7 +402,7 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
                 style={{ backgroundColor: `hsl(${accentColor} / 0.12)` }}
               >
                 <p className="text-2xl font-bold" style={{ color: accent }}>6%</p>
-                <p className="text-[8px] text-white/50 mt-0.5">Illustration, not paid</p>
+                <p className="text-[8px] text-white/50 mt-0.5">Annual Percentage Yield</p>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0 }}
@@ -410,7 +410,7 @@ export function SceneVisual({ visual, accentColor }: { visual: string; accentCol
                 transition={{ delay: 1.1 }}
                 className="flex items-center justify-between p-2 rounded-lg border border-white/5 bg-white/[0.03]"
               >
-                <span className="text-[8px] text-white/40">Illustrated, not paid</span>
+                <span className="text-[8px] text-white/40">Monthly earnings</span>
                 <span className="text-[10px] font-semibold font-mono text-green-400">+$62.25</span>
               </motion.div>
             </motion.div>

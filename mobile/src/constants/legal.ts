@@ -19,7 +19,7 @@ export const TERMS_SECTIONS: { title: string; content: string | null; list?: str
     },
     {
       title: "5. Financial Services",
-      content: `Ξ╳oSky is not a bank and does not currently provide insured deposits or banking services through a partner institution. Wallet balances are an internal ledger. Peer transfers move that ledger only.`,
+      content: `Ξ╳oSky provides digital wallet, payment, currency conversion, and money transfer services through licensed partners in applicable jurisdictions. Ξ╳oSky is not a bank. Banking services are provided by partner financial institutions in each supported region. Deposit insurance coverage (such as FDIC in the US) depends on your country and applicable local regulations.`,
     },
     {
       title: "6. Transaction Limits",
@@ -133,7 +133,7 @@ export const COMPLIANCE_BADGES = [
     { icon: 'Building2', title: "Regulated Partners", desc: "Financial services provided through licensed and regulated banking partners in each jurisdiction" },
     { icon: 'Shield', title: "AML/CTF Compliant", desc: "Full compliance with anti-money laundering and counter-terrorism financing regulations globally" },
     { icon: 'Globe', title: "Multi-Jurisdiction", desc: "Operating across 90+ countries with country-specific regulatory compliance and feature availability" },
-    { icon: 'Scale', title: "Identity", desc: "Identity verification is not available yet. Completing a screen does not verify you." },
+    { icon: 'Scale', title: "KYC Verified", desc: "All users undergo identity and geographic verification before accessing financial services" },
     { icon: 'MapPin', title: "Geo-Enforced", desc: "Continuous location verification prevents unauthorized access from restricted regions" },
     { icon: 'FileCheck', title: "SOC 2 Type II", desc: "Infrastructure meets SOC 2 Type II security, availability, and confidentiality standards" },
     { icon: 'Ban', title: "Sanctions Enforced", desc: "Full OFAC, EU, and UN sanctions screening on all users and transactions" },
@@ -151,7 +151,7 @@ export const COMPLIANCE_SECTIONS: { title: string; content: string | null; list?
     },
     {
       title: "Banking Relationships",
-      content: `Ξ╳oSky is not a bank and does not currently provide banking services through a partner institution. Balances are an internal ledger. They are not FDIC, FSCS, or otherwise deposit-insured.`,
+      content: `Ξ╳oSky is a financial technology company, not a bank. Banking services are provided by licensed partner institutions in applicable jurisdictions. Deposit insurance coverage varies by country: FDIC insurance (up to $250,000) in the United States, FSCS protection (up to £85,000) in the United Kingdom, and equivalent protections where available. Not all jurisdictions offer deposit insurance. Please verify coverage applicable to your country in your account settings.`,
     },
     {
       title: "Anti-Money Laundering (AML)",
@@ -159,7 +159,7 @@ export const COMPLIANCE_SECTIONS: { title: string; content: string | null; list?
     },
     {
       title: "Know Your Customer (KYC) & Identity Verification",
-      content: `Identity document collection and a KYC review are not available yet. ExoSky does not collect a Social Security number, a government ID, or a selfie, and an account is not identity-verified by completing a screen in the app.`,
+      content: `All users must complete multi-layer verification: (1) Country selection and phone number verification matching the declared country code, (2) Government-issued identity document verification (passport, national ID, or driver's license), (3) Continuous geographic verification via IP and device location. Enhanced due diligence is required in jurisdictions flagged as higher risk. Users who fail verification or provide fraudulent documents will be denied access and reported to authorities where required by law.`,
     },
     {
       title: "OFAC & International Sanctions Compliance",
@@ -175,7 +175,7 @@ export const COMPLIANCE_SECTIONS: { title: string; content: string | null; list?
     },
     {
       title: "Interest Rate & Investment Disclosures",
-      content: `Savings interest is not paid. Any percentage shown on a savings chart is an illustration, not a rate you earn. Cryptocurrency and stock features inside the app are simulated ledger trades, not a brokerage, and can show losses. Ξ╳oSky does not provide investment advice.`,
+      content: `Savings APY is variable and may differ by country. Displayed rates apply to qualifying balances and may change without notice. Cryptocurrency and stock trading involve significant risk of loss. Past performance is not indicative of future results. Ξ╳oSky does not provide investment advice. Trading features are only available in jurisdictions where such services are legally permitted and properly licensed.`,
     },
     {
       title: "Complaints & Dispute Resolution",

@@ -80,7 +80,6 @@ export default function QRPayments() {
   const [scanRecipient, setScanRecipient] = useState("");
   const [scanAmount, setScanAmount] = useState("");
   const [scanNote, setScanNote] = useState("");
-  const [txPin, setTxPin] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   // QR code image
@@ -227,7 +226,6 @@ export default function QRPayments() {
         recipient: scanRecipient,
         note: scanNote,
         idempotency_key: crypto.randomUUID(),
-        pin: txPin,
       });
       if (!result || result.success !== true || !result.transaction_id) {
         throw new Error("Payment could not be confirmed. Check your activity before trying again.");
@@ -494,17 +492,6 @@ export default function QRPayments() {
                   <span className="text-sm font-mono">{formatMoney(balance - parseFloat(scanAmount || "0"))}</span>
                 </div>
               </div>
-              {parseFloat(scanAmount || "0") > 500 && (
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={txPin}
-                  onChange={(e) => setTxPin(e.target.value.replace(/\D/g, ""))}
-                  placeholder="Transaction PIN (if you set one)"
-                  className="text-center tracking-[0.4em] font-mono bg-secondary border-border"
-                />
-              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <Button variant="outline" onClick={() => setView("scan")} className="gap-2">

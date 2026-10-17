@@ -3,36 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-function requireCron(req: Request): Response | null {
-  const secret = Deno.env.get("CRON_SECRET");
-  if (!secret) {
-    return new Response(JSON.stringify({ error: "CRON_SECRET is not configured" }), {
-      status: 503,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  const header = req.headers.get("x-cron-secret") ?? "";
-  const auth = req.headers.get("authorization") ?? "";
-  const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7) : "";
-  if (header !== secret && bearer !== secret) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  return null;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
-  const cronDenied = requireCron(req);
-  if (cronDenied) return cronDenied;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

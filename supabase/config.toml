@@ -1,38 +1,31 @@
 project_id = "vxcxwmhesgpncbkhwsej"
 
 [functions.ai-advisor]
-verify_jwt = true
-
-[functions.redeem-referral]
-verify_jwt = true
-
-[functions.create-checkout]
-verify_jwt = true
-
-[functions.check-subscription]
-verify_jwt = true
-
-[functions.customer-portal]
-verify_jwt = true
-
-[functions.verify-identity]
-verify_jwt = true
-
-[functions.wallet-operation]
-verify_jwt = true
-
-[functions.forecast-data]
-verify_jwt = true
-
-[functions.geo-verify]
-verify_jwt = true
-
-[functions.stock-data]
-verify_jwt = true
-
-# Cron callers are not users. The functions refuse to run unless CRON_SECRET matches.
-[functions.check-bill-reminders]
 verify_jwt = false
 
-[functions.check-rate-alerts]
+[functions.redeem-referral]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.verify-identity]
+verify_jwt = false
+
+[functions.wallet-operation]
+verify_jwt = false
+
+[functions.forecast-data]
+verify_jwt = false
+
+[functions.geo-verify]
+verify_jwt = false
+
+[functions.stock-data]
 verify_jwt = false

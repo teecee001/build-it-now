@@ -44,7 +44,7 @@ function baseDefs(withGoals: boolean) {
       category: { type: "string", description: "Optional category or type filter, e.g. Dining, Bills, send." },
     }),
     fn("get_bills", "The user's bills with amount, due date and paid status.", {}),
-    fn("get_savings", `Savings balance and an illustrative ${APY_RATE}% chart rate. Interest is not paid.`, {}),
+    fn("get_savings", `Savings vault balance and the app's savings APY (${APY_RATE}%).`, {}),
     fn("get_prices", "Live USD prices and 24h change for crypto or stock symbols.", {
       symbols: { type: "array", items: { type: "string" }, description: "e.g. [\"BTC\",\"ETH\",\"NVDA\"]" },
     }, ["symbols"]),
@@ -60,7 +60,7 @@ function baseDefs(withGoals: boolean) {
       years: { type: "number" },
       months: { type: "number" },
       target: { type: "number" },
-      apy: { type: "number", description: `Chart rate only. Defaults to ${APY_RATE}%. Interest is not paid.` },
+      apy: { type: "number", description: `Defaults to the app's ${APY_RATE}% APY.` },
       income: { type: "number" },
       amount: { type: "number" },
       from: { type: "string" },
@@ -217,7 +217,7 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
       return { bills: a.bills };
     case "get_savings": {
       const w = a.wallets.find((x) => x.currency === "USD") ?? a.wallets[0];
-      return { savings_balance: w?.savings_balance ?? 0, available: w?.balance ?? 0, currency: w?.currency ?? "USD", apy_percent: APY_RATE, interest_paid: false, note: "apy_percent is an illustration. Do not say the user earns it." };
+      return { savings_balance: w?.savings_balance ?? 0, available: w?.balance ?? 0, currency: w?.currency ?? "USD", apy_percent: APY_RATE };
     }
     case "get_prices": {
       const syms = Array.isArray(args.symbols) ? (args.symbols as unknown[]).map(String).slice(0, 15) : [];
@@ -233,7 +233,7 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
         const principal = n("principal"), monthly = n("monthly"), years = n("years", 1);
         const fv = projectSavings(principal, monthly, years, apy);
         const contributed = principal + monthly * Math.round(years * 12);
-        return { op, apy_percent: apy, principal, monthly, years, future_value: r2(fv), contributed: r2(contributed), illustrated_interest: r2(fv - contributed), interest_paid: false };
+        return { op, apy_percent: apy, principal, monthly, years, future_value: r2(fv), contributed: r2(contributed), interest_earned: r2(fv - contributed) };
       }
       if (op === "monthly_needed") {
         const target = n("target"), months = Math.max(1, Math.round(n("months", 12))), principal = n("principal");

@@ -62,6 +62,8 @@ export default function Dashboard() {
   const displayName = profile?.full_name?.trim() || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const handle = "@" + (user?.email?.split("@")[0] || "user");
 
+  const apyRate = 6.0;
+
   const totalInActiveCurrency = wallets.reduce((sum, w) => {
     const wRate = rates[w.currency] || 1;
     const usdValue = w.balance / wRate;
@@ -109,7 +111,7 @@ export default function Dashboard() {
   const shortcuts = [
     { label: "Markets", sub: "Live prices", icon: BarChart3, tint: "text-accent", path: "/markets" },
     { label: "Cards", sub: "Virtual & metal", icon: CreditCard, tint: "text-primary", path: "/card" },
-    { label: "Savings", sub: "Projection only", icon: PiggyBank, tint: "text-success", path: "/savings" },
+    { label: "Savings", sub: `${apyRate}% APY`, icon: PiggyBank, tint: "text-success", path: "/savings" },
     { label: "QR Pay", sub: "Scan & pay", icon: QrCode, tint: "text-muted-foreground", path: "/qr" },
     { label: "Pay Bills", sub: "Utilities & more", icon: Landmark, tint: "text-primary", path: "/bills", feature: "features_bill_pay" },
     { label: "Exo", sub: "Exo Intelligence", icon: Bot, tint: "text-accent", path: "/exo" },

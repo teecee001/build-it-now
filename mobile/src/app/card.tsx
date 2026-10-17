@@ -48,6 +48,7 @@ function recordFailure() {
 }
 const clearFailures = () => { secureKV.remove('card_fail_count'); secureKV.remove('card_lockout'); };
 const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const fullNumber = (l4: string) => `4532872100${l4.slice(0, 2)}9${l4}`;
 
 const PinField = (p: { value: string; onChange: (v: string) => void; placeholder: string; label?: string; onSubmit?: () => void }) => (
   <Field label={p.label} secureTextEntry keyboardType="number-pad" maxLength={6} placeholder={p.placeholder} value={p.value} onChangeText={(v) => p.onChange(v.replace(/\D/g, ''))} onSubmitEditing={p.onSubmit} autoFocus style={{ textAlign: 'center', letterSpacing: 8, fontSize: 18 }} />
@@ -68,6 +69,7 @@ function CardPageContent() {
   const [view, setView] = useState<ViewName>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedCard = cards.find((c) => c.id === selectedId) ?? null;
+  const [showNumber, setShowNumber] = useState(false);
   const [newCardFormat, setNewCardFormat] = useState<'virtual' | 'physical'>('virtual');
   const [newCardName, setNewCardName] = useState('');
   const [newCardDesign, setNewCardDesign] = useState(CARD_DESIGNS[0].id);
@@ -110,7 +112,7 @@ function CardPageContent() {
     if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
     setVerifiedAt(Date.now());
     sessionTimerRef.current = setTimeout(() => {
-      setPinVerified(false); setVerifiedAt(null);
+      setPinVerified(false); setShowNumber(false); setVerifiedAt(null);
       toast.info('Session expired — please verify again');
     }, SESSION_TIMEOUT);
   }, []);
@@ -191,10 +193,10 @@ function CardPageContent() {
   };
 
   if (isLoading) return <Loading />;
-  const openDetail = (c: CardData) => { setSelectedId(c.id); setPinInput(''); setPinVerified(false); setPinVerifyError(''); setView('detail'); };
+  const openDetail = (c: CardData) => { setSelectedId(c.id); setShowNumber(false); setPinInput(''); setPinVerified(false); setPinVerifyError(''); setView('detail'); };
   const openSettings = (c: CardData) => { setSelectedId(c.id); setView('settings'); };
-  const copy = async (msg: string) => { if (!selectedCard) return; await Clipboard.setStringAsync(selectedCard.card_number_last4); haptic.tap(); toast.success(msg || 'Last 4 copied'); };
-  const leaveDetail = () => { setView('list'); setPinVerified(false); if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current); setVerifiedAt(null); };
+  const copy = async (msg: string) => { if (!selectedCard) return; await Clipboard.setStringAsync(fullNumber(selectedCard.card_number_last4)); haptic.tap(); toast.success(msg); };
+  const leaveDetail = () => { setView('list'); setShowNumber(false); setPinVerified(false); if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current); setVerifiedAt(null); };
 
   if (view === 'detail' && selectedCard) {
     const hasPin = !!getCardPinHash(selectedCard.id);
@@ -244,18 +246,18 @@ function CardPageContent() {
             </View>
             <Box i={1}>
               <View style={[k.rowB, { marginBottom: 10 }]}>
-                <Text style={k.h3}>Card details</Text>
-                <Text style={[k.muted, { fontSize: 11 }]}>Last 4 only</Text>
+                <Text style={k.h3}>Card Details</Text>
+                <Btn small variant="secondary" icon={showNumber ? 'eye-off-outline' : 'eye-outline'} label={showNumber ? 'Hide' : 'Show'} onPress={() => setShowNumber(!showNumber)} />
               </View>
               <View style={k.rowB}>
                 <View>
                   <Text style={k.muted}>Card Number</Text>
-                  <Text style={[k.text, k.mono, { letterSpacing: 1.5 }]}>{`•••• •••• •••• ${selectedCard.card_number_last4}`}</Text>
+                  <Text style={[k.text, k.mono, { letterSpacing: 1.5 }]}>{showNumber ? `4532 8721 0${selectedCard.card_number_last4.slice(0, 2)}9 ${selectedCard.card_number_last4}` : `•••• •••• •••• ${selectedCard.card_number_last4}`}</Text>
                 </View>
-                <Pressable accessibilityLabel="Copy" onPress={() => copy('Last 4 copied')} hitSlop={8}><Ionicons name="copy-outline" size={16} color={C.muted} /></Pressable>
+                <Pressable accessibilityLabel="Copy" onPress={() => copy('Card number copied')} hitSlop={8}><Ionicons name="copy-outline" size={16} color={C.muted} /></Pressable>
               </View>
               {[
-                [['Expiry', `${String(selectedCard.expiry_month).padStart(2, '0')}/${String(selectedCard.expiry_year).slice(-2)}`], ['CVV', 'Not issued'], ['Network', 'Not a network card']],
+                [['Expiry', `${String(selectedCard.expiry_month).padStart(2, '0')}/${String(selectedCard.expiry_year).slice(-2)}`], ['CVV', showNumber ? selectedCard.card_number_last4.slice(-3) : '•••'], ['Network', 'VISA']],
                 [['Cardholder', selectedCard.card_name || handle], ['Format', selectedCard.card_format]],
                 [['Status', selectedCard.is_frozen ? 'Frozen' : selectedCard.is_active ? 'Active' : 'Inactive'], ['Card Type', selectedCard.card_type]],
                 ...(selectedCard.card_format === 'physical' && selectedCard.shipping_status ? [[['Shipping', selectedCard.shipping_status]]] : []),

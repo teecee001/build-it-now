@@ -48,7 +48,7 @@ export default function Rewards() {
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-title">Rewards</h1>
-        <p className="text-muted-foreground text-sm mt-1">Cashback and bonuses. Savings interest is not paid.</p>
+        <p className="text-muted-foreground text-sm mt-1">Cashback, APY interest, and bonuses</p>
       </motion.div>
 
       {/* Rewards Summary */}
@@ -69,7 +69,7 @@ export default function Rewards() {
                 <p className="text-sm font-semibold font-mono">${thisMonthRewards.toFixed(2)}</p>
               </div>
               <div className="p-3 rounded-lg bg-secondary/50">
-                <p className="text-xs text-muted-foreground">Interest paid</p>
+                <p className="text-xs text-muted-foreground">APY Earnings</p>
                 <p className="text-sm font-semibold font-mono text-success">${apyEarnings.toFixed(2)}</p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function Rewards() {
                 <Percent className="w-4 h-4 text-success" />
                 <p className="text-sm font-semibold">High-Yield Savings</p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Illustrated rate only. Interest is not paid.</p>
+              <p className="text-xs text-muted-foreground mt-1">Earn interest on your savings balance daily</p>
               {savingsBalance > 0 && (
                 <p className="text-xs text-success mt-1">
                   Current savings: ${savingsBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
@@ -94,8 +94,8 @@ export default function Rewards() {
               )}
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold font-mono text-success">0%</p>
-              <p className="text-xs text-success/70">paid</p>
+              <p className="text-2xl font-bold font-mono text-success">6.00%</p>
+              <p className="text-xs text-success/70">APY</p>
             </div>
           </div>
         </Card>

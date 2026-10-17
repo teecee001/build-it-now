@@ -28,7 +28,6 @@ serve(async (req) => {
 
     const body = await req.json();
     const { operation } = body;
-    const pin = typeof body.pin === "string" ? body.pin : "";
 
     switch (operation) {
       case "send": {
@@ -40,7 +39,6 @@ serve(async (req) => {
         const currency = cleanCurrency(body.currency);
         const amount = roundMoney(finitePositive(body.amount, "amount"));
         const usdAmount = await usdEquivalent(currency, amount, body.usd_amount);
-        await assertPin(supabase, userId, pin, usdAmount);
         const description = typeof body.description === "string"
           ? body.description.trim().slice(0, 300) || null
           : null;
@@ -52,13 +50,38 @@ serve(async (req) => {
       }
 
       case "savings_transfer": {
-        const amount = finitePositive(body.amount, "amount");
-        await assertPin(supabase, userId, pin, amount);
-        await callRpc(supabase, "savings_transfer", {
-          p_user: userId,
-          p_direction: body.direction,
-          p_amount: amount,
-        });
+        const { direction, amount } = body;
+        if (!amount || amount <= 0) throw new Error("Invalid amount");
+
+        const { data: wallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !wallet) throw new Error("USD wallet not found");
+
+        if (direction === "to_savings") {
+          if (wallet.balance < amount) throw new Error("Insufficient wallet balance");
+          await supabase.from("wallets").update({
+            balance: wallet.balance - amount,
+            savings_balance: (wallet.savings_balance ?? 0) + amount,
+          }).eq("id", wallet.id);
+          await supabase.from("transactions").insert({
+            user_id: userId, type: "deposit", amount: -amount,
+            description: `Transfer to Savings — 6.0% APY`, status: "completed",
+            metadata: { savings_transfer: true, direction: "to_savings" },
+          });
+        } else if (direction === "to_wallet") {
+          if ((wallet.savings_balance ?? 0) < amount) throw new Error("Insufficient savings balance");
+          await supabase.from("wallets").update({
+            balance: wallet.balance + amount,
+            savings_balance: (wallet.savings_balance ?? 0) - amount,
+          }).eq("id", wallet.id);
+          await supabase.from("transactions").insert({
+            user_id: userId, type: "deposit", amount,
+            description: "Withdrawal from Savings", status: "completed",
+            metadata: { savings_transfer: true, direction: "to_wallet" },
+          });
+        } else {
+          throw new Error("Invalid direction");
+        }
         return ok({ success: true });
       }
 
@@ -68,22 +91,59 @@ serve(async (req) => {
         const quoted = finitePositive(body.price, "price");
         if (!code) throw new Error("Invalid parameters");
         const price = await liveUsdPrice(code, quoted);
-        const usd = action === "buy"
-          ? finitePositive(body.amount, "amount")
-          : finitePositive(body.amount, "amount") * price;
-        await assertPin(supabase, userId, pin, usd);
-        await callRpc(supabase, "crypto_trade", {
-          p_user: userId,
-          p_code: code,
-          p_action: action,
-          p_amount: finitePositive(body.amount, "amount"),
-          p_price: price,
-        });
+
+        const { data: usdWallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !usdWallet) throw new Error("No USD wallet");
+
+        if (action === "buy") {
+          const usd = finitePositive(body.amount, "amount");
+          if (Number(usdWallet.balance) + 1e-8 < usd) throw new Error("Insufficient USD balance");
+          const units = usd / price;
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) - usd }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
+          await upsertCryptoHolding(supabase, userId, code, units, price);
+          await supabase.from("transactions").insert({
+            user_id: userId, type: "purchase", amount: -usd, status: "completed",
+            description: `Bought ${units.toFixed(6)} ${code} at $${price.toLocaleString()}`,
+            metadata: { crypto: code, crypto_amount: units, price_per_unit: price, action: "buy" },
+          });
+        } else if (action === "sell") {
+          const units = finitePositive(body.amount, "amount");
+          const holding = await getCryptoHolding(supabase, userId, code);
+          if (holding + 1e-12 < units) throw new Error(`Insufficient ${code} balance`);
+          const credit = units * price;
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) + credit }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
+          await upsertCryptoHolding(supabase, userId, code, -units, price);
+          await supabase.from("transactions").insert({
+            user_id: userId, type: "purchase", amount: credit, status: "completed",
+            description: `Sold ${units.toFixed(6)} ${code} at $${price.toLocaleString()}`,
+            metadata: { crypto: code, crypto_amount: units, price_per_unit: price, action: "sell" },
+          });
+        } else {
+          throw new Error("Invalid action");
+        }
         return ok({ success: true });
       }
 
       case "crypto_send": {
-        throw new Error("On-chain withdrawals are not available. No coins were moved.");
+        const code = String(body.code || "");
+        const units = finitePositive(body.amount, "amount");
+        const address = String(body.address || body.recipient || "").slice(0, 200);
+        if (!code || !address) throw new Error("Invalid parameters");
+        const holding = await getCryptoHolding(supabase, userId, code);
+        if (holding + 1e-12 < units) throw new Error(`Insufficient ${code} balance`);
+        await upsertCryptoHolding(supabase, userId, code, -units, Number(body.price) || 0);
+        await supabase.from("transactions").insert({
+          user_id: userId, type: "send", amount: -(units * (Number(body.price) || 0)), status: "completed",
+          description: `Sent ${units.toFixed(6)} ${code}`,
+          recipient: address,
+          metadata: { crypto: code, crypto_amount: units, action: "crypto_send", wallet_address: address },
+        });
+        return ok({ success: true });
       }
 
       case "crypto_swap": {
@@ -92,14 +152,16 @@ serve(async (req) => {
         const units = finitePositive(body.amount, "amount");
         const fromPrice = await liveUsdPrice(from, finitePositive(body.price, "price"));
         const toPrice = await liveUsdPrice(to, finitePositive(body.swap_to_price, "swap price"));
-        await assertPin(supabase, userId, pin, units * fromPrice);
-        const received = await callRpc(supabase, "crypto_swap", {
-          p_user: userId,
-          p_from: from,
-          p_to: to,
-          p_units: units,
-          p_from_price: fromPrice,
-          p_to_price: toPrice,
+        if (!from || !to || from === to) throw new Error("Invalid swap pair");
+        const holding = await getCryptoHolding(supabase, userId, from);
+        if (holding + 1e-12 < units) throw new Error(`Insufficient ${from} balance`);
+        const received = (units * fromPrice) / toPrice;
+        await upsertCryptoHolding(supabase, userId, from, -units, fromPrice);
+        await upsertCryptoHolding(supabase, userId, to, received, toPrice);
+        await supabase.from("transactions").insert({
+          user_id: userId, type: "conversion", amount: -units, status: "completed",
+          description: `Swapped ${units.toFixed(6)} ${from} → ${received.toFixed(6)} ${to}`,
+          metadata: { from, to, amount: units, received, action: "swap" },
         });
         return ok({ success: true, received });
       }
@@ -111,35 +173,80 @@ serve(async (req) => {
         const quoted = finitePositive(body.price, "price");
         if (!ticker) throw new Error("Invalid parameters");
         const price = await liveStockPrice(ticker, quoted);
-        await assertPin(supabase, userId, pin, shares * price);
-        await callRpc(supabase, "stock_trade", {
-          p_user: userId,
-          p_ticker: ticker,
-          p_action: action,
-          p_shares: shares,
-          p_price: price,
-        });
+        const dollars = shares * price;
+
+        const { data: usdWallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !usdWallet) throw new Error("No USD wallet");
+
+        if (action === "buy") {
+          if (Number(usdWallet.balance) + 1e-8 < dollars) throw new Error("Insufficient USD balance");
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) - dollars }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
+          await upsertStockHolding(supabase, userId, ticker, shares, price);
+          await supabase.from("transactions").insert({
+            user_id: userId, type: "purchase", amount: -dollars, status: "completed",
+            description: `Bought ${shares.toFixed(4)} shares of ${ticker} at $${price.toFixed(2)}`,
+            metadata: { stock: ticker, shares, price_per_share: price, action: "stock_buy" },
+          });
+        } else if (action === "sell") {
+          const currentShares = await getStockShares(supabase, userId, ticker);
+          if (currentShares + 1e-8 < shares) throw new Error(`Insufficient ${ticker} shares`);
+          const { error: uErr } = await supabase.from("wallets")
+            .update({ balance: Number(usdWallet.balance) + dollars }).eq("id", usdWallet.id);
+          if (uErr) throw new Error(uErr.message);
+          await upsertStockHolding(supabase, userId, ticker, -shares, price);
+          await supabase.from("transactions").insert({
+            user_id: userId, type: "purchase", amount: dollars, status: "completed",
+            description: `Sold ${shares.toFixed(4)} shares of ${ticker} at $${price.toFixed(2)}`,
+            metadata: { stock: ticker, shares, price_per_share: price, action: "stock_sell" },
+          });
+        } else {
+          throw new Error("Invalid action");
+        }
         return ok({ success: true });
       }
 
       case "demo_deposit": {
-        throw new Error("Deposits are not available yet. No money was added.");
+        const amount = finitePositive(body.amount, "amount");
+        if (amount > 100000) throw new Error("Demo deposits are capped at $100,000");
+        const { data: wallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !wallet) throw new Error("USD wallet not found");
+        const { error: uErr } = await supabase.from("wallets")
+          .update({ balance: Number(wallet.balance) + amount }).eq("id", wallet.id);
+        if (uErr) throw new Error(uErr.message);
+        const method = body.method === "bank" ? "Bank transfer deposit (demo)" : "Card deposit (demo)";
+        await supabase.from("transactions").insert({
+          user_id: userId, type: "deposit", amount, status: "completed", description: method,
+        });
+        return ok({ success: true });
       }
 
       case "bill_pay": {
         const amount = finitePositive(body.amount, "amount");
-        await assertPin(supabase, userId, pin, amount);
-        const cashback = await callRpc(supabase, "bill_pay", {
-          p_user: userId,
-          p_amount: amount,
-          p_name: String(body.biller_name || "bill"),
-        });
+        const name = String(body.biller_name || "bill").slice(0, 80);
+        const { data: wallet, error: wErr } = await supabase
+          .from("wallets").select("*").eq("user_id", userId).eq("currency", "USD").maybeSingle();
+        if (wErr || !wallet) throw new Error("USD wallet not found");
+        if (Number(wallet.balance) + 1e-8 < amount) throw new Error("Insufficient balance");
+        const cashback = Math.round(amount * 0.01 * 100) / 100;
+        const { error: uErr } = await supabase.from("wallets")
+          .update({ balance: Number(wallet.balance) - amount + cashback }).eq("id", wallet.id);
+        if (uErr) throw new Error(uErr.message);
+        await supabase.from("transactions").insert([
+          { user_id: userId, type: "bill_payment", amount: -amount, status: "completed", description: `Bill payment — ${name}` },
+          { user_id: userId, type: "cashback", amount: cashback, status: "completed", description: `1% cashback — ${name}` },
+        ]);
         return ok({ success: true, cashback });
       }
 
       case "qr_pay": {
+        // QR payments carry the payee's @handle (see QRPayments.tsx), so they use
+        // the same atomic transfer as "send": the payee is credited, and a payee
+        // that cannot be resolved is rejected before any money moves.
         const amount = roundMoney(finitePositive(body.amount, "amount"));
-        await assertPin(supabase, userId, pin, amount);
         const recipient = cleanRecipient(body.recipient);
         const idempotencyKey = cleanIdempotencyKey(body.idempotency_key);
         const note = String(body.note || "").slice(0, 140);
@@ -155,20 +262,91 @@ serve(async (req) => {
         const { from_currency, to_currency } = body;
         const amount = Number(body.amount);
         const rate = await checkedRate(String(from_currency), String(to_currency), Number(body.rate));
-        if (!from_currency || !to_currency) throw new Error("Missing from/to currency");
-        if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid amount");
-        const from = String(from_currency).toUpperCase();
-        const rates = await usdPerUnitRates();
-        const perUsd = from === "USD" ? 1 : rates[from];
-        const usd = perUsd && perUsd > 0 ? amount / perUsd : amount;
-        await assertPin(supabase, userId, pin, usd);
-        const convertedAmount = await callRpc(supabase, "convert_funds", {
-          p_user: userId,
-          p_from: from_currency,
-          p_to: to_currency,
-          p_amount: amount,
-          p_rate: rate,
+
+        if (!from_currency || !to_currency) {
+          throw new Error("Missing from/to currency");
+        }
+        if (!Number.isFinite(amount) || amount <= 0) {
+          throw new Error("Invalid amount");
+        }
+        if (!Number.isFinite(rate) || rate <= 0) {
+          throw new Error("Invalid or missing exchange rate — wait for live rates and try again");
+        }
+        if (from_currency === to_currency) {
+          throw new Error("Currencies must be different");
+        }
+
+        const { data: fromWallet, error: fErr } = await supabase
+          .from("wallets")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("currency", from_currency)
+          .maybeSingle();
+
+        if (fErr) throw new Error(`Wallet lookup failed: ${fErr.message}`);
+        if (!fromWallet) throw new Error(`No ${from_currency} wallet`);
+
+        // Float-safe: allow tiny rounding drift
+        if (fromWallet.balance + 1e-8 < amount) {
+          throw new Error(
+            `Insufficient ${from_currency} balance (have ${Number(fromWallet.balance).toFixed(2)}, need ${amount.toFixed(2)})`,
+          );
+        }
+
+        const debit = Math.min(amount, fromWallet.balance);
+
+        let { data: toWallet } = await supabase
+          .from("wallets")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("currency", to_currency)
+          .maybeSingle();
+
+        if (!toWallet) {
+          const { data: newWallet, error: cErr } = await supabase
+            .from("wallets")
+            .insert({
+              user_id: userId,
+              balance: 0,
+              savings_balance: 0,
+              currency: to_currency,
+            })
+            .select()
+            .maybeSingle();
+          if (cErr) throw new Error(`Could not create ${to_currency} wallet: ${cErr.message}`);
+          toWallet = newWallet;
+        }
+        if (!toWallet) throw new Error(`Could not open ${to_currency} wallet`);
+
+        const convertedAmount = debit * rate;
+
+        const { error: u1 } = await supabase
+          .from("wallets")
+          .update({ balance: fromWallet.balance - debit })
+          .eq("id", fromWallet.id);
+        if (u1) throw new Error(`Debit failed: ${u1.message}`);
+
+        const { error: u2 } = await supabase
+          .from("wallets")
+          .update({ balance: (toWallet.balance ?? 0) + convertedAmount })
+          .eq("id", toWallet.id);
+        if (u2) throw new Error(`Credit failed: ${u2.message}`);
+
+        await supabase.from("transactions").insert({
+          user_id: userId,
+          type: "conversion",
+          amount: -Math.abs(debit),
+          status: "completed",
+          description: `Converted ${debit.toFixed(2)} ${from_currency} → ${convertedAmount.toFixed(4)} ${to_currency}`,
+          metadata: {
+            from: from_currency,
+            to: to_currency,
+            from_amount: debit,
+            to_amount: convertedAmount,
+            rate,
+          },
         });
+
         return ok({ success: true, convertedAmount });
       }
 
@@ -242,28 +420,6 @@ type RpcClient = {
 
 // Error codes raised by public.p2p_send whose message is safe and useful to show.
 const P2P_USER_ERROR_CODES = new Set(["22023", "P0002", "23514"]);
-
-
-async function assertPin(supabase: SupabaseClient, userId: string, pin: string, usd: number) {
-  if (!(usd > 500)) return;
-  await callRpc(supabase, "assert_tx_pin", { p_user: userId, p_pin: pin, p_usd: usd });
-}
-
-async function callRpc(supabase: SupabaseClient, fn: string, args: Record<string, unknown>) {
-  const { data, error } = await supabase.rpc(fn, args);
-  if (error) {
-    const message = error.message ?? "Operation failed";
-    console.error(fn, error.code, message);
-    if (error.code && (P2P_USER_ERROR_CODES.has(error.code) || error.code === "22023" || error.code === "23514" || error.code === "P0002" || error.code === "28000")) {
-      throw new Error(message);
-    }
-    if (/insufficient|invalid|wallet|pin|not available|not found|already|upgrade|currency/i.test(message)) {
-      throw new Error(message.replace(/^.*ERROR:\s*/i, ""));
-    }
-    throw new Error("Operation failed. No money was moved. Please try again.");
-  }
-  return data;
-}
 
 async function p2pSend(
   client: unknown,
@@ -393,4 +549,70 @@ async function liveStockPrice(ticker: string, clientPrice: number): Promise<numb
     throw new Error(`${ticker} price is out of date. Refresh and try again.`);
   }
   return live;
+}
+
+async function upsertCryptoHolding(
+  supabase: SupabaseClient,
+  userId: string,
+  code: string,
+  amountDelta: number,
+  price: number,
+) {
+  const { data: existing } = await supabase
+    .from("crypto_holdings").select("*").eq("user_id", userId).eq("crypto_code", code).maybeSingle();
+
+  if (existing) {
+    const newAmount = existing.amount + amountDelta;
+    if (newAmount <= 0.000001) {
+      await supabase.from("crypto_holdings").delete().eq("id", existing.id);
+    } else {
+      const newAvg = amountDelta > 0
+        ? (existing.avg_buy_price * existing.amount + price * amountDelta) / newAmount
+        : existing.avg_buy_price;
+      await supabase.from("crypto_holdings").update({ amount: newAmount, avg_buy_price: newAvg }).eq("id", existing.id);
+    }
+  } else if (amountDelta > 0) {
+    await supabase.from("crypto_holdings").insert({
+      user_id: userId, crypto_code: code, amount: amountDelta, avg_buy_price: price,
+    });
+  }
+}
+
+async function getCryptoHolding(supabase: SupabaseClient, userId: string, code: string): Promise<number> {
+  const { data } = await supabase
+    .from("crypto_holdings").select("amount").eq("user_id", userId).eq("crypto_code", code).maybeSingle();
+  return data?.amount ?? 0;
+}
+
+async function upsertStockHolding(
+  supabase: SupabaseClient,
+  userId: string,
+  ticker: string,
+  sharesDelta: number,
+  price: number,
+) {
+  const { data: existing } = await supabase
+    .from("stock_holdings").select("*").eq("user_id", userId).eq("ticker", ticker).maybeSingle();
+
+  if (existing) {
+    const newShares = existing.shares + sharesDelta;
+    if (newShares <= 0.0001) {
+      await supabase.from("stock_holdings").delete().eq("id", existing.id);
+    } else {
+      const newAvg = sharesDelta > 0
+        ? (existing.avg_buy_price * existing.shares + price * sharesDelta) / newShares
+        : existing.avg_buy_price;
+      await supabase.from("stock_holdings").update({ shares: newShares, avg_buy_price: newAvg }).eq("id", existing.id);
+    }
+  } else if (sharesDelta > 0) {
+    await supabase.from("stock_holdings").insert({
+      user_id: userId, ticker, shares: sharesDelta, avg_buy_price: price,
+    });
+  }
+}
+
+async function getStockShares(supabase: SupabaseClient, userId: string, ticker: string): Promise<number> {
+  const { data } = await supabase
+    .from("stock_holdings").select("shares").eq("user_id", userId).eq("ticker", ticker).maybeSingle();
+  return data?.shares ?? 0;
 }

@@ -28,7 +28,6 @@ export function CurrencyWallets({ mode }: { mode?: 'convert' }) {
   const [fromCurrency, setFromCurrency] = useState('');
   const [toCurrency, setToCurrency] = useState('');
   const [convertAmount, setConvertAmount] = useState('');
-  const [txPin, setTxPin] = useState('');
   const [justConverted, setJustConverted] = useState(false);
   const { run, busy: isConverting } = useSingleFlight();
 
@@ -65,7 +64,7 @@ export function CurrencyWallets({ mode }: { mode?: 'convert' }) {
       if (fromCurrency === toCurrency) { toast.error('Select different currencies'); return; }
       if (!fromCurrency || !toCurrency) { toast.error('Select currencies'); return; }
       try {
-        const result = await convertCurrency.mutateAsync({ fromCurrency, toCurrency, amount: amt, rate: convRate, pin: txPin });
+        const result = await convertCurrency.mutateAsync({ fromCurrency, toCurrency, amount: amt, rate: convRate });
         toast.success(`Converted ${amt} ${fromCurrency} → ${result.convertedAmount.toFixed(4)} ${toCurrency}`);
         setConvertAmount('');
         setShowConvert(false);
@@ -126,9 +125,6 @@ export function CurrencyWallets({ mode }: { mode?: 'convert' }) {
             <Select label="To" value={toCurrency} onChange={setToCurrency} placeholder="To" options={wallets.filter((w) => w.currency !== fromCurrency).map((w) => ({ value: w.currency, label: `${w.currency} (${sym(w.currency)}${w.balance.toFixed(2)})` }))} />
           </View>
           <Field placeholder="Amount" keyboardType="decimal-pad" value={convertAmount} onChangeText={setConvertAmount} />
-          {(fromCurrency === 'USD' ? parseFloat(convertAmount || '0') : parseFloat(convertAmount || '0') / (rates[fromCurrency] || 1)) > 500 && (
-            <Field placeholder="Transaction PIN (if you set one)" secureTextEntry keyboardType="number-pad" maxLength={6} value={txPin} onChangeText={(v) => setTxPin(v.replace(/\D/g, ''))} />
-          )}
           {fromCurrency ? (
             <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>
               {[0.25, 0.5, 1].map((frac) => {

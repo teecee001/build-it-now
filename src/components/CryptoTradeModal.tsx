@@ -64,7 +64,6 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
   const { getWallet } = useMultiCurrencyWallet();
   const { holdingsMap } = useCryptoHoldings();
   const [amount, setAmount] = useState("");
-  const [txPin, setTxPin] = useState("");
   const [swapTo, setSwapTo] = useState(code === "BTC" ? "ETH" : "BTC");
   const [walletAddress, setWalletAddress] = useState("");
   const [showScanner, setShowScanner] = useState(false);
@@ -133,7 +132,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
         if (!usdWallet) throw new Error("No USD wallet");
         await invokeWalletOp({
           operation: "crypto_trade", action: "buy", code,
-          amount: numAmount, crypto_amount: cryptoAmount, price, usd_value: numAmount, pin: txPin,
+          amount: numAmount, crypto_amount: cryptoAmount, price, usd_value: numAmount,
         });
         haptic("success");
         toast.success(`Bought ${cryptoAmount.toFixed(6)} ${code}! 🎉`);
@@ -142,12 +141,21 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
         await invokeWalletOp({
           operation: "crypto_trade", action: "sell", code,
-          amount: numAmount, crypto_amount: numAmount, price, usd_value: usdValue, pin: txPin,
+          amount: numAmount, crypto_amount: numAmount, price, usd_value: usdValue,
         });
         haptic("success");
         toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
       } else if (type === "send") {
-        throw new Error("On-chain withdrawals are not available. No coins were moved.");
+        if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
+        await invokeWalletOp({
+          operation: "crypto_send",
+          code,
+          amount: numAmount,
+          price,
+          address: walletAddress,
+        });
+        haptic("success");
+        toast.success(`Sent ${numAmount.toFixed(6)} ${code} 🚀`);
       } else {
         if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
         const swapToPrice = getPrice?.(swapTo) || 0;
@@ -159,7 +167,6 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
           amount: numAmount,
           price,
           swap_to_price: swapToPrice,
-          pin: txPin,
         });
         haptic("success");
         toast.success(`Swapped ${numAmount} ${code} → ${swapTo} ⚡`);
@@ -334,23 +341,9 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: Crypt
           </div>
         )}
 
-        {(type === "buy" ? numAmount : type === "sell" ? usdValue : numAmount * price) > 500 && (
-          <Input
-            type="password"
-            inputMode="numeric"
-            maxLength={6}
-            value={txPin}
-            onChange={(e) => setTxPin(e.target.value.replace(/\D/g, ""))}
-            placeholder="Transaction PIN (if you set one)"
-            className="text-center tracking-[0.4em] font-mono bg-secondary border-border"
-          />
-        )}
-        {type === "send" && (
-          <p className="text-xs text-muted-foreground">On-chain withdrawals are not available. No coins will be moved.</p>
-        )}
         <Button
           onClick={handleTrade}
-          disabled={!canProceed || isProcessing || type === "send"}
+          disabled={!canProceed || isProcessing}
           className={`w-full gap-2 ${
             type === "buy" ? "bg-success text-success-foreground hover:bg-success/90" :
             type === "sell" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" :

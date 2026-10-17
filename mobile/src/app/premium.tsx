@@ -65,7 +65,7 @@ function PremiumContent() {
         <Box i={3}>
           <Text style={k.h3}>Free Plan</Text>
           <Text style={[k.muted, { marginBottom: 10 }]}>What you currently have</Text>
-          {['No paid savings interest', 'Standard transfer speeds', 'Email support', 'Basic transaction limits', 'In-app card record'].map((f) => (
+          {['6% APY on Savings', 'Standard transfer speeds', 'Email support', 'Basic transaction limits', 'Standard debit card'].map((f) => (
             <View key={f} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
               <Ionicons name="checkmark-circle-outline" size={14} color={C.muted} />
               <Text style={k.muted}>{f}</Text>

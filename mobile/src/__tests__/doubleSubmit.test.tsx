@@ -64,12 +64,16 @@ test('useSingleFlight runs once while the first call is in flight', async () => 
   expect(await b).toBeUndefined();
 });
 
-test('deposit: screen does not call demo_deposit', async () => {
+test('deposit: double tap sends one demo_deposit', async () => {
   const Deposit = require('@/app/deposit').default;
   await render(<Deposit />);
-  expect(screen.getByText('Bank deposits are not connected')).toBeTruthy();
-  expect(screen.getByText(/No deposit instructions/)).toBeTruthy();
-  expect(mockInvoke).not.toHaveBeenCalled();
+  await fireEvent.press(screen.getByText('Debit Card'));
+  await fireEvent.changeText(screen.getByPlaceholderText('0.00'), '25');
+  const btn = screen.getByLabelText('Deposit $25');
+  await doubleTap(btn);
+  expect(mockInvoke).toHaveBeenCalledTimes(1);
+  expect(mockInvoke.mock.calls[0][0]).toMatchObject({ operation: 'demo_deposit', amount: 25 });
+  await settle();
 });
 
 test('convert: double tap converts once', async () => {

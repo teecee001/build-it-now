@@ -839,13 +839,6 @@ export type Database = {
         }
         Returns: string
       }
-      open_currency_wallet: {
-        Args: { p_currency: string }
-        Returns: string
-      }
-      set_tx_pin: { Args: { p_pin: string }; Returns: undefined }
-      clear_tx_pin: { Args: never; Returns: undefined }
-      has_tx_pin: { Args: never; Returns: boolean }
     }
     Enums: {
       account_tier: "personal" | "pro" | "business" | "bank"

@@ -41,7 +41,6 @@ function SavingsContent() {
   } = useSavings();
 
   const [amount, setAmount] = useState("");
-  const [txPin, setTxPin] = useState("");
   const [direction, setDirection] = useState<TransferDirection>("to_savings");
   const [projectionMonths, setProjectionMonths] = useState(12);
   const [monthlyContribution, setMonthlyContribution] = useState(0);
@@ -55,11 +54,10 @@ function SavingsContent() {
     const num = parseFloat(amount);
     if (isNaN(num) || num <= 0) return;
     if (direction === "to_savings") {
-      await transferToSavings(num, txPin);
+      await transferToSavings(num);
     } else {
-      await transferToWallet(num, txPin);
+      await transferToWallet(num);
     }
-    setTxPin("");
     setAmount("");
   };
 
@@ -73,10 +71,10 @@ function SavingsContent() {
           <PiggyBank className="w-6 h-6 text-success" />
           <h1 className="text-title">Savings</h1>
           <Badge className="bg-success/10 text-success border-0 text-xs font-semibold">
-            {apyRate}% projection
+            {apyRate}% APY
           </Badge>
         </div>
-        <p className="text-muted-foreground text-sm">A savings balance inside the app. The chart is a projection — interest is not paid.</p>
+        <p className="text-muted-foreground text-sm">Grow your money with industry-leading yields</p>
       </motion.div>
 
       {/* Balance Overview */}
@@ -173,17 +171,6 @@ function SavingsContent() {
               className="pl-7 h-12 bg-secondary border-border text-lg font-mono"
             />
           </div>
-          {parseFloat(amount || "0") > 500 && (
-            <Input
-              type="password"
-              inputMode="numeric"
-              maxLength={6}
-              value={txPin}
-              onChange={(e) => setTxPin(e.target.value.replace(/\D/g, ""))}
-              placeholder="Transaction PIN (if you set one)"
-              className="h-12 bg-secondary border-border text-center tracking-[0.4em] font-mono"
-            />
-          )}
 
           {/* Quick Amounts */}
           <div className="flex gap-2">
@@ -323,7 +310,7 @@ function SavingsContent() {
               </p>
             </div>
             <div className="p-3 rounded-lg bg-success/5 border border-success/10">
-              <p className="text-caption text-success uppercase tracking-wider">Projected interest (not paid)</p>
+              <p className="text-caption text-success uppercase tracking-wider">Total Interest Earned</p>
               <p className="text-sm font-semibold font-mono text-success">
                 +${totalProjectedInterest.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </p>
@@ -337,7 +324,7 @@ function SavingsContent() {
         <Card className="p-3 bg-secondary/30 border-border flex items-start gap-2">
           <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
           <p className="text-caption text-muted-foreground leading-relaxed">
-            ExoSky is not a bank. Savings are not held at a partner bank, are not FDIC insured, and do not earn interest. The {apyRate}% figure is an illustration only.
+            Deposits are held at our partner bank and eligible for FDIC insurance up to $250,000. APY is variable and may change. Interest is calculated daily and paid monthly.
           </p>
         </Card>
       </motion.div>

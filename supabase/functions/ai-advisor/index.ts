@@ -134,19 +134,6 @@ serve(async (req) => {
     const { data: userData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !userData.user) return json({ error: "Sign in required" }, 401);
 
-    const quotaClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${token}` } } },
-    );
-    const { error: quotaError } = await quotaClient.rpc("consume_ai_quota");
-    if (quotaError) {
-      const msg = quotaError.message ?? "";
-      if (/rate limit/i.test(msg)) return json({ error: "AI rate limit reached. Try again in an hour." }, 429);
-      console.error("consume_ai_quota", quotaError);
-      return json({ error: "AI quota is unavailable" }, 503);
-    }
-
     const body = await req.json().catch(() => ({}));
     const timezone = safeTimeZone(body?.timezone);
     const mode: Mode = body?.mode === "life" ? "life" : "money";

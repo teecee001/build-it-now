@@ -192,7 +192,6 @@ function BillPayContent() {
   const [newDueDate, setNewDueDate] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
   const [confirmBill, setConfirmBill] = useState<Bill | null>(null);
-  const [txPin, setTxPin] = useState("");
 
   const handleCategoryChange = (cat: string) => {
     setNewCategory(cat);
@@ -234,7 +233,6 @@ function BillPayContent() {
         operation: "bill_pay",
         amount: bill.amount,
         biller_name: bill.biller_name,
-        pin: txPin,
       });
       await payBill.mutateAsync(bill.id);
       const cashback = Number(result?.cashback ?? bill.amount * 0.01);
@@ -465,17 +463,6 @@ function BillPayContent() {
                 <span className="text-muted-foreground">Cashback (1%)</span>
                 <span className="text-success font-mono">+${(confirmBill.amount * 0.01).toFixed(2)}</span>
               </div>
-              {Number(confirmBill.amount) > 500 && (
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={txPin}
-                  onChange={(e) => setTxPin(e.target.value.replace(/\D/g, ""))}
-                  placeholder="Transaction PIN (if you set one)"
-                  className="text-center tracking-[0.4em] font-mono bg-secondary border-border"
-                />
-              )}
               <div className="border-t border-border pt-2 mt-2">
                 <p className="text-caption text-muted-foreground text-center">
                   By confirming, you authorize this payment from your Ξ╳oSky wallet.
