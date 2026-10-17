@@ -77,6 +77,7 @@ function Root() {
           <Stack.Screen name="rewards" />
           <Stack.Screen name="savings" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="admin" />
           <Stack.Screen name="stocks" />
         </Stack.Protected>
         <Stack.Protected guard={!session}>
