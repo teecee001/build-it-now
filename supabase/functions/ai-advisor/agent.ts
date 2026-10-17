@@ -1,10 +1,9 @@
-// Exo agent loop: OpenAI-compatible tool calling (Groq, Gemini, xAI, OpenAI), up to
-// MAX_TOOL_ROUNDS rounds, then a fact-check of every $ / % figure with one repair pass.
+// Exo agent loop: OpenAI-compatible tool calling. Tuned for lower latency.
 import { unsupportedFigures } from "./factcheck.ts";
 import { runTool, type ToolCtx, toolDefs } from "./tools.ts";
 
-export const MAX_TOOL_ROUNDS = 5;
-export const TOOL_TIMEOUT_MS = 12_000;
+export const MAX_TOOL_ROUNDS = 3; // reduced from 5 for speed
+export const TOOL_TIMEOUT_MS = 8_000; // reduced from 12s
 
 type Msg = Record<string, unknown>;
 export type CallResult = { ok: boolean; status: number; json?: unknown; text?: string };
@@ -27,10 +26,10 @@ const looksLikeToolRejection = (status: number, text = "") =>
 
 export async function runAgent(opts: {
   call: Caller;
-  messages: Msg[]; // system prompts + conversation
+  messages: Msg[];
   ctx: ToolCtx;
-  evidence: string[]; // account summary + user messages
-  deadline?: number; // epoch ms; after it, no more tool rounds
+  evidence: string[];
+  deadline?: number;
 }): Promise<AgentResult> {
   const { call, ctx } = opts;
   const evidence = [...opts.evidence];
@@ -40,20 +39,19 @@ export async function runAgent(opts: {
   let mode: "tools" | "context" = "tools";
   const convo: Msg[] = [...opts.messages];
 
-  // Runs the model until it produces a final text answer (or errors).
   const complete = async (maxRounds: number): Promise<{ text: string } | { error: CallResult }> => {
     for (let round = 0; ; round++) {
       const useTools = mode === "tools";
       const body: Record<string, unknown> = { messages: convo, stream: false };
       if (useTools) {
         body.tools = tools;
-        const late = opts.deadline !== undefined && Date.now() > opts.deadline - 12_000;
+        const late = opts.deadline !== undefined && Date.now() > opts.deadline - 8_000;
         body.tool_choice = round >= maxRounds || late ? "none" : "auto";
       }
       const res = await call(body);
       if (!res.ok) {
         if (useTools && round === 0 && looksLikeToolRejection(res.status, res.text)) {
-          mode = "context"; // provider rejects tools: fall back to context injection
+          mode = "context";
           round = -1;
           continue;
         }
@@ -65,8 +63,8 @@ export async function runAgent(opts: {
       if (!useTools || calls.length === 0 || body.tool_choice === "none") {
         return { text: stripThink(String(msg.content ?? "")) };
       }
-      convo.push(msg); // keep provider fields (e.g. Gemini thought signatures) intact
-      for (const c of calls.slice(0, 8)) {
+      convo.push(msg);
+      for (const c of calls.slice(0, 6)) { // cap parallel tools
         let args: Record<string, unknown> = {};
         try {
           args = JSON.parse(c.function?.arguments || "{}");
@@ -74,7 +72,6 @@ export async function runAgent(opts: {
         const name = c.function?.name ?? "";
         let result: unknown;
         try {
-          // A slow or failing tool must never sink the answer: cap it and return an error object.
           let timer: ReturnType<typeof setTimeout> | undefined;
           result = await Promise.race([
             ctx.allow && !ctx.allow.includes(name)
@@ -102,7 +99,7 @@ export async function runAgent(opts: {
   let bad = unsupportedFigures(answer, evidence);
   if (bad.length === 0 && answer) return { kind: "answer", text: answer, toolsUsed, mode, factcheck: "pass", newsResults };
 
-  // One repair pass.
+  // One repair pass only if figures are unsupported
   convo.push({ role: "assistant", content: answer });
   convo.push({
     role: "user",
@@ -111,7 +108,7 @@ export async function runAgent(opts: {
         bad.map((b) => b.raw).join(", ")
       }. Rewrite the full answer for the user. Only use figures returned by tools or present in the account summary; use the calculate tool for any maths, or leave the figure out. Do not mention this check.`,
   });
-  const repaired = await complete(2);
+  const repaired = await complete(1);
   if ("error" in repaired) return { kind: "factcheck_failed", toolsUsed, mode, unsupported: bad.map((b) => b.raw) };
   answer = repaired.text;
   bad = unsupportedFigures(answer, evidence);

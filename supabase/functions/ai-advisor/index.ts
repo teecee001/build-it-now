@@ -29,7 +29,7 @@ const todayLine = (a: AccountData) =>
     a.timeZone ?? "UTC"
   }). This is authoritative and overrides your training data. Resolve relative dates like "by December 31" to the next such date, never one in the past.`;
 
-const TIME_BUDGET_MS = 40_000;
+const TIME_BUDGET_MS = 22_000; // reduced from 40s for faster responses
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -60,7 +60,7 @@ async function fetchQuotes(cls: "crypto" | "stocks"): Promise<Record<string, Quo
     const base = Deno.env.get("SUPABASE_URL") ?? "";
     const anon = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const timer = setTimeout(() => ctrl.abort(), 4000);
     const res = await fetch(`${base}/functions/v1/market-data?class=${cls}`, {
       headers: { apikey: anon, Authorization: `Bearer ${anon}` },
       signal: ctrl.signal,
@@ -90,20 +90,18 @@ async function loadAccount(token: string, userId: string, fallbackName?: string)
     db.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
     db.from("wallets").select("currency, balance, savings_balance").eq("user_id", userId),
     db.from("transactions").select("amount, currency, type, status, description, recipient, created_at, metadata")
-      .eq("user_id", userId).gte("created_at", since).order("created_at", { ascending: false }).limit(200),
+      .eq("user_id", userId).gte("created_at", since).order("created_at", { ascending: false }).limit(120),
     db.from("bills").select("biller_name, amount, category, due_date, is_paid").eq("user_id", userId),
     db.from("crypto_holdings").select("crypto_code, amount").eq("user_id", userId),
     db.from("stock_holdings").select("ticker, shares").eq("user_id", userId),
     fetchQuotes("crypto"),
     fetchQuotes("stocks"),
-    // Goal memory is optional: skipped gracefully until the exo_goals migration is applied.
     db.from("exo_goals").select("id").limit(1),
   ]);
   const goals: GoalsDb | undefined = goalsProbe.error ? undefined : {
     list: async () => await db.from("exo_goals").select("id, goal, target_amount, target_date, created_at").eq("user_id", userId)
       .order("created_at", { ascending: false }).limit(20),
     insert: async (row) => await db.from("exo_goals").insert({ ...row, user_id: userId }).select("id, goal, target_amount, target_date").single(),
-    // RLS restricts deletes to the owner; the user_id filter is a second guard.
     remove: async (id) => await db.from("exo_goals").delete().eq("id", id).eq("user_id", userId).select("id"),
   };
   const account: AccountData = {
@@ -131,7 +129,6 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    // Unchanged: this client only verifies the caller's JWT.
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -142,11 +139,8 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const timezone = body?.timezone;
-    // Optional; older clients don't send it and get Money mode (unchanged behaviour).
     const mode: Mode = body?.mode === "life" ? "life" : "money";
     if (!Array.isArray(body?.messages)) return json({ error: "Invalid messages" }, 400);
-    // The app keeps up to 200 messages of history and sends them all; never reject a long
-    // chat (that surfaced as the client's generic error). Keep only the recent, valid turns.
     const messages = sanitizeMessages(body.messages);
     if (!messages.length) return json({ error: "Invalid messages" }, 400);
 
@@ -162,7 +156,6 @@ serve(async (req) => {
     account.timeZone = safeTimeZone(timezone);
     const builtIn = (extra: Record<string, string> = {}) => sseAnswer(ruleAnswer(question, account), extra);
 
-    // Date questions are answered exactly from the server clock in the user's time zone.
     if (mode === "money" && detectIntent(question) === "date") {
       return builtIn({ "X-Exo-Provider": "built-in", "X-Exo-Tried": "date-shortcut", "X-Exo-Tools": "none", "X-Exo-Factcheck": "pass" });
     }
@@ -185,7 +178,6 @@ serve(async (req) => {
       ...messages,
     ];
     const plan = route(question, mode);
-    // Shared targets/limits (Upstash Redis when configured, else safe defaults); read-only here.
     const risk = await loadRiskConfig(sharedStore(), userData.user.id).catch(() => undefined);
     const board = new Blackboard();
     const allowFor = (ids: typeof plan.agents) => [...new Set(ids.flatMap((id) => AGENTS[id].tools))];
@@ -193,7 +185,6 @@ serve(async (req) => {
 
     const leadNews: unknown[] = [];
     for (const p of providers) {
-      // Per-request time budget: stay well inside the edge wall-clock limit and the user's patience.
       if (Date.now() - started > TIME_BUDGET_MS) {
         tried.push(`${p.name}=skipped-time-budget`);
         continue;
@@ -202,10 +193,9 @@ serve(async (req) => {
         const send = () => chatCompletions(p, { ...b, ...(p.extraBody ?? {}) });
         let response = await send();
         if (response.status === 503 || response.status === 429) {
-          // Transient overload / rate limit: one short retry before giving up on this provider.
           await response.body?.cancel().catch(() => {});
           tried.push(`${p.name}=${response.status}`);
-          await new Promise((r) => setTimeout(r, 700));
+          await new Promise((r) => setTimeout(r, 400));
           response = await send();
         }
         if (response.ok) return { ok: true, status: response.status, json: await response.json() };
@@ -221,10 +211,9 @@ serve(async (req) => {
         const persona = (ids: typeof plan.agents) => ({ role: "system", content: ids.map(agentSystem).join("\n") });
         let leadMessages = [...baseMessages.slice(0, -messages.length), persona(plan.agents), ...messages];
         if (plan.debate) {
-          // Bull and Bear research in parallel on the shared blackboard; the Lead then synthesises.
           const sides = await Promise.all((["bull", "bear"] as const).map(async (id) => {
             const r = await runAgent({
-              call, deadline: Math.min(deadline, Date.now() + 18_000), evidence: [...evidence],
+              call, deadline: Math.min(deadline, Date.now() + 10_000), evidence: [...evidence],
               messages: [...baseMessages.slice(0, -messages.length), persona([id]), ...messages],
               ctx: { account, goals, fiatRates, allow: AGENTS[id].tools, board, risk },
             }).catch(() => null);
