@@ -66,68 +66,23 @@ serve(async (req) => {
     }
 
     const referrerId = referrerProfile.id;
-    const rewardAmount = 10;
 
-    // Create completed referral record
-    await supabase.from("referrals").insert({
+    // A referral records the relationship. It does not create money.
+    const { error: insertError } = await supabase.from("referrals").insert({
       referrer_id: referrerId,
       referred_id: userId,
       referral_code: code,
       status: "completed",
-      reward_amount: rewardAmount,
+      reward_amount: 0,
       completed_at: new Date().toISOString(),
     });
-
-    // Credit referrer wallet
-    const { data: referrerWallet } = await supabase
-      .from("wallets")
-      .select("id, balance")
-      .eq("user_id", referrerId)
-      .eq("currency", "USD")
-      .single();
-
-    if (referrerWallet) {
-      await supabase
-        .from("wallets")
-        .update({ balance: referrerWallet.balance + rewardAmount })
-        .eq("id", referrerWallet.id);
-
-      await supabase.from("transactions").insert({
-        user_id: referrerId,
-        type: "cashback",
-        amount: rewardAmount,
-        description: "Referral bonus — friend joined ExoSky",
-        status: "completed",
-        metadata: { referral: true, referred_user: userId },
-      });
-    }
-
-    // Credit referred user wallet
-    const { data: referredWallet } = await supabase
-      .from("wallets")
-      .select("id, balance")
-      .eq("user_id", userId)
-      .eq("currency", "USD")
-      .single();
-
-    if (referredWallet) {
-      await supabase
-        .from("wallets")
-        .update({ balance: referredWallet.balance + rewardAmount })
-        .eq("id", referredWallet.id);
-
-      await supabase.from("transactions").insert({
-        user_id: userId,
-        type: "cashback",
-        amount: rewardAmount,
-        description: "Referral welcome bonus — $10 credited",
-        status: "completed",
-        metadata: { referral: true, referrer_user: referrerId },
-      });
+    if (insertError) {
+      if (insertError.code === "23505") throw new Error("You have already used a referral code");
+      throw new Error(insertError.message);
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Referral redeemed! $10 bonus credited." }),
+      JSON.stringify({ success: true, message: "Referral saved. An admin adds any reward." }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {

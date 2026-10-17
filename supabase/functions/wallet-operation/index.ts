@@ -209,6 +209,13 @@ serve(async (req) => {
       }
 
       case "demo_deposit": {
+        const { data: roleRow, error: roleErr } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (roleErr || !roleRow) throw new Error("Only an admin can add money to a wallet.");
         const amount = finitePositive(body.amount, "amount");
         if (amount > 100000) throw new Error("Demo deposits are capped at $100,000");
         const { data: wallet, error: wErr } = await supabase

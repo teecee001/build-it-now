@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Switch, Text } from 'react-native';
 
 import { Card, Screen, ui } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { haptic } from '@/lib/haptics';
 import { biometricLabel, isLockEnabled, setLockEnabled } from '@/lib/lock';
 import { C } from '@/lib/theme';
@@ -35,6 +36,7 @@ function Row({ label, onPress, right }: { label: string; onPress?: () => void; r
 
 export default function Menu() {
   const { signOut } = useAuth();
+  const isAdmin = useIsAdmin();
   const [bio, setBio] = useState<string | null>(null);
   const [lock, setLock] = useState(false);
   useEffect(() => {
@@ -54,6 +56,12 @@ export default function Menu() {
           {sec.items.map((it) => <Row key={it.label} label={it.label} onPress={() => go(it.path)} />)}
         </Card>
       ))}
+      {isAdmin && (
+        <Card i={4}>
+          <Text style={s.sec}>Admin</Text>
+          <Row label="Add money" onPress={() => go('/admin')} />
+        </Card>
+      )}
       {bio && (
         <Card i={5}>
           <Row
