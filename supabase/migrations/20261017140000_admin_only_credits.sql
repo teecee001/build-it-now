@@ -1,5 +1,6 @@
 -- Users can open a currency slot, but they cannot create a balance.
--- Only an admin can add money. Existing balances are left as they are.
+-- Only an admin can add money after signup. New accounts still receive the $25 test bonus.
+-- Existing balances are left as they are.
 
 DROP POLICY IF EXISTS "Users can insert own wallets" ON public.wallets;
 DROP POLICY IF EXISTS "Users can insert own empty wallets" ON public.wallets;
@@ -20,7 +21,7 @@ SET search_path = public
 AS $$
 BEGIN
   INSERT INTO public.wallets (user_id, balance, savings_balance, currency)
-  VALUES (NEW.id, 0, 0, 'USD')
+  VALUES (NEW.id, 25.00, 0, 'USD')
   ON CONFLICT (user_id, currency) DO NOTHING;
   RETURN NEW;
 END;
@@ -33,6 +34,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  INSERT INTO public.transactions (user_id, type, amount, description, status)
+  VALUES (NEW.id, 'welcome_bonus', 25.00, 'Welcome to X Money — $25 bonus credited', 'completed');
   RETURN NEW;
 END;
 $$;
