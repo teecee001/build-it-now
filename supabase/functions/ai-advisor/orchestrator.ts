@@ -61,7 +61,6 @@ export class Blackboard {
   findings: { agent: string; text: string }[] = [];
   hits = 0;
   run(name: string, args: Record<string, unknown>, exec: () => Promise<unknown>) {
-    // Writes are never cached.
     if (/^(set_goal|delete_goal)$/.test(name)) return exec();
     const key = `${name}:${JSON.stringify(args, Object.keys(args).sort())}`;
     if (this.cache.has(key)) { this.hits++; return this.cache.get(key)!; }
@@ -71,11 +70,13 @@ export class Blackboard {
   }
 }
 
-/** Messenger style for every reply (shown as short chat bubbles; Sources shown by the app as cards). */
+/** Messenger style for every reply. */
 export const STYLE_RULES = [
-  "Write like a messenger, not a report: 2-4 short sentences (under 90 words) unless the user asks for detail. No headings, no numbered or bulleted essays; plain sentences. Never mention internal tool names. Allocation rows, itinerary slots and product links may follow as short lines.",
-  "Do not write a 'Sources' heading or list links at the end; cite inline like (Reuters, Oct 7). The app shows sources as cards.",
-  "If a tool flags missing_data or a price is null, say it's not available. Never estimate or invent prices.",
+  "Write like a sharp professional messenger: 2-4 short, clear sentences. No headings, no numbered essays, no broken tables, no raw data dumps.",
+  "Never mention internal tool names, function names, or snake_case identifiers. Never say 'accounting_check', 'get_prices', or any tool name.",
+  "If data is missing or a price is unavailable, say so plainly. Never invent prices or leave incomplete fragments like '$1.' or broken table rows.",
+  "Cite sources inline like (Reuters, Oct 17). Do not write a Sources heading or list links at the end.",
+  "The date in the system message is authoritative. Always use it for 'today', 'current date', or relative dates.",
 ].join("\n");
 
 export const LIFE_RULES = [
