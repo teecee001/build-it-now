@@ -10,26 +10,25 @@ import { appendSources, collectHeadlines } from "./sources.ts";
 import { loadRiskConfig, sharedStore } from "./engines.ts";
 import { AGENTS, agentSystem, Blackboard, LIFE_RULES, leadSynthesis, type Mode, route, STYLE_RULES } from "./orchestrator.ts";
 
-// Exo-internal system instructions (not app UI copy).
 const EXO_DATA_RULES = [
   "Account data (balances, transactions, bills, savings, holdings, prices, goals) comes from ExoSky's records through your tools and the account summary, NOT from the user.",
   'Never say "you mentioned", "you said" or "you told me" about account data; say "your account shows" instead.',
-  "Get figures by calling tools. Use the calculate tool for every calculation (interest, projections, budgets, conversions, totals, and days between dates via op days_until); never do arithmetic yourself.",
+  "Get figures by calling tools. Use the calculate tool for every calculation; never do arithmetic yourself.",
   "Only state dollar amounts and percentages that come from tool results or the account summary.",
-  "You are Exo: an expert financial advisor, auditor, accountant and markets analyst. You HAVE live data tools: get_news (live headlines), get_market_sentiment (crypto and stock Fear & Greed), get_macro (fed funds, Treasury yields, CPI inflation, unemployment, mortgage rates), get_company_fundamentals (SEC filings) and audit_finances (statements, subscriptions, anomalies, savings rate). Never say you lack news, browsing, internet or real-time access; call the tool instead.",
-  "For any news, Fed, rate-cut, inflation, economy, market, company or crypto question, call get_news (and get_macro / get_market_sentiment where relevant) before answering. Cite each headline's source and date. Note that headlines are not confirmed outcomes.",
-  "For audits, budgets, statements, subscriptions or 'where does my money go' questions, call audit_finances and present it like an accountant: statement, findings, then concrete recommendations.",
-  "For company analysis, call get_company_fundamentals and get_prices, and say which period each figure is for. If a tool returns an error, say that source is temporarily unavailable and use the others.",
-  "When reporting news, list the key headlines as bullets ending with the source and date in parentheses, e.g. (Reuters, Oct 7), then give your analysis.",
+  "You are Exo Intelligence: precise, professional, and current. You have live data tools. Never say you lack real-time access; call the tool instead.",
+  "For any news, market, crypto, company or macro question, call the relevant tools before answering. Cite sources inline.",
+  "Never mention tool names, function names, or internal identifiers. Never output broken tables or incomplete fragments.",
+  "If a tool returns an error or missing data, say that source is temporarily unavailable and continue with what you have.",
   "Keep the not-financial-advice caveat for investment suggestions.",
-  "Only call set_goal when the user explicitly asks to save a goal. Only call delete_goal when the user explicitly asks to remove a goal; call list_goals first to get its id, and never delete goals the user didn't ask to remove.",
+  "Only call set_goal when the user explicitly asks to save a goal. Only call delete_goal when the user explicitly asks to remove a goal.",
 ].join("\n");
+
 const todayLine = (a: AccountData) =>
   `Today's date is ${todayText(a.now ?? new Date(), a.timeZone ?? "UTC")} (${todayISO(a.now ?? new Date(), a.timeZone ?? "UTC")}, user's time zone ${
     a.timeZone ?? "UTC"
-  }). This is authoritative and overrides your training data. Resolve relative dates like "by December 31" to the next such date, never one in the past.`;
+  }). This is authoritative and overrides your training data. Always use this date for any question about today, the current date, or relative dates.`;
 
-const TIME_BUDGET_MS = 22_000; // reduced from 40s for faster responses
+const TIME_BUDGET_MS = 22_000;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -39,7 +38,6 @@ const corsHeaders = {
 const json = (body: unknown, status: number) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-/** Emit a complete answer in the same OpenAI-style SSE format the client already parses. */
 function sseAnswer(text: string, extra: Record<string, string> = {}): Response {
   const enc = new TextEncoder();
   const stream = new ReadableStream({
@@ -79,7 +77,6 @@ async function fetchQuotes(cls: "crypto" | "stocks"): Promise<Record<string, Quo
   }
 }
 
-/** Reads only the signed-in user's rows, using their own JWT so RLS applies (never the service role). */
 async function loadAccount(token: string, userId: string, fallbackName?: string): Promise<{ account: AccountData; goals?: GoalsDb }> {
   const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
     auth: { persistSession: false },
@@ -156,7 +153,8 @@ serve(async (req) => {
     account.timeZone = safeTimeZone(timezone);
     const builtIn = (extra: Record<string, string> = {}) => sseAnswer(ruleAnswer(question, account), extra);
 
-    if (mode === "money" && detectIntent(question) === "date") {
+    // Always answer date questions from the server clock. Never let the model guess.
+    if (detectIntent(question) === "date") {
       return builtIn({ "X-Exo-Provider": "built-in", "X-Exo-Tried": "date-shortcut", "X-Exo-Tools": "none", "X-Exo-Factcheck": "pass" });
     }
 
