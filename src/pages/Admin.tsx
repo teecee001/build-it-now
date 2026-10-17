@@ -70,6 +70,8 @@ export default function Admin() {
   const [waitFilter, setWaitFilter] = useState<"all" | "pending" | "approved">("all");
   const [newEmail, setNewEmail] = useState("");
   const [approveOnAdd, setApproveOnAdd] = useState(true);
+  const [creditEmail, setCreditEmail] = useState("");
+  const [creditAmount, setCreditAmount] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -185,6 +187,26 @@ export default function Admin() {
     else {
       toast.success(banned ? `Banned ${email}` : `Unbanned ${email}`);
       setUsers((p) => p.map((u) => u.id === id ? { ...u, banned_until: banned ? "2099-01-01" : null } : u));
+    }
+  });
+
+  const creditWallet = () => run("credit", async () => {
+    const email = creditEmail.trim().toLowerCase();
+    const amount = Number(creditAmount);
+    if (!email || !Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter an email and a positive amount");
+      return;
+    }
+    const { data, error } = await supabase.rpc("admin_credit_wallet", {
+      p_email: email,
+      p_amount: amount,
+      p_currency: "USD",
+    });
+    if (error) toast.error(rpcMessage(error));
+    else {
+      toast.success(`Added ${money(amount)} to ${email}. Balance ${money(Number(data) || 0)}`);
+      setCreditAmount("");
+      await load();
     }
   });
 
@@ -334,7 +356,19 @@ export default function Admin() {
             )}
           </TabsContent>
 
-          <TabsContent value="users">
+          <TabsContent value="users" className="space-y-4">
+            <Card className="p-4 bg-card border-border/50">
+              <p className="text-sm font-semibold mb-1">Add money</p>
+              <p className="text-xs text-muted-foreground mb-3">Only an admin can add a balance. Send, receive, and trades are unchanged.</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input type="email" value={creditEmail} onChange={(e) => setCreditEmail(e.target.value)} placeholder="user@email.com" className="h-10 rounded-card" />
+                <Input type="number" min="0" step="0.01" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} placeholder="Amount (USD)" className="h-10 rounded-card sm:max-w-[160px]" />
+                <Button className="rounded-lg h-10" onClick={creditWallet} disabled={!creditEmail || !creditAmount || action === "credit"}>
+                  {action === "credit" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Add to wallet
+                </Button>
+              </div>
+            </Card>
             {loading ? (
               <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
             ) : filteredUsers.length === 0 ? (

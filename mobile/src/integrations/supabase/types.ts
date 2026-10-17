@@ -839,6 +839,10 @@ export type Database = {
         }
         Returns: string
       }
+      admin_credit_wallet: {
+        Args: { p_email: string; p_amount: number; p_currency?: string }
+        Returns: number
+      }
     }
     Enums: {
       account_tier: "personal" | "pro" | "business" | "bank"
