@@ -11,29 +11,31 @@ import { toast } from '@/lib/toast';
 
 export default function AdminCredit() {
   const { user, isLoading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [checkedId, setCheckedId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
+    if (isLoading || !user) return;
+    const id = user.id;
     let cancelled = false;
     (async () => {
       await supabase.rpc('claim_founder_admin');
-      const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
-      if (!cancelled) setIsAdmin(!!data);
+      const { data } = await supabase.rpc('has_role', { _user_id: id, _role: 'admin' });
+      if (!cancelled) {
+        setCheckedId(id);
+        setIsAdmin(!!data);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [user?.id, isLoading]);
+  }, [user, isLoading]);
 
-  if (isLoading || isAdmin === null) return <Page title="Admin"><Loading /></Page>;
+  const known = !!user && checkedId === user.id;
+  if (isLoading || (user && !known)) return <Page title="Admin"><Loading /></Page>;
   if (!user || !isAdmin) return <Redirect href="/(tabs)/menu" />;
 
   const add = async () => {

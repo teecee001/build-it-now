@@ -5,23 +5,21 @@ import { useAuth } from '@/hooks/useAuth';
 
 export function useIsAdmin() {
   const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [checked, setChecked] = useState<{ id: string; admin: boolean } | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
+    if (!user) return;
+    const id = user.id;
     let cancelled = false;
     (async () => {
       await supabase.rpc('claim_founder_admin');
-      const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
-      if (!cancelled) setIsAdmin(!!data);
+      const { data } = await supabase.rpc('has_role', { _user_id: id, _role: 'admin' });
+      if (!cancelled) setChecked({ id, admin: !!data });
     })();
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user]);
 
-  return isAdmin;
+  return !!user && checked?.id === user.id && checked.admin;
 }
