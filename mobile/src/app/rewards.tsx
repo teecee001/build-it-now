@@ -30,7 +30,7 @@ export default function Rewards() {
   if (txLoading || walletLoading) return <Loading />;
 
   return (
-    <Page title="Rewards" sub="Cashback, APY interest, and bonuses">
+    <Page title="Rewards" sub="Cashback and bonuses. Savings interest is not paid.">
       <Box i={1} tint={AMBER}>
         <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
           <Ionicons name="gift-outline" size={16} color={AMBER} />
@@ -39,7 +39,7 @@ export default function Rewards() {
         <Text style={[k.title, k.mono, { color: AMBER, fontSize: 30, marginTop: 4 }]}>${totalRewards.toFixed(2)}</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
           <Stat label="This Month" value={`$${thisMonthRewards.toFixed(2)}`} />
-          <Stat label="APY Earnings" color={C.green} value={`$${apyEarnings.toFixed(2)}`} />
+          <Stat label="Interest paid" color={C.green} value={`$${apyEarnings.toFixed(2)}`} />
         </View>
       </Box>
       <Box i={2} tint={C.green} style={[k.rowB]}>
@@ -48,12 +48,12 @@ export default function Rewards() {
             <Ionicons name="trending-up" size={16} color={C.green} />
             <Text style={k.h3}>High-Yield Savings</Text>
           </View>
-          <Text style={[k.muted, { marginTop: 4 }]}>Earn interest on your savings balance daily</Text>
+          <Text style={[k.muted, { marginTop: 4 }]}>Illustrated rate only. Interest is not paid.</Text>
           {savingsBalance > 0 && <Text style={{ color: C.green, fontSize: 12, marginTop: 4 }}>Current savings: ${savingsBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>}
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={[k.mono, { color: C.green, fontSize: 24 }]}>6.00%</Text>
-          <Text style={{ color: C.green + 'B3', fontSize: 12 }}>APY</Text>
+          <Text style={[k.mono, { color: C.green, fontSize: 24 }]}>0%</Text>
+          <Text style={{ color: C.green + 'B3', fontSize: 12 }}>paid</Text>
         </View>
       </Box>
       <SectionLabel>Cashback Rates</SectionLabel>

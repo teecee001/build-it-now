@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { Btn, k, Sheet } from '@/components/kit';
+import { Btn, Field, k, Sheet } from '@/components/kit';
 import { CURRENCIES } from '@/constants/currencies';
 import { useActiveCurrency } from '@/hooks/useActiveCurrency';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
@@ -29,6 +29,7 @@ export function CurrencySwitcher() {
   const { rates } = useExchangeRates();
   const [picker, setPicker] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
+  const [txPin, setTxPin] = useState('');
   const { run, busy } = useSingleFlight();
   const fromWallet = wallets.find((w) => w.currency === activeCurrency);
   const fromBalance = fromWallet?.balance ?? 0;
@@ -46,7 +47,7 @@ export function CurrencySwitcher() {
     run(async () => {
       if (!pending) return;
       try {
-        await convertCurrency.mutateAsync({ fromCurrency: activeCurrency, toCurrency: pending, amount: fromBalance, rate });
+        await convertCurrency.mutateAsync({ fromCurrency: activeCurrency, toCurrency: pending, amount: fromBalance, rate, pin: txPin });
         setActiveCurrency(pending);
         haptic.success();
         toast.success(`Switched to ${pending}`, { description: `${fmtAmt(converted, pending)} now in your ${pending} wallet` });
@@ -89,6 +90,9 @@ export function CurrencySwitcher() {
             </View>
             <View style={[k.rowB, { marginBottom: 6 }]}><Text style={k.muted}>Exchange Rate</Text><Text style={k.text}>1 {activeCurrency} = {rate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} {pending}</Text></View>
             <View style={[k.rowB, { marginBottom: 14 }]}><Text style={k.muted}>Fee</Text><Text style={{ color: C.green }}>Free</Text></View>
+            {fromBalance / (rates[activeCurrency] || 1) > 500 && (
+              <Field placeholder="Transaction PIN (if you set one)" secureTextEntry keyboardType="number-pad" maxLength={6} value={txPin} onChangeText={(v) => setTxPin(v.replace(/\D/g, ''))} />
+            )}
           </>
         )}
         <View style={{ flexDirection: 'row', gap: 8 }}>

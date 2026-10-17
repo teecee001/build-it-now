@@ -7,6 +7,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function allowedOrigin(origin: string | null): string {
+  const fallback = "https://exosky-beta.vercel.app";
+  if (!origin) return fallback;
+  if (origin === fallback) return origin;
+  try {
+    const u = new URL(origin);
+    if ((u.hostname === "localhost" || u.hostname === "127.0.0.1") && (u.protocol === "http:" || u.protocol === "https:")) {
+      return origin;
+    }
+  } catch {
+    /* ignore malformed origins */
+  }
+  return fallback;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,8 +39,15 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
 
+    const ALLOWED_PRICES = new Set([
+      "price_1T8fhd7TGYrUaVZ5ypAYQgch",
+      ...(Deno.env.get("STRIPE_PRICE_ALLOWLIST") || "").split(",").map((s) => s.trim()).filter(Boolean),
+    ]);
+
     const { price_id } = await req.json();
-    if (!price_id) throw new Error("price_id is required");
+    if (!price_id || !ALLOWED_PRICES.has(price_id)) throw new Error("Unknown price");
+
+    const origin = allowedOrigin(req.headers.get("origin"));
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
 
@@ -40,8 +62,8 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: price_id, quantity: 1 }],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/premium?success=true`,
-      cancel_url: `${req.headers.get("origin")}/premium?canceled=true`,
+      success_url: `${origin}/premium?success=true`,
+      cancel_url: `${origin}/premium?canceled=true`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

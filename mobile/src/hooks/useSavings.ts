@@ -5,7 +5,7 @@ import { useWallet, invokeWalletOp } from "@/hooks/useWallet";
 import { toast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/errors";
 
-const APY_RATE = 6.0;
+const APY_RATE = 6.0; // illustrative projection only — interest is not paid
 
 export function useSavings() {
   const { wallet, balance, savingsBalance } = useWallet();
@@ -37,12 +37,12 @@ export function useSavings() {
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
   };
 
-  const transferToSavings = async (amount: number) => {
+  const transferToSavings = async (amount: number, pin = "") => {
     if (amount <= 0) { toast.error("Enter a valid amount"); return; }
     if (amount > balance) { toast.error("Insufficient wallet balance"); return; }
     setIsTransferring(true);
     try {
-      await invokeWalletOp({ operation: "savings_transfer", direction: "to_savings", amount });
+      await invokeWalletOp({ operation: "savings_transfer", direction: "to_savings", amount, pin });
       invalidate();
       toast.success(`$${amount.toFixed(2)} moved to Savings`);
     } catch (err: unknown) {
@@ -52,12 +52,12 @@ export function useSavings() {
     }
   };
 
-  const transferToWallet = async (amount: number) => {
+  const transferToWallet = async (amount: number, pin = "") => {
     if (amount <= 0) { toast.error("Enter a valid amount"); return; }
     if (amount > savingsBalance) { toast.error("Insufficient savings balance"); return; }
     setIsTransferring(true);
     try {
-      await invokeWalletOp({ operation: "savings_transfer", direction: "to_wallet", amount });
+      await invokeWalletOp({ operation: "savings_transfer", direction: "to_wallet", amount, pin });
       invalidate();
       toast.success(`$${amount.toFixed(2)} moved to Wallet`);
     } catch (err: unknown) {

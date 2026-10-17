@@ -44,6 +44,7 @@ export default function Send() {
   const { requiresPin, verifyPin, isPinSet, PIN_THRESHOLD } = useTransactionPin();
   const [pinOpen, setPinOpen] = useState(false);
   const pinGate = useRef<((ok: boolean) => void) | null>(null);
+  const pinValue = useRef("");
   const { ask, sheet: confirmSheet } = useConfirmSheet();
   const closePin = (ok: boolean) => { setPinOpen(false); pinGate.current?.(ok); pinGate.current = null; };
 
@@ -79,6 +80,7 @@ export default function Send() {
         recipient: recipient.trim(),
         idempotency_key: idem.current,
         description: `Sent ${symbolOf(cur)}${parsed.toFixed(2)} ${cur} to ${formatHandle(recipient)}`,
+        pin: pinValue.current,
       });
       // Only report success when the server confirms the transfer was recorded (same rule as web).
       if (!result || result.success !== true || !result.transaction_id) {
@@ -146,7 +148,7 @@ export default function Send() {
         )}
         <SwipeToPay label="Send" onConfirm={handleSend} disabled={!recipient || !amount} />
         {confirmSheet}
-        <TransactionPinModal open={pinOpen} amount={toUSD(parsed || 0, cur)} verifyPin={verifyPin} onVerified={() => closePin(true)} onCancel={() => closePin(false)} />
+        <TransactionPinModal open={pinOpen} amount={toUSD(parsed || 0, cur)} verifyPin={verifyPin} onVerified={(pin) => { pinValue.current = pin; closePin(true); }} onCancel={() => { pinValue.current = ""; closePin(false); }} />
       </Card>
     </Screen>
   );

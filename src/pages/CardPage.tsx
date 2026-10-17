@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCard, CardData } from "@/hooks/useCard";
 import { useAccountTier, TIER_CONFIG, AccountTierType } from "@/hooks/useAccountTier";
 import {
-  CreditCard, Lock, Globe, Percent, Eye, EyeOff,
+  CreditCard, Lock, Globe, Percent,
   Snowflake, Settings, Copy, CheckCircle2, Loader2,
   ArrowLeft, ShieldCheck, Smartphone, MapPin, ShoppingBag,
   Fuel, Utensils, Plane, DollarSign, AlertTriangle,
@@ -157,7 +157,6 @@ function CardPageContent() {
   const { tier, config, limits } = useAccountTier();
   const [view, setView] = useState<View>("list");
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
-  const [showNumber, setShowNumber] = useState(false);
   const [newCardFormat, setNewCardFormat] = useState<"virtual" | "physical">("virtual");
   const [newCardName, setNewCardName] = useState("");
   const [newCardDesign, setNewCardDesign] = useState(CARD_DESIGNS[0].id);
@@ -218,7 +217,6 @@ function CardPageContent() {
     setVerifiedAt(Date.now());
     sessionTimerRef.current = setTimeout(() => {
       setPinVerified(false);
-      setShowNumber(false);
       setVerifiedAt(null);
       toast.info("Session expired — please verify again", { icon: <Timer className="w-4 h-4" /> });
     }, SESSION_TIMEOUT);
@@ -332,7 +330,6 @@ function CardPageContent() {
 
   const openDetail = (c: CardData) => {
     setSelectedCard(c);
-    setShowNumber(false);
     setPinInput("");
     setPinVerified(false);
     setPinVerifyError("");
@@ -416,7 +413,7 @@ function CardPageContent() {
             <div>
               <p className="text-xs font-mono text-white/80">{expiry}</p>
             </div>
-            <span className="text-sm font-bold italic tracking-tighter text-white/60">VISA</span>
+            <span className="text-sm font-bold italic tracking-tighter text-white/60">VIRTUAL</span>
           </div>
         </div>
       </div>
@@ -569,7 +566,7 @@ function CardPageContent() {
         {view === "detail" && selectedCard && (
           <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => { setView("list"); setShowNumber(false); setPinVerified(false); if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current); setVerifiedAt(null); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+              <button onClick={() => { setView("list"); setPinVerified(false); if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current); setVerifiedAt(null); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -665,21 +662,18 @@ function CardPageContent() {
                 {/* Full Card Details */}
                 <Card className="p-6 bg-card border-border space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold">Card Details</h3>
-                    <Button variant="ghost" size="sm" className="h-7 px-2 gap-1" onClick={() => setShowNumber(!showNumber)}>
-                      {showNumber ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      <span className="text-caption">{showNumber ? "Hide" : "Show"}</span>
-                    </Button>
+                    <h3 className="text-sm font-bold">Card details</h3>
+                    <p className="text-caption text-muted-foreground">Last 4 only. No full number is issued.</p>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-caption text-muted-foreground uppercase tracking-wider">Card Number</p>
                         <p className="text-sm font-mono font-medium mt-1">
-                          {showNumber ? `4532 8721 0${selectedCard.card_number_last4.slice(0, 2)}9 ${selectedCard.card_number_last4}` : `•••• •••• •••• ${selectedCard.card_number_last4}`}
+                          •••• •••• •••• {selectedCard.card_number_last4}
                         </p>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Card number copied"); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+                      <button onClick={() => { navigator.clipboard.writeText(selectedCard.card_number_last4); toast.success("Last 4 copied"); }} className="p-2 rounded-lg hover:bg-secondary transition-colors">
                         <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                       </button>
                     </div>
@@ -690,11 +684,11 @@ function CardPageContent() {
                       </div>
                       <div>
                         <p className="text-caption text-muted-foreground uppercase tracking-wider">CVV</p>
-                        <p className="text-sm font-mono font-medium mt-1">{showNumber ? selectedCard.card_number_last4.slice(-3) : "•••"}</p>
+                        <p className="text-sm font-mono font-medium mt-1">Not issued</p>
                       </div>
                       <div>
                         <p className="text-caption text-muted-foreground uppercase tracking-wider">Network</p>
-                        <p className="text-sm font-medium mt-1">VISA</p>
+                        <p className="text-sm font-medium mt-1">Not issued</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -734,7 +728,7 @@ function CardPageContent() {
 
                 {/* Quick Actions */}
                 <div className="grid grid-cols-4 gap-2">
-                  <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => { navigator.clipboard.writeText(`4532872100${selectedCard.card_number_last4.slice(0,2)}9${selectedCard.card_number_last4}`); toast.success("Full number copied"); }}>
+                  <Button variant="outline" className="flex-col h-auto py-3 gap-1" onClick={() => { navigator.clipboard.writeText(selectedCard.card_number_last4); toast.success("Last 4 copied"); }}>
                     <Copy className="w-4 h-4" />
                     <span className="text-caption">Copy</span>
                   </Button>

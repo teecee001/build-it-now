@@ -33,6 +33,48 @@ function getAiConfig() {
 const SUPABASE_URL = "https://vxcxwmhesgpncbkhwsej.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ceCUc9fqMwACxBU43yg43Q_nmKqkbmt";
 
+function sanitizeMessages(raw: unknown): { role: "user" | "assistant"; content: string }[] {
+  if (!Array.isArray(raw)) return [];
+  const ok = raw.filter((m): m is { role: "user" | "assistant"; content: string } => {
+    const r = m as { role?: unknown; content?: unknown } | null;
+    return !!r && (r.role === "user" || r.role === "assistant") && typeof r.content === "string" && r.content.trim() !== "";
+  });
+  const recent = ok.slice(-20).map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
+  while (recent.length && recent[0].role !== "user") recent.shift();
+  return recent;
+}
+
+async function consumeQuota(auth: string): Promise<Response | null> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_ai_quota`, {
+    method: "POST",
+    headers: {
+      Authorization: auth,
+      apikey: SUPABASE_KEY,
+      "Content-Type": "application/json",
+    },
+    body: "{}",
+  });
+  if (res.ok) return null;
+  const text = await res.text();
+  if (res.status === 401 || /not authenticated/i.test(text)) {
+    return new Response(JSON.stringify({ error: "Sign in required" }), {
+      status: 401,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+  if (/rate limit/i.test(text)) {
+    return new Response(JSON.stringify({ error: "AI rate limit reached. Try again in an hour." }), {
+      status: 429,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+  console.error("consume_ai_quota", res.status, text);
+  return new Response(JSON.stringify({ error: "AI quota is unavailable" }), {
+    status: 503,
+    headers: { ...cors, "Content-Type": "application/json" },
+  });
+}
+
 async function signedIn(req: Request) {
   const auth = req.headers.get("authorization") || "";
   if (!auth.toLowerCase().startsWith("bearer ")) return false;
@@ -57,6 +99,9 @@ export default async function handler(req: Request) {
     });
   }
 
+  const limited = await consumeQuota(req.headers.get("authorization") || "");
+  if (limited) return limited;
+
   const cfg = getAiConfig();
   if (!cfg) {
     return new Response(JSON.stringify({ error: "AI service not configured" }), {
@@ -66,8 +111,8 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const { messages } = await req.json();
-    if (!Array.isArray(messages) || messages.length > 40) {
+    const messages = sanitizeMessages((await req.json()).messages);
+    if (!messages.length) {
       return new Response(JSON.stringify({ error: "Invalid messages" }), {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
@@ -82,7 +127,7 @@ export default async function handler(req: Request) {
       body: JSON.stringify({
         model: cfg.model,
         stream: true,
-        messages: [{ role: "system", content: SYSTEM }, ...(messages ?? [])],
+        messages: [{ role: "system", content: SYSTEM }, ...messages],
       }),
     });
 

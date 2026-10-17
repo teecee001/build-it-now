@@ -47,6 +47,7 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: { typ
   const { getWallet } = useMultiCurrencyWallet();
   const { holdingsMap } = useCryptoHoldings();
   const [amount, setAmount] = useState('');
+  const [txPin, setTxPin] = useState('');
   const [swapTo, setSwapTo] = useState(code === 'BTC' ? 'ETH' : 'BTC');
   const [walletAddress, setWalletAddress] = useState('');
   const [showScanner, setShowScanner] = useState(false);
@@ -79,25 +80,22 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: { typ
       try {
         if (type === 'buy') {
           if (!usdWallet) throw new Error('No USD wallet');
-          await invokeWalletOp({ operation: 'crypto_trade', action: 'buy', code, amount: numAmount, crypto_amount: cryptoAmount, price, usd_value: numAmount });
+          await invokeWalletOp({ operation: 'crypto_trade', action: 'buy', code, amount: numAmount, crypto_amount: cryptoAmount, price, usd_value: numAmount, pin: txPin });
           haptic.success();
           toast.success(`Bought ${cryptoAmount.toFixed(6)} ${code}! 🎉`);
         } else if (type === 'sell') {
           if (!usdWallet) throw new Error('No USD wallet');
           if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
-          await invokeWalletOp({ operation: 'crypto_trade', action: 'sell', code, amount: numAmount, crypto_amount: numAmount, price, usd_value: usdValue });
+          await invokeWalletOp({ operation: 'crypto_trade', action: 'sell', code, amount: numAmount, crypto_amount: numAmount, price, usd_value: usdValue, pin: txPin });
           haptic.success();
           toast.success(`Sold ${numAmount.toFixed(6)} ${code} for $${usdValue.toFixed(2)} 💰`);
         } else if (type === 'send') {
-          if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
-          await invokeWalletOp({ operation: 'crypto_send', code, amount: numAmount, price, address: walletAddress });
-          haptic.success();
-          toast.success(`Sent ${numAmount.toFixed(6)} ${code} 🚀`);
+          throw new Error('On-chain withdrawals are not available. No coins were moved.');
         } else {
           if (currentHolding < numAmount) throw new Error(`Insufficient ${code} balance`);
           const swapToPrice = getPrice?.(swapTo) || 0;
           if (swapToPrice <= 0) throw new Error(`No price for ${swapTo}`);
-          await invokeWalletOp({ operation: 'crypto_swap', code, swap_to: swapTo, amount: numAmount, price, swap_to_price: swapToPrice });
+          await invokeWalletOp({ operation: 'crypto_swap', code, swap_to: swapTo, amount: numAmount, price, swap_to_price: swapToPrice, pin: txPin });
           haptic.success();
           toast.success(`Swapped ${numAmount} ${code} → ${swapTo} ⚡`);
         }
@@ -168,8 +166,11 @@ export function CryptoTradeModal({ type, code, price, getPrice, onClose }: { typ
               {[10, 25, 50, 100].map((v) => <Btn key={v} small variant="outline" label={`$${v}`} style={{ flex: 1 }} onPress={() => setAmount(v.toString())} />)}
             </View>
           )}
-          {type === 'send' && <View style={[k.rowB, { marginBottom: 10 }]}><Text style={k.muted}>Network fee</Text><Text style={{ color: C.green }}>Free</Text></View>}
-          <Btn label={isProcessing ? 'Processing...' : `${label} ${code}`} icon={ICONS[type]} variant={type === 'sell' ? 'danger' : 'primary'} onPress={handleTrade} busy={isProcessing} disabled={!canProceed} />
+          {type === 'send' && <Text style={[k.muted, { marginBottom: 10 }]}>On-chain withdrawals are not available. No coins will be moved.</Text>}
+          {(type === 'buy' ? numAmount : type === 'sell' ? usdValue : numAmount * price) > 500 && (
+            <Field placeholder="Transaction PIN (if you set one)" secureTextEntry keyboardType="number-pad" maxLength={6} value={txPin} onChangeText={(v) => setTxPin(v.replace(/\D/g, ''))} />
+          )}
+          <Btn label={isProcessing ? 'Processing...' : `${label} ${code}`} icon={ICONS[type]} variant={type === 'sell' ? 'danger' : 'primary'} onPress={handleTrade} busy={isProcessing} disabled={!canProceed || type === 'send'} />
         </>
       )}
     </Sheet>

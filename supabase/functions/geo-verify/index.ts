@@ -74,7 +74,13 @@ Deno.serve(async (req) => {
         }, 400);
       }
 
-      return jsonResponse({ success: true, phone_verified: true });
+      // Format only. There is no SMS provider, so this is not a verification.
+      return jsonResponse({
+        success: true,
+        format_ok: true,
+        phone_verified: false,
+        error: "SMS verification is not available yet.",
+      });
     }
 
     // ─── REGISTER ───
@@ -84,7 +90,42 @@ Deno.serve(async (req) => {
       }
       const user_id = authedUser.id;
 
-      // Upsert geo record
+      const { data: countryData } = await supabase
+        .from("countries")
+        .select("code, is_sanctioned, is_supported")
+        .eq("code", country_code)
+        .maybeSingle();
+
+      if (!countryData) {
+        return jsonResponse({ success: false, error: "Country not found", code: "COUNTRY_NOT_FOUND" }, 400);
+      }
+      if (countryData.is_sanctioned) {
+        return jsonResponse({ success: false, error: "Services are not available in your country due to regulatory restrictions.", code: "SANCTIONED" }, 403);
+      }
+      if (!countryData.is_supported) {
+        return jsonResponse({ success: false, error: "Services are not yet available in your country.", code: "UNSUPPORTED" }, 403);
+      }
+
+      const ipCountry = (req.headers.get("cf-ipcountry") || req.headers.get("x-vercel-ip-country") || "").toUpperCase();
+      const ipKnown = /^[A-Z]{2}$/.test(ipCountry) && ipCountry !== "XX" && ipCountry !== "T1";
+      if (ipKnown && ipCountry !== String(country_code || "").toUpperCase()) {
+        return jsonResponse({
+          success: false,
+          error: "That country does not match your network location.",
+          code: "LOCATION_MISMATCH",
+        }, 403);
+      }
+      if (ipKnown) {
+        const { data: ipRow } = await supabase
+          .from("countries")
+          .select("is_sanctioned, is_supported")
+          .eq("code", ipCountry)
+          .maybeSingle();
+        if (ipRow?.is_sanctioned || ipRow?.is_supported === false) {
+          return jsonResponse({ success: false, error: "Services are not available in your country due to regulatory restrictions.", code: "SANCTIONED" }, 403);
+        }
+      }
+
       const { error: geoError } = await supabase
         .from("user_geo_verification")
         .upsert({

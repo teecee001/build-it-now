@@ -26,7 +26,7 @@ const FEATURES = [
   {
     icon: PiggyBank,
     title: "Savings",
-    description: "A savings experience built around a clear 6% APY target, with no lock-up story.",
+    description: "A savings screen with an illustrative projection. Interest is not paid in this beta.",
     gradient: "from-warning/20 to-warning/5",
   },
   {
@@ -44,7 +44,7 @@ const FEATURES = [
 ];
 
 const STATS = [
-  { value: "$25", label: "Welcome bonus" },
+  { value: "$0", label: "Starting balance" },
   { value: "Live", label: "Market data" },
   { value: "Multi", label: "Currencies" },
   { value: "Beta", label: "Open to try" },
@@ -60,7 +60,7 @@ const HOW_IT_WORKS = [
   {
     step: "01",
     title: "Create your account",
-    description: "Sign up with email in a couple of minutes. New accounts get a $25 welcome bonus in the demo.",
+    description: "Sign up with email in a couple of minutes. New accounts start at $0. Existing balances are left as they are.",
     icon: Sparkles,
   },
   {
@@ -88,10 +88,10 @@ const FAQS = [
   },
   {
     q: "What can I try right now?",
-    a: "Create an account, claim the welcome bonus, browse live markets, convert between currencies in the demo, and walk through the main product screens.",
+    a: "Create an account, browse live markets, convert between currencies in the demo, and walk through the main product screens. New accounts start at zero. Nothing here is a bank deposit.",
   },
   {
-    q: "What about the 6% APY and cards?",
+    q: "What about savings yield and cards?",
     a: "Those are part of the product vision you can explore in the app. Live banking rails, cards, and yield will come with partners and compliance, not in this beta.",
   },
   {

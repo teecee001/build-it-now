@@ -22,6 +22,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: { type: TradeT
   const { getWallet } = useMultiCurrencyWallet();
   const { holdingsMap } = useStockHoldings();
   const [amount, setAmount] = useState('');
+  const [txPin, setTxPin] = useState('');
   const [orderType, setOrderType] = useState<'dollars' | 'shares'>('dollars');
   const [isDone, setIsDone] = useState(false);
   const { run, busy: isProcessing } = useSingleFlight();
@@ -41,7 +42,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: { type: TradeT
       try {
         if (!usdWallet) throw new Error('No USD wallet');
         if (type === 'sell' && currentShares < sharesToTrade) throw new Error(`Insufficient ${ticker} shares`);
-        await invokeWalletOp({ operation: 'stock_trade', action: type, ticker, shares: sharesToTrade, dollar_value: dollarValue, price });
+        await invokeWalletOp({ operation: 'stock_trade', action: type, ticker, shares: sharesToTrade, dollar_value: dollarValue, price, pin: txPin });
         haptic.success();
         toast.success(type === 'buy' ? `Bought ${sharesToTrade.toFixed(4)} shares of ${ticker}! 📈` : `Sold ${sharesToTrade.toFixed(4)} shares of ${ticker} for $${dollarValue.toFixed(2)} 💰`);
         setIsDone(true);
@@ -101,6 +102,9 @@ export function StockTradeModal({ type, ticker, price, onClose }: { type: TradeT
             </View>
           )}
           <View style={[k.rowB, { marginBottom: 12 }]}><Text style={k.muted}>Commission</Text><Text style={k.text}>$0.00</Text></View>
+          {dollarValue > 500 && (
+            <Field placeholder="Transaction PIN (if you set one)" secureTextEntry keyboardType="number-pad" maxLength={6} value={txPin} onChangeText={(v) => setTxPin(v.replace(/\D/g, ''))} />
+          )}
           <Btn
             label={isProcessing ? 'Executing...' : `${type === 'buy' ? 'Buy' : 'Sell'} ${ticker}`}
             icon={type === 'buy' ? 'arrow-down' : 'arrow-up'}

@@ -32,6 +32,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
   const { addTransaction } = useTransactions();
   const { holdingsMap, upsertHolding } = useStockHoldings();
   const [amount, setAmount] = useState("");
+  const [txPin, setTxPin] = useState("");
   const [orderType, setOrderType] = useState<"dollars" | "shares">("dollars");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
@@ -59,7 +60,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
         if (!usdWallet) throw new Error("No USD wallet");
         await invokeWalletOp({
           operation: "stock_trade", action: "buy", ticker,
-          shares: sharesToTrade, dollar_value: dollarValue, price,
+          shares: sharesToTrade, dollar_value: dollarValue, price, pin: txPin,
         });
         haptic("success");
         toast.success(`Bought ${sharesToTrade.toFixed(4)} shares of ${ticker}! 📈`);
@@ -68,7 +69,7 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
         if (currentShares < sharesToTrade) throw new Error(`Insufficient ${ticker} shares`);
         await invokeWalletOp({
           operation: "stock_trade", action: "sell", ticker,
-          shares: sharesToTrade, dollar_value: dollarValue, price,
+          shares: sharesToTrade, dollar_value: dollarValue, price, pin: txPin,
         });
         haptic("success");
         toast.success(`Sold ${sharesToTrade.toFixed(4)} shares of ${ticker} for $${dollarValue.toFixed(2)} 💰`);
@@ -196,6 +197,17 @@ export function StockTradeModal({ type, ticker, price, onClose }: StockTradeModa
           <span className="text-success font-medium">$0.00</span>
         </div>
 
+        {dollarValue > 500 && (
+          <Input
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            value={txPin}
+            onChange={(e) => setTxPin(e.target.value.replace(/\D/g, ""))}
+            placeholder="Transaction PIN (if you set one)"
+            className="text-center tracking-[0.4em] font-mono bg-secondary border-border"
+          />
+        )}
         <Button
           onClick={handleTrade}
           disabled={!canProceed || isProcessing}

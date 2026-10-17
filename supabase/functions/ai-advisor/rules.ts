@@ -1,7 +1,7 @@
 // Built-in Exo advisor: deterministic answers from the user's own account data.
 // Pure functions (no Deno/network APIs) so they can be unit-tested anywhere.
 
-export const APY_RATE = 6.0; // matches the app's existing "6% APY" savings feature
+export const APY_RATE = 6.0; // illustration only — the ledger does not pay interest
 
 export type Wallet = { currency: string; balance: number; savings_balance: number };
 export type Txn = {
@@ -69,7 +69,7 @@ export type Intent =
   | "date"
   | "general";
 
-const DISCLAIMER = "_Not financial advice. Projections are estimates and the APY can change._";
+const DISCLAIMER = "_Not financial advice. The savings percentage is an illustration only. Interest is not paid._";
 
 export function money(n: number, currency = "USD"): string {
   try {
@@ -156,7 +156,7 @@ function savingsAnswer(d: AccountData): string {
   const w = usd(d.wallets);
   const s = w?.savings_balance ?? 0;
   const cash = w?.balance ?? 0;
-  const lines = [`### Growing your savings at ${APY_RATE}% APY`, ""];
+  const lines = [`### Illustrated savings chart at ${APY_RATE}% (not paid)`, ""];
   lines.push(`- **Savings vault:** ${money(s)}`);
   lines.push(`- **Available cash:** ${money(cash)}`);
   lines.push("");
@@ -192,7 +192,7 @@ function budgetAnswer(d: AccountData): string {
   if (base > 0) {
     lines.push(`Based on **${money(base)}** ${income > 0 ? "coming in" : "spent"} over the last 30 days:`);
     lines.push(`- **Needs (50%):** ${money(base * 0.5)}`, `- **Wants (30%):** ${money(base * 0.3)}`, `- **Savings (20%):** ${money(base * 0.2)}`);
-    lines.push("", `Putting ${money(base * 0.2)} a month into savings at ${APY_RATE}% APY grows to about **${money(projectSavings(usd(d.wallets)?.savings_balance ?? 0, base * 0.2, 1))}** in a year.`);
+    lines.push("", `An illustration only: ${money(base * 0.2)} a month at ${APY_RATE}% would show about **${money(projectSavings(usd(d.wallets)?.savings_balance ?? 0, base * 0.2, 1))}** after a year. That interest is not paid.`);
     if (income > 0 && total > income) lines.push("", `⚠️ You spent ${money(total - income)} more than came in this month.`);
   } else {
     lines.push("Split your monthly income into **50% needs**, **30% wants** and **20% savings**. Add a deposit and Exo will fill in the numbers.");
@@ -276,7 +276,7 @@ const DEPOSIT_HOWTO = `### How to add money
 2. Choose the currency and amount.
 3. Confirm. Your balance updates right away.
 
-Tip: move part of each deposit into **Savings** to start earning ${APY_RATE}% APY.`;
+Tip: the savings chart can illustrate ${APY_RATE}%, but interest is not paid.`;
 
 function dcaAnswer(d: AccountData): string {
   const btc = d.cryptoQuotes.BTC?.price;
@@ -328,7 +328,7 @@ function longTermAnswer(d: AccountData): string {
 - **Consistency:** regular contributions (like dollar-cost averaging) beat perfect timing.
 - **Emotions:** have a plan so short-term swings don't push you into rash moves.
 
-For reference, ${money(s || 100)} at the app's ${APY_RATE}% APY would be about **${money(projectSavings(s || 100, 0, 10))}** after 10 years if the rate stayed the same.
+For reference, an illustration of ${money(s || 100)} at ${APY_RATE}% (not paid) would show about **${money(projectSavings(s || 100, 0, 10))}** after 10 years. Interest is not credited.
 
 ${DISCLAIMER}`;
 }
@@ -372,7 +372,7 @@ export function accountSummary(d: AccountData): string {
     `Today: ${todayText(d.now ?? new Date(), d.timeZone ?? "UTC")} (${todayISO(d.now ?? new Date(), d.timeZone ?? "UTC")}, time zone ${d.timeZone ?? "UTC"})`,
     `User: ${d.name ?? "unknown"}`,
     `Wallets: ${d.wallets.map((w) => `${w.currency} available ${w.balance}, savings ${w.savings_balance}`).join("; ") || "none"}`,
-    `Savings APY: ${APY_RATE}%`,
+    `Savings illustration: ${APY_RATE}% (not paid; do not say the user earns it)`,
     `Last 30 days: spent ${total.toFixed(2)}, received ${income.toFixed(2)}; by category: ${categories.map(([k, v]) => `${k} ${v.toFixed(2)}`).join(", ") || "none"}`,
     `Unpaid bills: ${d.bills.filter((b) => !b.is_paid).map((b) => `${b.biller_name} ${b.amount} due ${b.due_date}`).join("; ") || "none"}`,
     `Crypto holdings: ${d.crypto.map((h) => `${h.amount} ${h.code}`).join(", ") || "none"}`,

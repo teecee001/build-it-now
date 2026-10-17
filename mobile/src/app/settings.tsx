@@ -90,12 +90,12 @@ export default function Settings() {
       setIsUploading(false);
     }
   };
-  const handleSetupPin = () => {
+  const handleSetupPin = async () => {
     if (newPin.length < 4 || newPin.length > 6) { toast.error('PIN must be 4-6 digits'); return; }
     if (newPin !== confirmPin) { toast.error("PINs don't match"); return; }
     try {
-      setupPin(newPin);
-      toast.success('Transaction PIN set successfully');
+      await setupPin(newPin);
+      toast.success('Transaction PIN set. It is checked by the server for transfers over $500.');
       setShowPinSetup(false); setNewPin(''); setConfirmPin('');
     } catch (err: unknown) { toast.error(getErrorMessage(err)); }
   };
@@ -137,7 +137,7 @@ export default function Settings() {
         {isPinSet && !showPinSetup ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Btn small variant="outline" icon="key-outline" label="Change PIN" onPress={() => setShowPinSetup(true)} />
-            <Btn small variant="outline" label="Remove" onPress={() => { removePin(); toast.success('PIN removed'); }} />
+            <Btn small variant="outline" label="Remove" onPress={() => { void removePin().then(() => toast.success('PIN removed')).catch((err: unknown) => toast.error(getErrorMessage(err))); }} />
           </View>
         ) : !showPinSetup ? (
           <Btn small icon="add" label="Set Up PIN" onPress={() => setShowPinSetup(true)} />
@@ -192,7 +192,7 @@ export default function Settings() {
 
       <Box i={5}>
         <Text style={[k.h3, { marginBottom: 4 }]}>Account</Text>
-        <NavRow icon="shield-outline" label="Identity Verification" onPress={() => router.push('/kyc')} right={<Badge label="KYC" icon="checkmark-circle" />} />
+        <NavRow icon="shield-outline" label="Identity Verification" onPress={() => router.push('/kyc')} right={<Badge label="Not available" />} />
         <NavRow icon="diamond-outline" label="Subscription" onPress={() => router.push('/premium')} right={<Badge label={isSubscribed ? 'Pro' : 'Free'} color={isSubscribed ? C.green : C.muted} />} />
       </Box>
 

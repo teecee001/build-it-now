@@ -6,6 +6,7 @@ import { useExchangeRates } from "@/hooks/useExchangeRates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CURRENCIES } from "@/constants/currencies";
 import { Loader2, ArrowRight } from "lucide-react";
 import { useState } from "react";
@@ -56,6 +57,7 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
   const { rates } = useExchangeRates();
   const [isConverting, setIsConverting] = useState(false);
   const [pendingCurrency, setPendingCurrency] = useState<string | null>(null);
+  const [txPin, setTxPin] = useState("");
 
   const fromWallet = wallets.find(w => w.currency === activeCurrency);
   const fromBalance = fromWallet?.balance ?? 0;
@@ -83,6 +85,7 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
         toCurrency: pendingCurrency,
         amount: fromBalance,
         rate: conversionRate,
+        pin: txPin,
       });
       setActiveCurrency(pendingCurrency);
       toast.success(`Switched to ${pendingCurrency}`, {
@@ -137,6 +140,18 @@ export function CurrencySwitcher({ compact = false }: { compact?: boolean }) {
               Your full {activeCurrency} balance will be converted. For partial conversions, use the Multi-Currency page.
             </DialogDescription>
           </DialogHeader>
+
+          {fromBalance / (rates[activeCurrency] || 1) > 500 && (
+            <Input
+              type="password"
+              inputMode="numeric"
+              maxLength={6}
+              value={txPin}
+              onChange={(e) => setTxPin(e.target.value.replace(/\D/g, ""))}
+              placeholder="Transaction PIN (if you set one)"
+              className="text-center tracking-[0.4em] font-mono"
+            />
+          )}
 
           {pendingCurrency && (
             <div className="space-y-4 py-2">

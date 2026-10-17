@@ -82,12 +82,12 @@ export default function Settings() {
     }
   };
 
-  const handleSetupPin = () => {
+  const handleSetupPin = async () => {
     if (newPin.length < 4 || newPin.length > 6) { toast.error("PIN must be 4-6 digits"); return; }
     if (newPin !== confirmPin) { toast.error("PINs don't match"); return; }
     try {
-      setupPin(newPin);
-      toast.success("Transaction PIN set successfully");
+      await setupPin(newPin);
+      toast.success("Transaction PIN set. It is checked by the server for transfers over $500.");
       setShowPinSetup(false);
       setNewPin("");
       setConfirmPin("");
@@ -199,7 +199,7 @@ export default function Settings() {
               <Button size="sm" variant="outline" onClick={() => setShowPinSetup(true)} className="flex-1 gap-1">
                 <KeyRound className="w-3.5 h-3.5" /> Change PIN
               </Button>
-              <Button size="sm" variant="outline" onClick={() => { removePin(); toast.success("PIN removed"); }} className="border-destructive/20 text-destructive hover:bg-destructive/10">
+              <Button size="sm" variant="outline" onClick={() => { void removePin().then(() => toast.success("PIN removed")).catch((err: unknown) => toast.error(getErrorMessage(err))); }} className="border-destructive/20 text-destructive hover:bg-destructive/10">
                 Remove
               </Button>
             </div>
@@ -353,7 +353,7 @@ export default function Settings() {
               <Shield className="w-4 h-4 text-success" />
               <span className="text-sm font-medium">Identity Verification</span>
             </div>
-            <Badge className="bg-success/10 text-success border-0 text-xs"><CheckCircle2 className="w-3 h-3 mr-1" /> KYC</Badge>
+            <Badge variant="secondary" className="text-xs">Not available</Badge>
           </button>
           <button onClick={() => navigate("/premium")} className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
             <div className="flex items-center gap-3">

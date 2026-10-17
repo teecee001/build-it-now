@@ -66,6 +66,7 @@ export default function QRPayments() {
   const [scanRecipient, setScanRecipient] = useState(params.to ?? '');
   const [scanAmount, setScanAmount] = useState(params.amount ?? '');
   const [scanNote, setScanNote] = useState(params.note ?? '');
+  const [txPin, setTxPin] = useState('');
   const [permission, requestPermission] = useCameraPermissions();
   const scanned = useRef(false);
   const { run, busy: isSending } = useSingleFlight();
@@ -100,7 +101,7 @@ export default function QRPayments() {
       if (isNaN(amt) || amt <= 0) { toast.error('Enter a valid amount'); return; }
       if (amt > balance) { toast.error('Insufficient balance'); return; }
       try {
-        const result = await invokeWalletOp({ operation: 'qr_pay', amount: amt, recipient: scanRecipient, note: scanNote, idempotency_key: idempotencyKey });
+        const result = await invokeWalletOp({ operation: 'qr_pay', amount: amt, recipient: scanRecipient, note: scanNote, idempotency_key: idempotencyKey, pin: txPin });
         if (!result || result.success !== true || !result.transaction_id) {
           throw new Error('Payment could not be confirmed. Check your activity before trying again.');
         }
@@ -230,6 +231,9 @@ export default function QRPayments() {
                 <Text style={[k.text, { fontWeight: '600' }]}>{v}</Text>
               </View>
             ))}
+            {amt > 500 && (
+              <Field placeholder="Transaction PIN (if you set one)" secureTextEntry keyboardType="number-pad" maxLength={6} value={txPin} onChangeText={(v) => setTxPin(v.replace(/\D/g, ''))} />
+            )}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
               <Btn variant="outline" icon="arrow-back" label="Back" style={{ flex: 1 }} onPress={() => setView('scan')} />
               <Btn label="Send" icon="arrow-forward" style={{ flex: 1 }} onPress={handlePay} busy={isSending} />

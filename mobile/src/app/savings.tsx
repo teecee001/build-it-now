@@ -25,6 +25,7 @@ export default function Savings() {
 function SavingsContent() {
   const { apyRate, savingsBalance, walletBalance, monthlyEarnings, dailyEarnings, yearlyEarnings, projectBalance, transferToSavings, transferToWallet, isTransferring } = useSavings();
   const [amount, setAmount] = useState('');
+  const [txPin, setTxPin] = useState('');
   const [direction, setDirection] = useState<TransferDirection>('to_savings');
   const [projectionMonths, setProjectionMonths] = useState(12);
   const [monthlyContribution, setMonthlyContribution] = useState(0);
@@ -37,14 +38,15 @@ function SavingsContent() {
     run(async () => {
       const num = parseFloat(amount);
       if (isNaN(num) || num <= 0) return;
-      if (direction === 'to_savings') await transferToSavings(num);
-      else await transferToWallet(num);
+      if (direction === 'to_savings') await transferToSavings(num, txPin);
+      else await transferToWallet(num, txPin);
       setAmount('');
+      setTxPin('');
     });
 
   const avail = direction === 'to_savings' ? walletBalance : savingsBalance;
   return (
-    <Page title="Savings" sub="Grow your money with industry-leading yields" right={<Badge label={`${apyRate}% APY`} />}>
+    <Page title="Savings" sub="Chart is a projection. Interest is not paid." right={<Badge label={`${apyRate}% projection`} />}>
       <Box i={1} tint={C.green}>
         <Text style={k.muted}>Savings Balance</Text>
         <Text style={[k.title, k.mono, { fontSize: 34, marginTop: 4 }]}>${usd2(savingsBalance)}</Text>
@@ -65,6 +67,9 @@ function SavingsContent() {
           Available: <Text style={{ color: C.text, fontWeight: '600' }}>${usd2(avail)}</Text>
         </Text>
         <Field placeholder="0.00" keyboardType="decimal-pad" value={amount} onChangeText={setAmount} style={{ fontSize: 18, fontWeight: '600' }} />
+        {parseFloat(amount || '0') > 500 && (
+          <Field placeholder="Transaction PIN (if you set one)" secureTextEntry keyboardType="number-pad" maxLength={6} value={txPin} onChangeText={(v) => setTxPin(v.replace(/\D/g, ''))} />
+        )}
         <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
           {[10, 25, 50, 100].map((qa) => (
             <Btn key={qa} small variant="secondary" label={`$${qa}`} onPress={() => setAmount(qa.toString())} style={{ flex: 1 }} />
@@ -89,14 +94,14 @@ function SavingsContent() {
         <AreaChart values={chartData.map((d) => d.balance)} labels={{ left: '0mo', right: `${projectionMonths}mo` }} />
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
           <Stat label="Projected Balance" value={formatMoney(projectedEnd?.balance ?? 0)} />
-          <Stat label="Total Interest Earned" color={C.green} value={`+$${usd2(totalProjectedInterest)}`} />
+          <Stat label="Projected (not paid)" color={C.green} value={`+$${usd2(totalProjectedInterest)}`} />
         </View>
       </Box>
 
       <Box i={4} style={{ flexDirection: 'row', gap: 8, padding: 12 }}>
         <Ionicons name="shield-checkmark-outline" size={16} color={C.muted} />
         <Text style={[k.muted, { fontSize: 11, flex: 1, lineHeight: 16 }]}>
-          Deposits are held at our partner bank and eligible for FDIC insurance up to $250,000. APY is variable and may change. Interest is calculated daily and paid monthly.
+          ExoSky is not a bank. Savings are not held at a partner bank, are not FDIC insured, and do not earn interest. The {apyRate}% figure is an illustration only.
         </Text>
       </Box>
     </Page>

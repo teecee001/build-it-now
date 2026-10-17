@@ -6,7 +6,7 @@ import { KeyRound, X, ShieldCheck } from "lucide-react";
 
 interface TransactionPinModalProps {
   open: boolean;
-  onVerified: () => void;
+  onVerified: (pin: string) => void;
   onCancel: () => void;
   verifyPin: (pin: string) => boolean;
   amount: number;
@@ -20,7 +20,7 @@ export function TransactionPinModal({ open, onVerified, onCancel, verifyPin, amo
     if (verifyPin(pin)) {
       setPin("");
       setError("");
-      onVerified();
+      onVerified(pin);
     } else {
       setError("Incorrect PIN. Try again.");
       setPin("");

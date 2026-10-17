@@ -116,7 +116,7 @@ export default function LandingPage() {
             >
               <Gift className="w-3.5 h-3.5 text-accent" />
               <span className="text-xs font-semibold text-accent">
-                Get $25 when you sign up. No deposit required.
+                New accounts start at $0. No deposit is connected.
               </span>
             </motion.div>
 

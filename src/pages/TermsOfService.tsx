@@ -25,7 +25,7 @@ export default function TermsOfService() {
     },
     {
       title: "5. Financial Services",
-      content: `Ξ╳oSky provides digital wallet, payment, currency conversion, and money transfer services through licensed partners in applicable jurisdictions. Ξ╳oSky is not a bank. Banking services are provided by partner financial institutions in each supported region. Deposit insurance coverage (such as FDIC in the US) depends on your country and applicable local regulations.`,
+      content: `Ξ╳oSky is not a bank and does not currently provide insured deposits or banking services through a partner institution. Wallet balances are an internal ledger. Peer transfers move that ledger only.`,
     },
     {
       title: "6. Transaction Limits",

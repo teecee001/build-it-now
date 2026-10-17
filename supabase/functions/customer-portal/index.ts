@@ -7,6 +7,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function allowedOrigin(origin: string | null): string {
+  const fallback = "https://exosky-beta.vercel.app";
+  if (!origin) return fallback;
+  if (origin === fallback) return origin;
+  try {
+    const u = new URL(origin);
+    if ((u.hostname === "localhost" || u.hostname === "127.0.0.1") && (u.protocol === "http:" || u.protocol === "https:")) {
+      return origin;
+    }
+  } catch {
+    /* ignore malformed origins */
+  }
+  return fallback;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,7 +50,7 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) throw new Error("No Stripe customer found");
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = allowedOrigin(req.headers.get("origin"));
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customers.data[0].id,
       return_url: `${origin}/premium`,

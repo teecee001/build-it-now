@@ -64,7 +64,7 @@ export function CardVisual({ c, compact = false }: { c: CardData; compact?: bool
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 6 }}>
           <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>{c.card_name || (isVirtual ? 'Virtual' : 'Physical')}</Text>
           <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>{expiry}</Text>
-          <Text style={{ color: '#fff', fontStyle: 'italic', fontWeight: '800', fontSize: 16 }}>VISA</Text>
+          <Text style={{ color: '#fff', fontStyle: 'italic', fontWeight: '800', fontSize: 16 }}>VIRTUAL</Text>
         </View>
       </View>
     </View>

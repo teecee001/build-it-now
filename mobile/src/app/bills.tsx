@@ -44,6 +44,7 @@ function BillPayContent() {
   const [newDueDate, setNewDueDate] = useState('');
   const [newAccountNumber, setNewAccountNumber] = useState('');
   const [confirmBill, setConfirmBill] = useState<Bill | null>(null);
+  const [txPin, setTxPin] = useState('');
   const { run } = useSingleFlight();
 
   const handleCategoryChange = (cat: string) => {
@@ -69,7 +70,7 @@ function BillPayContent() {
       if (bill.amount > balance) { toast.error('Insufficient balance'); return; }
       setPayingId(bill.id);
       try {
-        const result = await invokeWalletOp({ operation: 'bill_pay', amount: bill.amount, biller_name: bill.biller_name });
+        const result = await invokeWalletOp({ operation: 'bill_pay', amount: bill.amount, biller_name: bill.biller_name, pin: txPin });
         await payBill.mutateAsync(bill.id);
         const cashback = Number(result?.cashback ?? bill.amount * 0.01);
         haptic.success();
@@ -174,6 +175,9 @@ function BillPayContent() {
               <View key={l} style={k.rowB}><Text style={k.muted}>{l}</Text><Text style={k.text}>{v}</Text></View>
             ))}
             <View style={k.rowB}><Text style={k.muted}>Cashback (1%)</Text><Text style={[k.text, { color: C.green }]}>+${(confirmBill.amount * 0.01).toFixed(2)}</Text></View>
+            {Number(confirmBill.amount) > 500 && (
+              <Field placeholder="Transaction PIN (if you set one)" secureTextEntry keyboardType="number-pad" maxLength={6} value={txPin} onChangeText={(v) => setTxPin(v.replace(/\D/g, ''))} />
+            )}
             <Text style={[k.muted, { fontSize: 12 }]}>By confirming, you authorize this payment from your Ξ╳oSky wallet.</Text>
           </View>
         )}

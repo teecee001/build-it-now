@@ -30,7 +30,7 @@ type Feature = Parameters<ReturnType<typeof useGeoVerification>['isFeatureAvaila
 const SHORTCUTS: { label: string; sub: string; icon: IconName; tint: string; path: Href; feature?: Feature }[] = [
   { label: 'Markets', sub: 'Live prices', icon: 'bar-chart-outline', tint: '#A78BFA', path: '/markets' },
   { label: 'Cards', sub: 'Virtual & metal', icon: 'card-outline', tint: C.green, path: '/card' },
-  { label: 'Savings', sub: '6% APY', icon: 'wallet-outline', tint: C.green, path: '/savings' },
+  { label: 'Savings', sub: 'Projection only', icon: 'wallet-outline', tint: C.green, path: '/savings' },
   { label: 'QR Pay', sub: 'Scan & pay', icon: 'qr-code-outline', tint: C.muted, path: '/qr' },
   { label: 'Pay Bills', sub: 'Utilities & more', icon: 'business-outline', tint: C.green, path: '/bills', feature: 'features_bill_pay' as Feature },
   { label: 'Exo', sub: 'Exo Intelligence', icon: 'sparkles-outline', tint: '#A78BFA', path: '/exo' },

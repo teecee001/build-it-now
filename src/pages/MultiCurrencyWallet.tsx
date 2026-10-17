@@ -40,6 +40,7 @@ export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {})
   const [fromCurrency, setFromCurrency] = useState("");
   const [toCurrency, setToCurrency] = useState("");
   const [convertAmount, setConvertAmount] = useState("");
+  const [txPin, setTxPin] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [justConverted, setJustConverted] = useState(false);
   useEffect(() => {
@@ -100,6 +101,7 @@ export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {})
         toCurrency,
         amount: amt,
         rate: convRate,
+        pin: txPin,
       });
       toast.success(`Converted ${amt} ${fromCurrency} → ${result.convertedAmount.toFixed(4)} ${toCurrency}`);
       setConvertAmount("");
@@ -289,6 +291,17 @@ export default function MultiCurrencyWallet({ mode }: { mode?: "convert" } = {})
                   Rate: 1 {fromCurrency} = {convRate.toFixed(6)} {toCurrency}
                 </p>
               </div>
+            )}
+            {(fromCurrency === "USD" ? parseFloat(convertAmount || "0") : parseFloat(convertAmount || "0") / (rates[fromCurrency] || 1)) > 500 && (
+              <Input
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                value={txPin}
+                onChange={(e) => setTxPin(e.target.value.replace(/\D/g, ""))}
+                placeholder="Transaction PIN (if you set one)"
+                className="text-center tracking-[0.4em] font-mono bg-secondary border-border"
+              />
             )}
             <Button
               onClick={handleConvert}

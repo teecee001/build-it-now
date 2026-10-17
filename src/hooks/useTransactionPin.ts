@@ -1,36 +1,37 @@
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const PIN_STORAGE_KEY = "x_money_tx_pin_hash";
-const PIN_THRESHOLD = 500; // Require PIN for transactions over $500
+const PIN_THRESHOLD = 500;
 
-function simpleHash(pin: string): string {
-  let hash = 0;
-  for (let i = 0; i < pin.length; i++) {
-    const char = pin.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return String(hash);
+function validPin(pin: string) {
+  return /^\d{4,6}$/.test(pin);
 }
 
 export function useTransactionPin() {
-  const [isPinSet, setIsPinSet] = useState(() => !!localStorage.getItem(PIN_STORAGE_KEY));
+  const [isPinSet, setIsPinSet] = useState(false);
 
-  const setupPin = useCallback((pin: string) => {
-    if (pin.length < 4 || pin.length > 6) throw new Error("PIN must be 4-6 digits");
-    if (!/^\d+$/.test(pin)) throw new Error("PIN must be digits only");
-    localStorage.setItem(PIN_STORAGE_KEY, simpleHash(pin));
+  useEffect(() => {
+    let cancelled = false;
+    supabase.rpc("has_tx_pin").then(({ data, error }) => {
+      if (!cancelled && !error) setIsPinSet(data === true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const setupPin = useCallback(async (pin: string) => {
+    if (!validPin(pin)) throw new Error("PIN must be 4-6 digits");
+    const { error } = await supabase.rpc("set_tx_pin", { p_pin: pin });
+    if (error) throw new Error(error.message || "Could not save PIN");
     setIsPinSet(true);
   }, []);
 
-  const verifyPin = useCallback((pin: string): boolean => {
-    const stored = localStorage.getItem(PIN_STORAGE_KEY);
-    if (!stored) return true; // No PIN set
-    return simpleHash(pin) === stored;
-  }, []);
+  const verifyPin = useCallback((pin: string): boolean => validPin(pin), []);
 
-  const removePin = useCallback(() => {
-    localStorage.removeItem(PIN_STORAGE_KEY);
+  const removePin = useCallback(async () => {
+    const { error } = await supabase.rpc("clear_tx_pin");
+    if (error) throw new Error(error.message || "Could not remove PIN");
     setIsPinSet(false);
   }, []);
 

@@ -18,7 +18,7 @@ const SCREENS = [
   { id: "dashboard", label: "Dashboard", icon: Wallet, color: "hsl(142 71% 45%)", hint: "Real-time balance tracking" },
   { id: "markets", label: "Markets", icon: TrendingUp, color: "hsl(217 91% 60%)", hint: "Live crypto & stock prices" },
   { id: "cards", label: "Cards", icon: CreditCard, color: "hsl(280 73% 58%)", hint: "Virtual & physical cards" },
-  { id: "savings", label: "Savings", icon: PiggyBank, color: "hsl(38 92% 50%)", hint: "6% APY savings vault" },
+  { id: "savings", label: "Savings", icon: PiggyBank, color: "hsl(38 92% 50%)", hint: "Projection only" },
   { id: "send", label: "Send", icon: Send, color: "hsl(190 90% 50%)", hint: "Instant global transfers" },
   { id: "analytics", label: "Analytics", icon: BarChart3, color: "hsl(280 70% 55%)", hint: "Smart spending insights" },
   { id: "wallet", label: "Crypto", icon: Coins, color: "hsl(38 80% 50%)", hint: "Multi-asset portfolio" },
@@ -232,7 +232,7 @@ function DashboardScreen() {
           <span className="text-[9px] text-white/30 font-medium">See all</span>
         </div>
         {[
-          { icon: Gift, label: "Welcome Bonus", desc: "Just now", amount: "+$25.00", positive: true },
+          { icon: Gift, label: "Sample activity", desc: "Illustration", amount: "+$0.00", positive: true },
           { icon: ArrowDownLeft, label: "Bank Deposit", desc: "1 hour ago", amount: "+$4,200.00", positive: true },
           { icon: ArrowUpRight, label: "Sent to @sarah", desc: "3 hours ago", amount: "-$500.00", positive: false },
           { icon: CreditCard, label: "Netflix", desc: "Yesterday", amount: "-$15.99", positive: false },
@@ -573,7 +573,7 @@ function SavingsScreen() {
             <PiggyBank className="w-4 h-4 text-green-400" />
             <p className="text-[15px] font-bold text-white tracking-tight">Savings</p>
           </div>
-          <div className="px-2 py-1 rounded-full bg-green-500/10 border border-green-500/15 text-[9px] font-bold text-green-400">6% APY</div>
+          <div className="px-2 py-1 rounded-full bg-green-500/10 border border-green-500/15 text-[9px] font-bold text-green-400">Projected</div>
         </div>
       </Stagger>
 
@@ -1107,7 +1107,7 @@ function DesktopDashboardScreen() {
               <span className="text-[7px] text-white/25">See all</span>
             </div>
             {[
-              { icon: Gift, label: "Welcome Bonus", amount: "+$25.00", positive: true },
+              { icon: Gift, label: "Sample activity", amount: "+$0.00", positive: true },
               { icon: ArrowDownLeft, label: "Bank Deposit", amount: "+$4,200.00", positive: true },
               { icon: ArrowUpRight, label: "Send to @sarah", amount: "-$500.00", positive: false },
             ].map((tx, i) => (
@@ -1396,7 +1396,7 @@ function DesktopSavingsScreen() {
             <PiggyBank className="w-4 h-4 text-green-400" />
             <p className="text-[14px] font-bold text-white tracking-tight">Savings</p>
           </div>
-          <div className="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/15 text-[8px] font-bold text-green-400">6% APY</div>
+          <div className="px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/15 text-[8px] font-bold text-green-400">Projected</div>
         </div>
       </Stagger>
 
@@ -2036,7 +2036,7 @@ export function AppShowcase() {
     dashboard: { text: "Real-time balance", position: "top-16 left-6" },
     markets: { text: "Live prices", position: "top-16 right-6" },
     cards: { text: "Metal card", position: "top-28 left-6" },
-    savings: { text: "6% APY vault", position: "top-16 right-6" },
+    savings: { text: "Projected vault", position: "top-16 right-6" },
     send: { text: "Instant transfer", position: "top-16 left-6" },
     analytics: { text: "Smart insights", position: "top-16 right-6" },
     wallet: { text: "Multi-asset portfolio", position: "top-16 left-6" },
