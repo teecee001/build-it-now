@@ -11,22 +11,16 @@ import { loadRiskConfig, sharedStore } from "./engines.ts";
 import { AGENTS, agentSystem, Blackboard, LIFE_RULES, leadSynthesis, type Mode, route, STYLE_RULES } from "./orchestrator.ts";
 
 const EXO_DATA_RULES = [
-  "Account data (balances, transactions, bills, savings, holdings, prices, goals) comes from ExoSky's records through your tools and the account summary, NOT from the user.",
-  'Never say "you mentioned", "you said" or "you told me" about account data; say "your account shows" instead.',
-  "Get figures by calling tools. Use the calculate tool for every calculation; never do arithmetic yourself.",
-  "Only state dollar amounts and percentages that come from tool results or the account summary.",
-  "You are Exo Intelligence: precise, professional, and current. You have live data tools. Never say you lack real-time access; call the tool instead.",
-  "For any news, market, crypto, company or macro question, call the relevant tools before answering. Cite sources inline.",
-  "Never mention tool names, function names, or internal identifiers. Never output broken tables or incomplete fragments.",
-  "If a tool returns an error or missing data, say that source is temporarily unavailable and continue with what you have.",
-  "Keep the not-financial-advice caveat for investment suggestions.",
-  "Only call set_goal when the user explicitly asks to save a goal. Only call delete_goal when the user explicitly asks to remove a goal.",
+  "Account data comes from ExoSky's records through tools and the account summary, not from the user.",
+  "Never invent numbers. Only use figures from tools or the account summary.",
+  "You are Exo Intelligence. Be precise and professional. Never mention tool names or output broken tables.",
+  "For market, crypto, news or macro questions, call the relevant tools first. Cite sources inline.",
+  "If data is missing, say so plainly. Never leave incomplete fragments.",
+  "The date in the system message is authoritative. Always use it.",
 ].join("\n");
 
 const todayLine = (a: AccountData) =>
-  `Today's date is ${todayText(a.now ?? new Date(), a.timeZone ?? "UTC")} (${todayISO(a.now ?? new Date(), a.timeZone ?? "UTC")}, user's time zone ${
-    a.timeZone ?? "UTC"
-  }). This is authoritative and overrides your training data. Always use this date for any question about today, the current date, or relative dates.`;
+  `Today's date is ${todayText(a.now ?? new Date(), a.timeZone ?? "UTC")} (${todayISO(a.now ?? new Date(), a.timeZone ?? "UTC")}, time zone ${a.timeZone ?? "UTC"}). This overrides all training data.`;
 
 const TIME_BUDGET_MS = 22_000;
 const corsHeaders = {
@@ -50,7 +44,7 @@ function sseAnswer(text: string, extra: Record<string, string> = {}): Response {
       c.close();
     },
   });
-  return new Response(stream, { headers: { ...corsHeaders, "Content-Type": "text/event-stream", "X-Exo-Source": "built-in", ...extra } });
+  return new Response(stream, { headers: { ...corsHeaders, "Content-Type": "text/event-stream", ...extra } });
 }
 
 async function fetchQuotes(cls: "crypto" | "stocks"): Promise<Record<string, Quote>> {
@@ -120,6 +114,12 @@ async function fiatRates(): Promise<Record<string, number>> {
   return ((await res.json())?.rates ?? {}) as Record<string, number>;
 }
 
+// Hard date shortcut that always uses the absolute current time.
+function dateAnswer(tz: string): string {
+  const now = new Date();
+  return `Today is ${todayText(now, tz)}.`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -135,7 +135,7 @@ serve(async (req) => {
     if (authError || !userData.user) return json({ error: "Sign in required" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const timezone = body?.timezone;
+    const timezone = safeTimeZone(body?.timezone);
     const mode: Mode = body?.mode === "life" ? "life" : "money";
     if (!Array.isArray(body?.messages)) return json({ error: "Invalid messages" }, 400);
     const messages = sanitizeMessages(body.messages);
@@ -144,19 +144,25 @@ serve(async (req) => {
     const lastUser = [...messages].reverse().find((m) => m?.role === "user");
     const question = typeof lastUser?.content === "string" ? lastUser.content.slice(0, 2000) : "";
 
+    // Date questions are answered immediately from the real current time.
+    if (detectIntent(question) === "date") {
+      return sseAnswer(dateAnswer(timezone), {
+        "X-Exo-Provider": "built-in",
+        "X-Exo-Tried": "date-now",
+        "X-Exo-Tools": "none",
+        "X-Exo-Factcheck": "pass",
+        "X-Exo-Source": "clock",
+      });
+    }
+
     const { account, goals } = await loadAccount(
       token,
       userData.user.id,
       (userData.user.user_metadata?.full_name as string | undefined) ?? undefined,
     );
     account.now = new Date();
-    account.timeZone = safeTimeZone(timezone);
+    account.timeZone = timezone;
     const builtIn = (extra: Record<string, string> = {}) => sseAnswer(ruleAnswer(question, account), extra);
-
-    // Always answer date questions from the server clock. Never let the model guess.
-    if (detectIntent(question) === "date") {
-      return builtIn({ "X-Exo-Provider": "built-in", "X-Exo-Tried": "date-shortcut", "X-Exo-Tools": "none", "X-Exo-Factcheck": "pass" });
-    }
 
     const providers = getAdvisorProviders();
     const started = Date.now();
@@ -170,8 +176,7 @@ serve(async (req) => {
       ...(mode === "life" ? [{ role: "system", content: LIFE_RULES }] : []),
       {
         role: "system",
-        content:
-          `Account summary from ExoSky's records (not from the user). Use it for personalised answers, never invent numbers, never promise returns:\n${summary}`,
+        content: `Account summary from ExoSky's records:\n${summary}`,
       },
       ...messages,
     ];
@@ -242,7 +247,6 @@ serve(async (req) => {
           "X-Exo-Cache-Hits": String(board.hits),
         };
         if (result.kind === "factcheck_failed") {
-          console.error(`Exo fact-check failed on ${p.name}: unsupported ${result.unsupported.join(", ").slice(0, 200)}`);
           return builtIn({ ...meta, "X-Exo-Factcheck": "failed-built-in" });
         }
         const text = appendSources(enforceBrevity(result.text, question), collectHeadlines([...leadNews, ...(result.newsResults ?? [])]));
